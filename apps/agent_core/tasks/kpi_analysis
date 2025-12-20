@@ -1,0 +1,147 @@
+"""Pure functions supporting prime cost KPI analysis."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, List
+
+from agent_core.schemas.kpi_analysis import InputPrimeCost, OutputPrimeCost
+
+
+def compute_percent(numerator: float, denominator: float) -> float:
+    """Return the ratio of ``numerator`` to ``denominator``.
+
+    Examples:
+        >>> compute_percent(30.0, 120.0)
+        0.25
+    """
+
+    if denominator <= 0:
+        raise ValueError("Denominator must be greater than zero to compute a percentage.")
+    return numerator / denominator
+
+
+def calc_prime_cost(labor: float, food: float, sales: float) -> Dict[str, float]:
+    """Calculate component values needed for the prime cost analysis.
+
+    Examples:
+        >>> round(calc_prime_cost(50.0, 70.0, 200.0)["prime_pct"], 2)
+        0.6
+    """
+
+    labor_pct = compute_percent(labor, sales)
+    food_pct = compute_percent(food, sales)
+    prime_amount = labor + food
+    prime_pct = compute_percent(prime_amount, sales)
+    return {
+        "labor_amount": labor,
+        "food_amount": food,
+        "prime_amount": prime_amount,
+        "labor_pct": labor_pct,
+        "food_pct": food_pct,
+        "prime_pct": prime_pct,
+    }
+
+
+def compare_to_benchmark(prime_pct: float, benchmark: float) -> Dict[str, float | bool]:
+    """Compare the computed prime cost percentage to an industry benchmark.
+
+    Examples:
+        >>> compare_to_benchmark(0.55, 0.60)["is_within"]
+        True
+    """
+
+    delta = prime_pct - benchmark
+    return {
+        "benchmark": benchmark,
+        "delta_pct": delta,
+        "is_within": prime_pct <= benchmark,
+    }
+
+
+def generate_recommendations(metrics: Dict[str, float], benchmark: float) -> List[str]:
+    """Produce actionable guidance based on the computed metrics.
+
+    Examples:
+        >>> generate_recommendations(
+        ...     {"prime_pct": 0.55, "food_pct": 0.33, "labor_pct": 0.22},
+        ...     0.60,
+        ... )[0]
+        'Prime cost within standards—monitor weekly.'
+    """
+
+    prime_pct = metrics["prime_pct"]
+    labor_pct = metrics["labor_pct"]
+    food_pct = metrics["food_pct"]
+
+    recommendations: List[str] = []
+
+    if prime_pct <= benchmark:
+        recommendations.append("Prime cost within standards—monitor weekly.")
+    else:
+        variance = prime_pct - benchmark
+        recommendations.append(
+            f"Prime cost exceeds benchmark by {variance:.1%}; audit scheduling and purchasing for efficiencies."
+        )
+
+    if food_pct > 0.31:
+        recommendations.append("Food costs slightly elevated; review vendor pricing and waste logs.")
+    elif food_pct < 0.26:
+        recommendations.append("Food costs lean; maintain recipe adherence and waste tracking.")
+
+    if labor_pct > 0.26:
+        recommendations.append("Labor costs above ideal; rebalance staffing plans and cross-train team members.")
+    elif labor_pct < 0.20:
+        recommendations.append("Labor productivity strong; continue monitoring shift efficiency metrics.")
+
+    if not recommendations:
+        recommendations.append("Monitor weekly prime cost trends to stay ahead of variances.")
+
+    return recommendations
+
+
+def _build_summary(prime_pct: float, benchmark: float) -> str:
+    """Create a concise summary comparing prime cost to the benchmark.
+
+    Examples:
+        >>> _build_summary(0.55, 0.60)
+        'Prime cost is 55.0% of sales, below the 60.0% benchmark.'
+    """
+
+    relation = "below" if prime_pct <= benchmark else "above"
+    return f"Prime cost is {prime_pct * 100:.1f}% of sales, {relation} the {benchmark * 100:.1f}% benchmark."
+
+
+def build_prime_cost_response(payload: InputPrimeCost) -> Dict[str, Any]:
+    """Hydrate :class:`OutputPrimeCost` from validated input data.
+
+    Examples:
+        >>> build_prime_cost_response(
+        ...     InputPrimeCost(labor_costs=1000.0, food_costs=1500.0, total_sales=4000.0)
+        ... )["status"]
+        'ok'
+    """
+
+    metrics = calc_prime_cost(payload.labor_costs, payload.food_costs, payload.total_sales)
+    comparison = compare_to_benchmark(metrics["prime_pct"], payload.industry_benchmark_pct)
+    recommendations = generate_recommendations(metrics, payload.industry_benchmark_pct)
+
+    response = OutputPrimeCost(
+        status="ok",
+        summary=_build_summary(metrics["prime_pct"], payload.industry_benchmark_pct),
+        metrics=[
+            {"name": "Labor Cost %", "value": metrics["labor_pct"], "unit": "ratio"},
+            {"name": "Food Cost %", "value": metrics["food_pct"], "unit": "ratio"},
+            {"name": "Prime Cost %", "value": metrics["prime_pct"], "unit": "ratio"},
+        ],
+        table=[
+            {"component": "Labor", "amount": metrics["labor_amount"], "pct_sales": metrics["labor_pct"]},
+            {"component": "Food", "amount": metrics["food_amount"], "pct_sales": metrics["food_pct"]},
+            {"component": "Prime", "amount": metrics["prime_amount"], "pct_sales": metrics["prime_pct"]},
+        ],
+        diagnostics={
+            "benchmark": comparison["benchmark"],
+            "recommendations": recommendations,
+            "timing_ms": 0,
+        },
+    )
+return response.dict()

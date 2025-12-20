@@ -1,0 +1,475 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Curated Restaurant Consulting - AI Assistant</title>
+  <style>
+    /* ——— Your CSS, unchanged except the < fix in the stats text ——— */
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);min-height:100vh;display:flex;flex-direction:column}
+    .header{background:rgba(255,255,255,.98);backdrop-filter:blur(10px);padding:1.5rem 0;border-bottom:1px solid rgba(67,56,202,.1);box-shadow:0 2px 20px rgba(0,0,0,.08)}
+    .header-content{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
+    .header-actions{display:flex;align-items:center;gap:1rem}
+    .logo{display:flex;align-items:center;gap:1rem}
+    .logo-circle{width:56px;height:56px;background:conic-gradient(from 180deg at 50% 50%,#4338ca 0deg,#6366f1 180deg,#4338ca 360deg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.75rem;font-weight:700;color:#fff;box-shadow:0 8px 24px rgba(67,56,202,.35);animation:float 3s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+    .brand-text{display:flex;flex-direction:column;gap:.25rem}
+    .company-name{font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
+    .company-tagline{font-size:.875rem;color:#64748b;font-weight:500;line-height:1.2}
+    .ai-badge{background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#fff;padding:.5rem 1rem;border-radius:25px;font-size:.875rem;font-weight:600;display:flex;align-items:center;gap:.5rem;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.8}}
+    .ai-badge::before{content:'';width:8px;height:8px;background:#fff;border-radius:50%;animation:blink 1.5s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+    .main-container{flex:1;display:flex;align-items:center;justify-content:center;padding:3rem 2rem}
+    .chat-interface{width:100%;max-width:900px;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;border:1px solid rgba(67,56,202,.1)}
+    .welcome-section{padding:3rem;text-align:center;background:linear-gradient(180deg,rgba(67,56,202,.03) 0%,transparent 100%)}
+    .welcome-title{font-size:2.5rem;font-weight:800;margin-bottom:1rem;background:linear-gradient(135deg,#4338ca 0%,#3b82f6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .welcome-subtitle{font-size:1.25rem;color:#64748b;margin-bottom:3rem;line-height:1.6;max-width:600px;margin-left:auto;margin-right:auto}
+    .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:1rem}
+    .service-card{background:#fff;border:2px solid #e5e7eb;border-radius:16px;padding:1.5rem;text-align:center;transition:all .3s ease;cursor:pointer;position:relative;overflow:hidden}
+    .service-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4338ca,#3b82f6);transform:translateX(-100%);transition:transform .3s ease}
+    .service-card:hover::before{transform:translateX(0)}
+    .service-card:hover{transform:translateY(-5px);box-shadow:0 12px 30px rgba(67,56,202,.2);border-color:#4338ca}
+    .service-icon{width:64px;height:64px;background:linear-gradient(135deg,#4338ca 0%,#6366f1 100%);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;box-shadow:0 8px 20px rgba(67,56,202,.25)}
+    .service-title{font-weight:700;color:#1f2937;margin-bottom:.5rem;font-size:1.125rem}
+    .service-desc{color:#64748b;font-size:.875rem;line-height:1.4}
+    .chat-messages-container{background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:24px;margin:2rem;margin-bottom:1rem;box-shadow:0 20px 60px rgba(0,0,0,.15);border:1px solid rgba(67,56,202,.1);max-height:500px;overflow:hidden;display:none}
+    .chat-messages-header{padding:1.5rem 2rem;background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);color:#fff;display:flex;justify-content:space-between;align-items:center}
+    .chat-messages-header h3{margin:0;font-size:1.2rem;font-weight:600}
+    .clear-chat{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.5rem 1rem;border-radius:12px;cursor:pointer;font-size:.9rem;transition:all .2s ease}
+    .clear-chat:hover{background:rgba(255,255,255,.3)}
+    .chat-messages{max-height:400px;overflow-y:auto;padding:1rem 2rem}
+    .message{margin-bottom:1.5rem;display:flex;flex-direction:column}
+    .message.user{align-items:flex-end}
+    .message.assistant{align-items:flex-start}
+    .message-bubble{max-width:80%;padding:1rem 1.5rem;border-radius:20px;word-wrap:break-word;line-height:1.5}
+    .message.user .message-bubble{background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);color:#fff;border-bottom-right-radius:8px}
+    .message.assistant .message-bubble{background:#f8fafc;color:#374151;border:1px solid #e5e7eb;border-bottom-left-radius:8px}
+    .message-time{font-size:.75rem;color:#94a3b8;margin-top:.5rem;padding:0 .5rem}
+    .chat-input-section{padding:1rem 2rem 2rem 2rem;margin-top:-1rem;background:linear-gradient(180deg,transparent 0%,rgba(67,56,202,.02) 100%)}
+    .input-container{position:relative;display:flex;flex-direction:column;gap:1rem;align-items:stretch}
+    .chat-input{flex:1;padding:1.25rem 1.5rem;border:2px solid #e5e7eb;border-radius:16px;font-size:1rem;color:#1f2937;background:#fff;transition:all .3s ease;resize:vertical;min-height:60px;max-height:150px}
+    .chat-input:focus{outline:none;border-color:#4338ca;box-shadow:0 0 0 4px rgba(67,56,202,.1)}
+    .chat-input::placeholder{color:#94a3b8}
+    .send-button{padding:1rem 1.5rem;background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 8px 20px rgba(67,56,202,.3);align-self:flex-end;max-width:120px}
+    .send-button:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(67,56,202,.4)}
+    .quick-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem;justify-content:center}
+    .quick-action{padding:.625rem 1.25rem;background:#fff;border:2px solid #e5e7eb;border-radius:25px;font-size:.875rem;color:#64748b;cursor:pointer;transition:all .2s ease;font-weight:500}
+    .quick-action:hover{background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);color:#fff;border-color:#4338ca;transform:scale(1.05)}
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;padding:2rem;background:linear-gradient(90deg,rgba(67,56,202,.02) 0%,rgba(59,130,246,.02) 100%);border-top:1px solid rgba(67,56,202,.1)}
+    .stat-item{text-align:center}
+    .stat-number{font-size:1.75rem;font-weight:800;background:linear-gradient(135deg,#4338ca 0%,#3b82f6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .stat-label{font-size:.875rem;color:#64748b;margin-top:.25rem}
+    @media (max-width:768px){
+      .welcome-title{font-size:2rem}
+      .services-grid{grid-template-columns:1fr}
+      .header-content{flex-direction:column;gap:1rem}
+      .stats-row{grid-template-columns:1fr 1fr}
+      .chat-input{font-size:16px;min-height:80px;padding:1.5rem}
+      .send-button{padding:1rem 1.25rem;max-width:100px;font-size:.9rem}
+      .input-container{gap:.75rem}
+      .chat-input-section{padding:1.5rem}
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo" aria-label="Curated Restaurant Consulting">
+        <div class="logo-circle" aria-hidden="true">€</div>
+        <div class="brand-text">
+          <div class="company-name">Curated Restaurant Consulting</div>
+          <div class="company-tagline">Driven by Data. Crafted for Excellence.</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="ai-badge" aria-live="polite">AI Assistant Active</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+    <div class="chat-interface" role="application" aria-label="AI Assistant chat">
+      <!-- Welcome Section -->
+      <section class="welcome-section">
+        <h1 class="welcome-title">Your AI Restaurant Consultant</h1>
+        <p class="welcome-subtitle">Get instant expert insights on KPIs, operations, and strategy. I analyze your data and provide actionable recommendations tailored to your restaurant.</p>
+
+        <!-- Service Cards -->
+        <div class="services-grid" role="list">
+          <!-- KPI Analysis -->
+          <button class="service-card" role="listitem" aria-label="KPI Analysis" onclick="goToKPIAnalysis()">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <rect x="4" y="28" width="4" height="8" rx="2" fill="white"/>
+                <rect x="10" y="22" width="4" height="14" rx="2" fill="white"/>
+                <rect x="16" y="18" width="4" height="18" rx="2" fill="white"/>
+                <rect x="22" y="12" width="4" height="24" rx="2" fill="white"/>
+                <rect x="28" y="8" width="4" height="28" rx="2" fill="white"/>
+                <path d="M6 16L12 10L18 14L26 6L32 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="service-title">KPI Analysis</div>
+            <div class="service-desc">Real-time performance metrics &amp; benchmarking</div>
+          </button>
+
+          <!-- HR Solutions -->
+          <button class="service-card" role="listitem" aria-label="HR Solutions" onclick="goToHRSolutions()">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <circle cx="14" cy="12" r="4" stroke="white" stroke-width="2"/>
+                <circle cx="26" cy="12" r="4" stroke="white" stroke-width="2"/>
+                <path d="M8 32V30C8 26.6863 10.6863 24 14 24C17.3137 24 20 26.6863 20 30V32" stroke="white" stroke-width="2"/>
+                <path d="M20 32V30C20 26.6863 22.6863 24 26 24C29.3137 24 32 26.6863 32 30V32" stroke="white" stroke-width="2"/>
+                <circle cx="20" cy="8" r="2" fill="white"/>
+              </svg>
+            </div>
+            <div class="service-title">HR Solutions</div>
+            <div class="service-desc">Staff optimization &amp; retention strategies</div>
+          </button>
+
+          <!-- Beverage -->
+          <button class="service-card" role="listitem" aria-label="Beverage" onclick="goToBeverage()">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <path d="M20 4C18.5 4 17 5 17 7V10H23V7C23 5 21.5 4 20 4Z" stroke="white" stroke-width="2" fill="none"/>
+                <rect x="12" y="10" width="16" height="22" rx="3" stroke="white" stroke-width="2" fill="none"/>
+                <circle cx="20" cy="16" r="2" fill="white"/>
+                <path d="M16 22H24" stroke="white" stroke-width="2"/>
+                <path d="M16 26H24" stroke="white" stroke-width="2"/>
+                <path d="M18 30H22" stroke="white" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="service-title">Beverage</div>
+            <div class="service-desc">Bar management &amp; liquor cost analysis</div>
+          </button>
+
+          <!-- Menu Engineering -->
+          <button class="service-card" role="listitem" aria-label="Menu Engineering" onclick="goToMenuEngineering()">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <rect x="6" y="8" width="28" height="24" rx="3" stroke="white" stroke-width="2"/>
+                <path d="M6 16H34" stroke="white" stroke-width="2"/>
+                <circle cx="13" cy="12" r="1.5" fill="white"/>
+                <circle cx="20" cy="12" r="1.5" fill="white"/>
+                <circle cx="27" cy="12" r="1.5" fill="white"/>
+                <rect x="10" y="20" width="8" height="2" rx="1" fill="white"/>
+                <rect x="10" y="24" width="12" height="2" rx="1" fill="white"/>
+              </svg>
+            </div>
+            <div class="service-title">Menu Engineering</div>
+            <div class="service-desc">Profitability analysis &amp; pricing optimization</div>
+          </button>
+
+          <!-- Recipes -->
+          <button class="service-card" role="listitem" aria-label="Recipes" onclick="goToRecipes()">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <rect x="8" y="6" width="24" height="28" rx="2" stroke="white" stroke-width="2" fill="none"/>
+                <path d="M12 12H28" stroke="white" stroke-width="2"/>
+                <path d="M12 16H24" stroke="white" stroke-width="2"/>
+                <path d="M12 20H26" stroke="white" stroke-width="2"/>
+                <path d="M12 24H22" stroke="white" stroke-width="2"/>
+                <path d="M12 28H20" stroke="white" stroke-width="2"/>
+                <circle cx="26" cy="26" r="3" stroke="white" stroke-width="2" fill="none"/>
+                <path d="M24 24L28 28" stroke="white" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="service-title">Recipes</div>
+            <div class="service-desc">Recipe costing &amp; ingredient optimization</div>
+          </button>
+
+          <!-- Strategic Planning -->
+          <button class="service-card" role="listitem" aria-label="Strategic Planning" onclick="goToStrategicPlanning()">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <circle cx="20" cy="20" r="16" stroke="white" stroke-width="2"/>
+                <circle cx="20" cy="20" r="10" stroke="white" stroke-width="2"/>
+                <circle cx="20" cy="20" r="4" stroke="white" stroke-width="2"/>
+                <path d="M20 4V8" stroke="white" stroke-width="2"/>
+                <path d="M36 20H32" stroke="white" stroke-width="2"/>
+                <path d="M20 36V32" stroke="white" stroke-width="2"/>
+                <path d="M4 20H8" stroke="white" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="service-title">Strategic Planning</div>
+            <div class="service-desc">Growth strategies &amp; operational excellence</div>
+          </button>
+
+          <!-- KPI Dashboard -->
+          <button class="service-card" role="listitem" aria-label="KPI Dashboard" onclick="goToKPIDashboard()">
+            <div class="service-icon" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <rect x="4" y="8" width="32" height="24" rx="3" stroke="white" stroke-width="2"/>
+                <rect x="8" y="12" width="4" height="16" rx="1" fill="white"/>
+                <rect x="14" y="16" width="4" height="12" rx="1" fill="white"/>
+                <rect x="20" y="10" width="4" height="18" rx="1" fill="white"/>
+                <rect x="26" y="14" width="4" height="14" rx="1" fill="white"/>
+                <path d="M10 20L16 16L22 18L28 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="10" cy="20" r="2" fill="white"/>
+                <circle cx="16" cy="16" r="2" fill="white"/>
+                <circle cx="22" cy="18" r="2" fill="white"/>
+                <circle cx="28" cy="14" r="2" fill="white"/>
+              </svg>
+            </div>
+            <div class="service-title">KPI Dashboard</div>
+            <div class="service-desc">Upload CSV for comprehensive performance analysis</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Chat Input Section -->
+      <section class="chat-input-section" aria-label="Message composer">
+        <div class="input-container">
+          <label for="chat-input" class="visually-hidden" style="position:absolute;left:-10000px;">Type your message</label>
+          <textarea id="chat-input" class="chat-input" placeholder="Ask me anything about your restaurant operations, KPIs, staffing, menu optimization, or business strategy..." rows="1"></textarea>
+          <button class="send-button" id="send-button" type="button" aria-label="Send message">
+            <span>Send</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="quick-actions" aria-label="Quick actions">
+          <button class="quick-action" type="button">Calculate my labor cost %</button>
+          <button class="quick-action" type="button">Analyze food costs</button>
+          <button class="quick-action" type="button">Review prime costs</button>
+          <button class="quick-action" type="button">Staff scheduling tips</button>
+          <button class="quick-action" type="button">Menu profitability</button>
+          <button class="quick-action" type="button">Sales forecasting</button>
+          <button class="quick-action" type="button">Inventory optimization</button>
+          <button class="quick-action" type="button">Financial health check</button>
+        </div>
+      </section>
+
+      <!-- Stats Row -->
+      <section class="stats-row" aria-label="Service stats">
+        <div class="stat-item">
+          <div class="stat-number">24/7</div>
+          <div class="stat-label">Availability</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">&lt; 3s</div>
+          <div class="stat-label">Response Time</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">500+</div>
+          <div class="stat-label">KPIs Tracked</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">98%</div>
+          <div class="stat-label">Accuracy Rate</div>
+        </div>
+      </section>
+
+      <!-- Chat Messages Area -->
+      <section class="chat-messages-container" id="chat-messages" aria-label="Conversation">
+        <div class="chat-messages-header">
+          <h3 id="chat-title">AI Assistant Conversation</h3>
+          <button class="clear-chat" id="clear-chat" type="button" aria-label="Clear chat history">Clear Chat</button>
+        </div>
+        <div class="chat-messages" id="messages" aria-live="polite" aria-labelledby="chat-title">
+          <!-- Messages are injected here -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      const qs = (sel, root=document) => root.querySelector(sel);
+      const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+      return null;
+    }
+    const CSRF_TOKEN = getCookie('csrftoken');
+
+    function safeTextToNode(text) {
+      const div = document.createElement('div');
+      const safe = document.createTextNode(text);
+      div.appendChild(safe);
+      return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    const textarea = qs('#chat-input');
+    const sendButton = qs('#send-button');
+    const clearButton = qs('#clear-chat');
+    const messagesContainer = qs('#messages');
+    const chatContainer = qs('#chat-messages');
+
+    // Debug: Check if elements exist
+    if (!textarea) console.error('Textarea not found');
+    if (!sendButton) console.error('Send button not found');
+    if (!messagesContainer) console.error('Messages container not found');
+    if (!chatContainer) console.error('Chat container not found');
+
+    if (textarea) {
+      textarea.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+      });
+    }
+
+    qsa('.quick-action').forEach(btn => {
+      btn.addEventListener('click', () => {
+        textarea.value = btn.textContent.trim();
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input'));
+      });
+    });
+
+    qsa('.service-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const title = card.querySelector('.service-title').textContent.trim();
+        textarea.value = `Tell me about ${title} for my restaurant`;
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input'));
+      });
+    });
+
+    function addMessage(content, isUser = false) {
+      console.log('addMessage called with:', content, 'isUser:', isUser);
+      
+      if (!chatContainer) {
+        console.error('chatContainer not found!');
+        return;
+      }
+      
+      if (!messagesContainer) {
+        console.error('messagesContainer not found!');
+        return;
+      }
+
+      // Make sure chat container is visible
+      chatContainer.style.display = 'block';
+      console.log('Chat container made visible');
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble';
+      bubble.innerHTML = safeTextToNode(content);
+
+      const time = document.createElement('div');
+      time.className = 'message-time';
+      const now = new Date();
+      time.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      messageDiv.appendChild(bubble);
+      messageDiv.appendChild(time);
+      messagesContainer.appendChild(messageDiv);
+
+      console.log('Message added to DOM');
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function clearChat() {
+      messagesContainer.innerHTML = '';
+      chatContainer.style.display = 'none';
+      textarea.value = '';
+      textarea.style.height = 'auto';
+      textarea.focus();
+    }
+
+    clearButton.addEventListener('click', clearChat);
+
+    async function sendMessage() {
+      console.log('sendMessage called');
+      const message = textarea.value.trim();
+      console.log('Message:', message);
+      if (!message) {
+        console.log('No message, returning');
+        return;
+      }
+
+      // Redirect to dedicated chat page with the message
+      const chatUrl = `/dashboard/chat/?message=${encodeURIComponent(message)}`;
+      window.location.href = chatUrl;
+    }
+
+    if (sendButton) {
+      sendButton.addEventListener('click', () => {
+        sendButton.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          sendButton.style.transform = '';
+          sendMessage();
+        }, 120);
+      });
+    }
+
+    if (textarea) {
+      textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+
+    // Navigation functions for all service pages
+    window.goToKPIAnalysis = function() {
+      window.location.href = '/dashboard/kpi-analysis/';
+    };
+
+    window.goToHRSolutions = function() {
+      window.location.href = '/dashboard/hr-solutions/';
+    };
+
+    window.goToBeverage = function() {
+      window.location.href = '/dashboard/beverage/';
+    };
+
+    window.goToMenuEngineering = function() {
+      window.location.href = '/dashboard/menu-engineering/';
+    };
+
+    window.goToRecipes = function() {
+      window.location.href = '/dashboard/recipes/';
+    };
+
+    window.goToStrategicPlanning = function() {
+      window.location.href = '/dashboard/strategic-planning/';
+    };
+
+    window.goToKPIDashboard = function() {
+      window.location.href = '/dashboard/kpi-dashboard/';
+    };
+
+    // KPI Dashboard upload function
+    window.uploadKPI = function() {
+      // Create a hidden file input
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.csv';
+      fileInput.style.display = 'none';
+      
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Redirect to chat page with KPI upload
+        const chatUrl = `/dashboard/chat/?task=kpi_analysis&file=${encodeURIComponent(file.name)}`;
+        window.location.href = chatUrl;
+      });
+      
+      // Trigger file selection
+      document.body.appendChild(fileInput);
+      fileInput.click();
+      document.body.removeChild(fileInput);
+    };
+    }); // End DOMContentLoaded
+
+  </script>
+</body>
+</html>

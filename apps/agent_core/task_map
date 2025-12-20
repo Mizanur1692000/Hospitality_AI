@@ -1,0 +1,47 @@
+"""Central mapping between task keys and callable handlers."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, Type
+
+from pydantic import BaseModel
+
+from agent_core.schemas.kpi_analysis import InputPrimeCost
+from agent_core.tasks.kpi_analysis.prime_cost import build_prime_cost_response
+
+
+@dataclass(frozen=True)
+class TaskDefinition:
+    """Describe how to validate and execute a task.
+
+    Examples:
+        >>> TaskDefinition(InputPrimeCost, lambda model: {"status": "ok"}, True).requires_entitlement
+        True
+    """
+
+    schema: Type[BaseModel]
+    runner: Callable[[BaseModel], Dict[str, Any]]
+    requires_entitlement: bool = False
+
+
+def _run_prime_cost(model: BaseModel) -> Dict[str, Any]:
+    """Execute the prime cost workflow from a validated model instance.
+
+    Examples:
+        >>> _run_prime_cost(InputPrimeCost(labor_costs=100.0, food_costs=150.0, total_sales=400.0))["status"]
+        'ok'
+    """
+
+    if not isinstance(model, InputPrimeCost):
+        raise TypeError("Expected InputPrimeCost instance for prime cost task.")
+    return build_prime_cost_response(model)
+
+
+TASK_DEFINITIONS: Dict[str, TaskDefinition] = {
+    "kpi_analysis.prime_cost": TaskDefinition(
+        schema=InputPrimeCost,
+        runner=_run_prime_cost,
+        requires_entitlement=True,
+    ),
+}

@@ -1,0 +1,99 @@
+{
+  "restaurant_scenarios": [
+    {
+      "scenario_name": "High-Performing Restaurant",
+      "description": "Well-managed restaurant with excellent efficiency",
+      "data": {
+        "total_sales": 25000,
+        "labor_cost": 6250,
+        "food_cost": 5000,
+        "hours_worked": 200,
+        "previous_sales": 24000
+      },
+      "expected_performance": "Excellent - Low labor costs, high sales per hour"
+    },
+    {
+      "scenario_name": "Average Restaurant",
+      "description": "Typical restaurant with industry-standard metrics",
+      "data": {
+        "total_sales": 15000,
+        "labor_cost": 4500,
+        "food_cost": 3750,
+        "hours_worked": 150,
+        "previous_sales": 14500
+      },
+      "expected_performance": "Good - Meets industry benchmarks"
+    },
+    {
+      "scenario_name": "Struggling Restaurant",
+      "description": "Restaurant with high costs and low efficiency",
+      "data": {
+        "total_sales": 12000,
+        "labor_cost": 4800,
+        "food_cost": 4200,
+        "hours_worked": 180,
+        "previous_sales": 13000
+      },
+      "expected_performance": "Needs Improvement - High labor costs, declining sales"
+    },
+    {
+      "scenario_name": "Fine Dining Restaurant",
+      "description": "Upscale restaurant with higher food costs",
+      "data": {
+        "total_sales": 35000,
+        "labor_cost": 8750,
+        "food_cost": 14000,
+        "hours_worked": 250,
+        "previous_sales": 33000
+      },
+      "expected_performance": "Good - Higher food costs typical for fine dining"
+    },
+    {
+      "scenario_name": "Fast Casual Restaurant",
+      "description": "Quick service with low labor costs",
+      "data": {
+        "total_sales": 18000,
+        "labor_cost": 3600,
+        "food_cost": 5400,
+        "hours_worked": 120,
+        "previous_sales": 17500
+      },
+      "expected_performance": "Excellent - Very efficient operations"
+    },
+    {
+      "scenario_name": "New Restaurant (First Month)",
+      "description": "Recently opened restaurant still optimizing",
+      "data": {
+        "total_sales": 8000,
+        "labor_cost": 3200,
+        "food_cost": 2800,
+        "hours_worked": 100,
+        "previous_sales": null
+      },
+      "expected_performance": "Acceptable - Room for improvement as operations mature"
+    }
+  ],
+  "quick_test_scenarios": [
+    {
+      "name": "Quick Test 1",
+      "total_sales": 10000,
+      "labor_cost": 3000,
+      "food_cost": 2500,
+      "hours_worked": 100
+    },
+    {
+      "name": "Quick Test 2", 
+      "total_sales": 20000,
+      "labor_cost": 7000,
+      "food_cost": 6000,
+      "hours_worked": 180
+    },
+    {
+      "name": "Quick Test 3",
+      "total_sales": 5000,
+      "labor_cost": 2000,
+      "food_cost": 1500,
+      "hours_worked": 80
+    }
+  ]
+}

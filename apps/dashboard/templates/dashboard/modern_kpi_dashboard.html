@@ -1,0 +1,378 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restaurant KPI Dashboard - Curated Consulting</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Alpine.js for interactivity -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-slide-up {
+      animation: slideUp 0.5s ease-out forwards;
+    }
+
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <!-- Logo -->
+          <div class="w-12 h-12 bg-gradient-to-br from-indigo-600 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+            <i data-lucide="chef-hat" class="w-6 h-6 text-white"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-gray-900">Restaurant Analytics</h1>
+            <p class="text-sm text-gray-500">Real-time KPI Dashboard</p>
+          </div>
+        </div>
+
+        <!-- Date Range Selector -->
+        <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-4 py-2">
+          <i data-lucide="calendar" class="w-4 h-4 text-gray-600"></i>
+          <select class="bg-transparent text-sm font-medium text-gray-700 border-none outline-none">
+            <option>Today</option>
+            <option>This Week</option>
+            <option>This Month</option>
+            <option>Last 30 Days</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Top KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+      <!-- Total Sales Card -->
+      <div class="bg-white rounded-2xl shadow-md p-6 card-hover animate-slide-up border-l-4 border-emerald-500">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+            <i data-lucide="dollar-sign" class="w-6 h-6 text-emerald-600"></i>
+          </div>
+          <div class="flex items-center gap-1 text-emerald-600 text-sm font-semibold">
+            <i data-lucide="trending-up" class="w-4 h-4"></i>
+            <span>+12.5%</span>
+          </div>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium mb-1">Total Sales</h3>
+        <p class="text-3xl font-bold text-gray-900">$45,230</p>
+        <p class="text-xs text-gray-500 mt-2">vs. last period: $40,204</p>
+      </div>
+
+      <!-- Labor Cost Card -->
+      <div class="bg-white rounded-2xl shadow-md p-6 card-hover animate-slide-up border-l-4 border-amber-500" style="animation-delay: 0.1s;">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+            <i data-lucide="users" class="w-6 h-6 text-amber-600"></i>
+          </div>
+          <div class="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-full">
+            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span class="text-green-700 text-xs font-semibold">Good</span>
+          </div>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium mb-1">Labor Cost %</h3>
+        <p class="text-3xl font-bold text-gray-900">28.3%</p>
+        <p class="text-xs text-gray-500 mt-2">Target: &lt;30% • Actual: $12,850</p>
+      </div>
+
+      <!-- Food Cost Card -->
+      <div class="bg-white rounded-2xl shadow-md p-6 card-hover animate-slide-up border-l-4 border-orange-500" style="animation-delay: 0.2s;">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+            <i data-lucide="utensils" class="w-6 h-6 text-orange-600"></i>
+          </div>
+          <div class="flex items-center gap-1 px-2 py-1 bg-yellow-100 rounded-full">
+            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+            <span class="text-yellow-700 text-xs font-semibold">Watch</span>
+          </div>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium mb-1">Food Cost %</h3>
+        <p class="text-3xl font-bold text-gray-900">31.8%</p>
+        <p class="text-xs text-gray-500 mt-2">Target: &lt;30% • Actual: $14,383</p>
+      </div>
+
+      <!-- Prime Cost Card -->
+      <div class="bg-white rounded-2xl shadow-md p-6 card-hover animate-slide-up border-l-4 border-rose-500" style="animation-delay: 0.3s;">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 bg-rose-100 rounded-xl flex items-center justify-center">
+            <i data-lucide="alert-circle" class="w-6 h-6 text-rose-600"></i>
+          </div>
+          <div class="flex items-center gap-1 px-2 py-1 bg-red-100 rounded-full">
+            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span class="text-red-700 text-xs font-semibold">Alert</span>
+          </div>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium mb-1">Prime Cost %</h3>
+        <p class="text-3xl font-bold text-gray-900">60.1%</p>
+        <p class="text-xs text-gray-500 mt-2">Target: &lt;60% • Actual: $27,233</p>
+      </div>
+
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+      <!-- Sales Trend Chart -->
+      <div class="bg-white rounded-2xl shadow-md p-6 card-hover">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-gray-900">Sales Trend</h3>
+          <div class="flex items-center gap-2 text-sm text-gray-500">
+            <i data-lucide="trending-up" class="w-4 h-4"></i>
+            <span>Last 7 Days</span>
+          </div>
+        </div>
+        <canvas id="salesChart" class="w-full" style="max-height: 300px;"></canvas>
+      </div>
+
+      <!-- Cost Breakdown Chart -->
+      <div class="bg-white rounded-2xl shadow-md p-6 card-hover">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-gray-900">Cost Breakdown</h3>
+          <div class="flex items-center gap-2 text-sm text-gray-500">
+            <i data-lucide="pie-chart" class="w-4 h-4"></i>
+            <span>Current Period</span>
+          </div>
+        </div>
+        <canvas id="costChart" class="w-full" style="max-height: 300px;"></canvas>
+      </div>
+
+    </div>
+
+    <!-- Product Mix Table -->
+    <div class="bg-white rounded-2xl shadow-md overflow-hidden card-hover">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-gray-900">Top Menu Items</h3>
+            <p class="text-sm text-gray-500 mt-1">Performance by item</p>
+          </div>
+          <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition flex items-center gap-2">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Export Report
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Item</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Qty Sold</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Revenue</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cost</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Profit</th>
+              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Margin</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                    🍔
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">Signature Burger</div>
+                    <div class="text-xs text-gray-500">Entrée</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">142</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-emerald-600">$2,130</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$852</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$1,278</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full">60%</span>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-gradient-to-br from-red-400 to-rose-500 rounded-lg flex items-center justify-center mr-3">
+                    🍕
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">Margherita Pizza</div>
+                    <div class="text-xs text-gray-500">Pizza</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">98</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-emerald-600">$1,568</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$471</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$1,097</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full">70%</span>
+              </td>
+            </tr>
+            <tr class="hover:bg-gray-50 transition">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center mr-3">
+                    🥗
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">Caesar Salad</div>
+                    <div class="text-xs text-gray-500">Salad</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">76</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-emerald-600">$912</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">$274</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">$638</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-3 py-1 text-xs font-semibold bg-emerald-100 text-emerald-800 rounded-full">70%</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Sales Trend Chart
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    new Chart(salesCtx, {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+          label: 'Sales',
+          data: [5200, 6100, 5800, 7200, 8100, 9500, 7800],
+          borderColor: 'rgb(99, 102, 241)',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          tension: 0.4,
+          fill: true,
+          borderWidth: 3,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointBackgroundColor: 'white',
+          pointBorderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 },
+            displayColors: false,
+            callbacks: {
+              label: function(context) {
+                return '$' + context.parsed.y.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+            ticks: {
+              callback: function(value) {
+                return '$' + (value/1000) + 'k';
+              }
+            }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+
+    // Cost Breakdown Doughnut Chart
+    const costCtx = document.getElementById('costChart').getContext('2d');
+    new Chart(costCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Food Cost', 'Labor Cost', 'Overhead', 'Profit'],
+        datasets: [{
+          data: [31.8, 28.3, 12.4, 27.5],
+          backgroundColor: [
+            'rgb(251, 146, 60)',
+            'rgb(251, 191, 36)',
+            'rgb(168, 85, 247)',
+            'rgb(34, 197, 94)'
+          ],
+          borderWidth: 4,
+          borderColor: '#fff',
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              font: { size: 13, weight: '600' },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            padding: 12,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 },
+            callbacks: {
+              label: function(context) {
+                return context.label + ': ' + context.parsed + '%';
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

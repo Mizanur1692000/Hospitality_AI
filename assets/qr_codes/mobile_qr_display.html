@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospitality AI Agent - Mobile Access</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            color: #1f2937;
+            max-width: 500px;
+        }
+        h1 {
+            margin-bottom: 1rem;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .url {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 0;
+            font-family: monospace;
+            font-size: 1.1rem;
+            word-break: break-all;
+            border: 2px solid #e5e7eb;
+        }
+        .qr-code {
+            margin: 1.5rem 0;
+        }
+        .qr-code img {
+            max-width: 300px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .instructions {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+        .status {
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+        .features {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            text-align: left;
+        }
+        .features h3 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+        .features ul {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+        }
+        .features li {
+            margin: 0.25rem 0;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status">🟢 Server Running</div>
+        <h1>🍽️ Hospitality AI Agent</h1>
+        <div class="url">http://192.168.0.145:8000</div>
+        <div class="qr-code">
+            <img src="local_access_qr.png" alt="QR Code for Mobile Access">
+        </div>
+        <div class="instructions">
+            <p><strong>📱 Scan this QR code with your phone</strong> to access the Hospitality AI Agent!</p>
+            <p><strong>Make sure your phone is on the same WiFi network</strong> as this computer.</p>
+            <p><em>✅ Django server is running with export functionality!</em></p>
+        </div>
+        <div class="features">
+            <h3>🚀 Available Features:</h3>
+            <ul>
+                <li>💬 AI Chat Assistant</li>
+                <li>📊 KPI Dashboard & Analysis</li>
+                <li>🍷 Beverage Management</li>
+                <li>👥 HR Solutions</li>
+                <li>📈 Menu Engineering</li>
+                <li>📋 Recipe Management</li>
+                <li>🎯 Strategic Planning</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

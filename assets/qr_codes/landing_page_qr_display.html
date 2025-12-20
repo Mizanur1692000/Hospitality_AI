@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospitality AI Agent - Landing Page QR Code</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 2rem;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            color: #1f2937;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #6b7280;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+        
+        .url-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 1.1rem;
+            word-break: break-all;
+            color: #475569;
+            font-weight: 600;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin: 2rem 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .qr-code img {
+            max-width: 280px;
+            height: auto;
+            border-radius: 8px;
+        }
+        
+        .instructions {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .instructions h3 {
+            color: #0c4a6e;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .instructions p {
+            color: #075985;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+        
+        .features {
+            margin-top: 2rem;
+            text-align: left;
+        }
+        
+        .features h4 {
+            color: #374151;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .features li {
+            color: #6b7280;
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .features li:before {
+            content: "🚀";
+            position: absolute;
+            left: 0;
+        }
+        
+        .status {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        
+        .nav-links {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .nav-link:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🏨</div>
+        <h1>Hospitality AI Agent</h1>
+        <p class="subtitle">Restaurant Management Dashboard</p>
+        
+        <div class="url-box">
+            http://127.0.0.1:8000/dashboard/
+        </div>
+        
+        <div class="qr-container">
+            <div class="qr-code">
+                <img src="landing_page_qr.png" alt="QR Code for Landing Page">
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>📱 How to Use</h3>
+            <p><strong>1. Scan this QR code</strong> with your phone camera</p>
+            <p><strong>2. Make sure your phone is on the same WiFi</strong> as this computer</p>
+            <p><strong>3. Access the main dashboard</strong> instantly!</p>
+        </div>
+        
+        <div class="features">
+            <h4>🎯 Dashboard Features:</h4>
+            <ul>
+                <li>KPI Analysis with Labor Cost, Prime Cost, and Sales Performance</li>
+                <li>Interactive Chat Interface for Natural Language Queries</li>
+                <li>Strategic Planning Tools and Forecasting</li>
+                <li>Menu Translation and Localization</li>
+                <li>Real-time Analytics and Reporting</li>
+                <li>Professional HTML Reports with Color-coded Performance</li>
+            </ul>
+        </div>
+        
+        <div class="nav-links">
+            <a href="kpi_qr_display.html" class="nav-link">KPI Analysis QR</a>
+            <a href="http://127.0.0.1:8000/dashboard/" class="nav-link">Open Dashboard</a>
+        </div>
+        
+        <div class="status">🟢 Server Running</div>
+    </div>
+</body>
+</html>
