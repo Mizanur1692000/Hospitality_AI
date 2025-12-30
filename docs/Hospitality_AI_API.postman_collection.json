@@ -1,0 +1,236 @@
+{
+  "info": {
+    "name": "Hospitality AI - POST APIs",
+    "description": "Unified collection to test POST endpoints: /api/agent/, /api/agent/safe/, and /chat/api/.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "kpiEntitled", "value": "true" }
+  ],
+  "item": [
+    {
+      "name": "Agent Core",
+      "item": [
+        {
+          "name": "Index (GET)",
+          "request": {
+            "method": "GET",
+            "header": [ {"key":"Accept","value":"application/json"}, {"key":"X-KPI-Analysis-Entitled","value":"{{kpiEntitled}}"} ],
+            "url": "{{baseUrl}}/api/"
+          },
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+            "pm.test('JSON body', function () { pm.response.to.be.json; });"
+          ] } } ]
+        },
+        {
+          "name": "Status (GET)",
+          "request": {
+            "method": "GET",
+            "header": [ {"key":"Accept","value":"application/json"} ],
+            "url": "{{baseUrl}}/api/status/"
+          },
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+            "pm.test('JSON body', function () { pm.response.to.be.json; });"
+          ] } } ]
+        },
+        {
+          "name": "Agent (JSON tasks)",
+          "item": [
+            {
+              "name": "forecast",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"} ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"task\": \"forecast\",\n  \"payload\": { \n    \"sales_data\": [1000, 1200, 1100, 1300, 1250] \n  }\n}"
+                },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', ()=>pm.response.to.have.status(200));","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "hr_retention",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"hr_retention\",\n  \"payload\": { \n    \"turnover_rate\": 65.0, \n    \"industry_avg\": 70.0 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', ()=>pm.response.to.have.status(200));","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "inventory_variance",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"inventory_variance\",\n  \"payload\": { \n    \"expected_usage\": 500, \n    \"actual_usage\": 550 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', ()=>pm.response.to.have.status(200));","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "labor_cost",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"labor_cost\",\n  \"payload\": { \n    \"total_sales\": 25000, \n    \"labor_hours\": 800, \n    \"hourly_rate\": 18 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', ()=>pm.response.to.have.status(200));","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "liquor_variance",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"liquor_variance\",\n  \"payload\": { \n    \"expected_oz\": 128, \n    \"actual_oz\": 140 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', ()=>pm.response.to.have.status(200));","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "pmix_report",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"pmix_report\",\n  \"payload\": { \n    \"items\": [ {\n      \"name\": \"Burger\", \n      \"sales\": 120, \n      \"cost\": 3.5 \n    }, {\n      \"name\": \"Pizza\", \n      \"sales\": 80, \n      \"cost\": 4.0 \n    } ] \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', ()=>pm.response.to.have.status(200));","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "kpi_summary (entitlement)",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"}, {"key":"X-KPI-Analysis-Entitled","value":"{{kpiEntitled}}"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"kpi_summary\",\n  \"payload\": { \n    \"total_sales\": 50000, \n    \"labor_cost\": 15000, \n    \"food_cost\": 12000, \n    \"hours_worked\": 900 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200/403', function(){ pm.expect([200,403]).to.include(pm.response.code); });","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "labor_cost_analysis (entitlement)",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"}, {"key":"X-KPI-Analysis-Entitled","value":"{{kpiEntitled}}"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"labor_cost_analysis\",\n  \"payload\": { \n    \"total_sales\": 50000, \n    \"labor_cost\": 15000, \n    \"hours_worked\": 900, \n    \"target_labor_percent\": 30 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200/403', function(){ pm.expect([200,403]).to.include(pm.response.code); });","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "prime_cost_analysis (entitlement)",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"}, {"key":"X-KPI-Analysis-Entitled","value":"{{kpiEntitled}}"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"prime_cost_analysis\",\n  \"payload\": { \n    \"total_sales\": 50000, \n    \"labor_cost\": 15000, \n    \"food_cost\": 12000, \n    \"target_prime_percent\": 60 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200/403', function(){ pm.expect([200,403]).to.include(pm.response.code); });","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "sales_performance_analysis (entitlement)",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"}, {"key":"X-KPI-Analysis-Entitled","value":"{{kpiEntitled}}"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"task\": \"sales_performance_analysis\",\n  \"payload\": { \n    \"total_sales\": 50000, \n    \"labor_cost\": 15000, \n    \"food_cost\": 12000, \n    \"hours_worked\": 900, \n    \"previous_sales\": 45000 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200/403', function(){ pm.expect([200,403]).to.include(pm.response.code); });","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            }
+          ]
+        },
+        {
+          "name": "Agent (CSV uploads)",
+          "item": [
+            {
+              "name": "product_mix CSV",
+              "request": {
+                "method": "POST",
+                "header": [ ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    { "key": "task", "type": "text", "value": "product_mix" },
+                    { "key": "file", "type": "file", "src": "data/test_menu.csv" }
+                  ]
+                },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK or 400', function(){ pm.expect([200,400]).to.include(pm.response.code); });","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "kpi_analysis CSV",
+              "request": {
+                "method": "POST",
+                "header": [ ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    { "key": "task", "type": "text", "value": "kpi_analysis" },
+                    { "key": "file", "type": "file", "src": "data/test_menu.csv" }
+                  ]
+                },
+                "url": "{{baseUrl}}/api/agent/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK or 400', function(){ pm.expect([200,400]).to.include(pm.response.code); });","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            }
+          ]
+        },
+        {
+          "name": "Agent Safe (JSON)",
+          "item": [
+            {
+              "name": "kpi.labor_cost",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"service\": \"kpi\",\n  \"subtask\": \"labor_cost\",\n  \"params\": { \n    \"total_sales\": 25000, \n    \"labor_cost\": 7500, \n    \"hours_worked\": 800 \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/safe/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', ()=>pm.response.to.have.status(200));","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            },
+            {
+              "name": "menu.questions",
+              "request": {
+                "method": "POST",
+                "header": [ {"key":"Content-Type","value":"application/json"} ],
+                "body": { "mode": "raw", "raw": "{\n  \"service\": \"menu\",\n  \"subtask\": \"questions\",\n  \"params\": { \n    \"context\": \"New winter menu update\", \n    \"question\": \"What are top menu engineering opportunities?\" \n  }\n}" },
+                "url": "{{baseUrl}}/api/agent/safe/"
+              },
+              "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('200 OK or 404', function(){ pm.expect([200,404]).to.include(pm.response.code); });","pm.test('JSON body', ()=>pm.response.to.be.json);"] } } ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Chat Assistant",
+      "item": [
+        {
+          "name": "chat/api (form-data)",
+          "request": {
+            "method": "POST",
+            "header": [ ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "message", "type": "text", "value": "Hello! Summarize prime cost for me." }
+              ]
+            },
+            "url": "{{baseUrl}}/chat/api/"
+          },
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK or 400', function(){ pm.expect([200,400]).to.include(pm.response.code); });",
+            "pm.test('JSON body', function(){ pm.response.to.be.json; });",
+            "pm.test('Has response or error', function(){ const j = pm.response.json(); pm.expect(j.response || j.error).to.exist; });"
+          ] } } ]
+        }
+      ]
+    }
+  ]
+}

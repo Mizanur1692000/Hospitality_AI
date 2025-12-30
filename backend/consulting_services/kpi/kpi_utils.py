@@ -93,6 +93,8 @@ def format_business_report(analysis_type, metrics, performance, recommendations,
 
     # Normalize badge class name
     badge_class = rating.lower().replace(' ', '-').replace('_', '-')
+
+
     
     business_report_html = f"""
 <section class="report">
