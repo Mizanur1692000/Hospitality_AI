@@ -3,11 +3,120 @@ Performance Management Module
 Handles KPI tracking, analytics, and performance reporting
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
+import os
 
 import pandas as pd
 from datetime import datetime
 from backend.shared.utils.business_report import format_comprehensive_analysis
+
+
+def generate_ai_kpi_analysis(
+    total_sales: float,
+    avg_labor_percent: float,
+    avg_food_percent: float,
+    avg_prime_percent: float,
+    avg_sales_per_hour: float,
+    trend: str,
+    num_days: int,
+    daily_data: List[Dict] = None
+) -> Optional[str]:
+    """
+    Generate AI-powered KPI analysis using OpenAI GPT-4.
+    
+    Args:
+        total_sales: Total sales for the period
+        avg_labor_percent: Average labor cost percentage
+        avg_food_percent: Average food cost percentage
+        avg_prime_percent: Average prime cost percentage
+        avg_sales_per_hour: Average sales per labor hour
+        trend: Performance trend (improving, declining, stable)
+        num_days: Number of days analyzed
+        daily_data: Sample of daily KPI data for pattern analysis
+        
+    Returns:
+        AI-generated analysis string or None if unavailable
+    """
+    try:
+        from openai import OpenAI
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return None
+            
+        client = OpenAI(api_key=api_key)
+        
+        # Build context for AI analysis
+        daily_summary = ""
+        if daily_data:
+            daily_summary = "\nDaily Data Sample:\n"
+            for day in daily_data[:5]:
+                daily_summary += f"- {day.get('date', 'N/A')}: Sales ${day.get('sales', 0):,.0f}, Labor {day.get('labor_percent', 0):.1f}%, Food {day.get('food_percent', 0):.1f}%\n"
+        
+        prompt = f"""As a restaurant business consultant, analyze these KPIs and provide strategic insights:
+
+**Period Analyzed:** {num_days} days
+**Total Sales:** ${total_sales:,.2f}
+**Average Labor Cost:** {avg_labor_percent:.1f}% (Industry benchmark: 25-30%)
+**Average Food Cost:** {avg_food_percent:.1f}% (Industry benchmark: 28-32%)
+**Average Prime Cost:** {avg_prime_percent:.1f}% (Industry benchmark: 55-60%)
+**Sales per Labor Hour:** ${avg_sales_per_hour:.2f} (Industry benchmark: $50+)
+**Performance Trend:** {trend}
+{daily_summary}
+
+Provide a concise but comprehensive analysis including:
+1. **Executive Summary** - Overall performance rating and key findings
+2. **Critical Issues** - Any metrics significantly outside industry benchmarks
+3. **Quick Wins** - Immediate actions that could improve performance
+4. **Strategic Recommendations** - Long-term improvements to consider
+5. **Projected Impact** - Estimated savings/revenue improvements if recommendations are implemented
+
+Keep the response practical and actionable for restaurant operators."""
+
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are an expert restaurant consultant with 20+ years of experience in hospitality operations. You specialize in KPI analysis, cost control, operational efficiency, and strategic business optimization.
+
+## Your Response Style:
+- Use a warm, professional, and conversational tone - like a trusted advisor
+- Break down complex metrics into easy-to-understand explanations
+- Always show your calculations step-by-step
+- Compare every metric to industry benchmarks
+- Provide specific dollar amounts and percentages
+- Use clear headings, bullet points, and numbered lists
+
+## When Analyzing Data, Always:
+1. Acknowledge the specific numbers provided
+2. Show calculation formulas with actual values
+3. State what industry benchmarks are
+4. Explain if performance is above/below standard and by how much
+5. Provide 3-5 specific, prioritized action items
+6. Quantify the potential impact of each recommendation
+
+## Use These Industry Benchmarks:
+- Food Cost: 28-32% (ideal: 30%)
+- Labor Cost: 25-30% (ideal: 28%)
+- Prime Cost: 55-65% (ideal: 60%)
+- Beverage Cost: 18-24% (ideal: 20%)
+- Sales Per Labor Hour: $35-50+
+
+Be thorough, specific, and actionable. Your goal is to help restaurant operators make better business decisions."""
+                },
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=2000,
+        )
+        
+        return response.choices[0].message.content
+        
+    except Exception as e:
+        return f"AI analysis unavailable: {str(e)}"
 
 
 def format_business_report(analysis_type, metrics, performance, recommendations, benchmarks=None, additional_data=None):
@@ -704,6 +813,27 @@ def process_kpi_csv_data(csv_file) -> Dict[str, Any]:
             "improving" if second_half_avg < first_half_avg else "declining" if second_half_avg > first_half_avg else "stable"
         )
 
+        # Generate base recommendations
+        recommendations = generate_kpi_recommendations(
+            avg_labor_percent, avg_food_percent, avg_prime_percent, avg_sales_per_hour
+        )
+        
+        # Try to get AI-powered analysis
+        ai_analysis = None
+        try:
+            ai_analysis = generate_ai_kpi_analysis(
+                total_sales=total_sales,
+                avg_labor_percent=avg_labor_percent,
+                avg_food_percent=avg_food_percent,
+                avg_prime_percent=avg_prime_percent,
+                avg_sales_per_hour=avg_sales_per_hour,
+                trend=trend,
+                num_days=len(daily_kpis),
+                daily_data=daily_kpis[:10]  # Send first 10 days for pattern analysis
+            )
+        except Exception as e:
+            ai_analysis = f"AI analysis unavailable: {str(e)}"
+        
         return {
             "status": "success",
             "file_info": csv_file.name,
@@ -717,9 +847,8 @@ def process_kpi_csv_data(csv_file) -> Dict[str, Any]:
                 "trend": trend,
             },
             "daily_kpis": daily_kpis[:30],  # Show last 30 days
-            "recommendations": generate_kpi_recommendations(
-                avg_labor_percent, avg_food_percent, avg_prime_percent, avg_sales_per_hour
-            ),
+            "recommendations": recommendations,
+            "ai_analysis": ai_analysis,
         }
 
     except Exception as e:

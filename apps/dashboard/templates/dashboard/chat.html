@@ -1,943 +1,515 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AI Chat - Curated Restaurant Consulting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Header */
-    .header {
-      background: rgba(255, 255, 255, 0.98);
-      backdrop-filter: blur(10px);
-      padding: 1rem 0;
-      border-bottom: 1px solid rgba(67, 56, 202, 0.1);
-      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
-    }
-
-    .header-content {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-    }
-
-    .back-button {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s ease;
-    }
-
-    .back-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(67, 56, 202, 0.3);
-    }
-
-    .chat-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1f2937;
-    }
-
-    /* Chat Container */
+    /* Enhanced Chat Interface Styles */
     .chat-container {
       flex: 1;
       display: flex;
       flex-direction: column;
-      max-width: 800px;
-      margin: 2rem auto;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-      border: 1px solid rgba(67, 56, 202, 0.1);
+      max-width: 950px;
+      width: 100%;
+      margin: 0 auto;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      backdrop-filter: blur(20px);
+      border-radius: var(--radius-2xl);
+      box-shadow: 
+        0 25px 60px -12px rgba(102, 126, 234, 0.15),
+        0 0 0 1px rgba(102, 126, 234, 0.08);
+      border: 1px solid rgba(102, 126, 234, 0.12);
       overflow: hidden;
-      height: calc(100vh - 200px);
+      height: calc(100vh - 160px);
+      animation: slide-up 0.6s ease-out;
+      position: relative;
     }
-
-    /* Messages Area */
+    .chat-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #667eea);
+      background-size: 300% 100%;
+      animation: gradientFlow 4s ease infinite;
+    }
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
     .messages-area {
       flex: 1;
       overflow-y: auto;
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      padding: var(--spacing-2xl);
+      max-height: none;
+      background: linear-gradient(180deg, transparent 0%, rgba(248, 250, 252, 0.5) 100%);
     }
-
+    .messages-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .messages-area::-webkit-scrollbar-track {
+      background: rgba(102, 126, 234, 0.05);
+      border-radius: 3px;
+    }
+    .messages-area::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #667eea, #764ba2);
+      border-radius: 3px;
+    }
+    
     .message {
-      display: flex;
-      flex-direction: column;
+      margin-bottom: var(--spacing-lg);
+      animation: messageSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes messageSlide {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .message.user .message-bubble {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
+      border-radius: var(--radius-xl) var(--radius-xl) var(--radius-sm) var(--radius-xl);
+      margin-left: auto;
+      max-width: 75%;
+    }
+    
+    .message.assistant .message-bubble {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      border-radius: var(--radius-xl) var(--radius-xl) var(--radius-xl) var(--radius-sm);
       max-width: 80%;
     }
-
-    .message.user {
-      align-self: flex-end;
-      align-items: flex-end;
-    }
-
-    .message.assistant {
-      align-self: flex-start;
-      align-items: flex-start;
-    }
-
+    
     .message-bubble {
-      padding: 1rem 1.5rem;
-      border-radius: 20px;
-      word-wrap: break-word;
-      line-height: 1.7;
-    }
-
-    /* Markdown formatting in message bubbles */
-    .message-bubble strong {
-      font-weight: 700;
-    }
-
-    .message-bubble ol,
-    .message-bubble ul {
-      margin: 10px 0;
-      padding-left: 25px;
-    }
-
-    .message-bubble ol {
-      list-style-type: decimal;
-    }
-
-    .message-bubble ul {
-      list-style-type: disc;
-    }
-
-    .message-bubble li {
-      margin: 6px 0;
+      padding: var(--spacing-lg) var(--spacing-xl);
       line-height: 1.6;
     }
-
-    .message-bubble h3 {
-      margin: 15px 0 8px 0;
-      font-size: 1.05rem;
-      font-weight: 700;
-      border-bottom: 2px solid rgba(0,0,0,0.1);
-      padding-bottom: 4px;
+    
+    .message-bubble ul {
+      margin: var(--spacing-md) 0;
+      padding-left: var(--spacing-lg);
     }
-
-    .message.assistant .message-bubble strong {
-      color: #4338ca;
+    
+    .message-bubble li {
+      margin: var(--spacing-xs) 0;
+      position: relative;
     }
-
-    .message.user .message-bubble h3 {
-      border-bottom-color: rgba(255,255,255,0.3);
-    }
-
-    .message.user .message-bubble {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: white;
-      border-bottom-right-radius: 8px;
-    }
-
-    .message.assistant .message-bubble {
-      background: #f8fafc;
-      color: #374151;
-      border: 1px solid #e5e7eb;
-      border-bottom-left-radius: 8px;
-    }
-
+    
     .message-time {
       font-size: 0.75rem;
-      color: #94a3b8;
-      margin-top: 0.5rem;
-      padding: 0 0.5rem;
+      color: var(--text-tertiary);
+      margin-top: var(--spacing-xs);
+      padding: 0 var(--spacing-md);
     }
-
-    /* Input Section */
+    
     .input-section {
-      padding: 1.5rem 2rem;
-      border-top: 1px solid #e5e7eb;
-      background: rgba(255, 255, 255, 0.8);
+      padding: var(--spacing-xl) var(--spacing-2xl);
+      border-top: 1px solid rgba(102, 126, 234, 0.1);
+      background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.98) 100%);
     }
-
+    
     .input-container {
       display: flex;
-      gap: 1rem;
-      align-items: flex-end;
+      gap: var(--spacing-sm);
+      background: white;
+      border: 2px solid rgba(102, 126, 234, 0.15);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-sm);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
+    
+    .input-container:focus-within {
+      border-color: #667eea;
+      box-shadow: 
+        0 8px 30px rgba(102, 126, 234, 0.12),
+        0 0 0 4px rgba(102, 126, 234, 0.08);
+    }
+    
     .chat-input {
       flex: 1;
-      padding: 1rem 1.5rem;
-      border: 2px solid #e5e7eb;
-      border-radius: 16px;
-      font-size: 1rem;
-      color: #1f2937;
-      background: white;
-      transition: all 0.3s ease;
-      resize: none;
-      min-height: 50px;
-      max-height: 120px;
-    }
-
-    .chat-input:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.1);
-    }
-
-    .send-button {
-      padding: 1rem 1.5rem;
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: white;
       border: none;
-      border-radius: 12px;
-      cursor: pointer;
+      outline: none;
+      padding: 0.875rem 1rem;
+      font-size: 1rem;
+      background: transparent;
+      color: var(--text-primary);
+      resize: none;
+      font-family: inherit;
+    }
+    
+    .chat-input::placeholder {
+      color: var(--text-tertiary);
+    }
+    
+    .send-button {
+      background: var(--primary-gradient);
+      border: none;
+      color: white;
+      padding: 0.875rem 1.5rem;
+      border-radius: var(--radius-lg);
       font-weight: 600;
+      cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(67, 56, 202, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
-
+    
     .send-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(67, 56, 202, 0.4);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
-
-    .send-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    
+    .send-button:active {
+      transform: translateY(0);
     }
-
+    
     .upload-button {
-      padding: 1rem;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      color: #667eea;
+      padding: 0.75rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
     }
-
+    
     .upload-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4);
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+      transform: scale(1.05);
     }
-
-    /* Table Styles */
+    
     .analysis-table {
       width: 100%;
       border-collapse: collapse;
       margin: 1rem 0;
       background: white;
-      border-radius: 12px;
+      border-radius: var(--radius-lg);
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
-
     .analysis-table th {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
+      background: var(--primary-gradient);
       color: white;
-      padding: 1rem 0.75rem;
+      padding: 1rem 0.875rem;
       text-align: left;
       font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .analysis-table td {
-      padding: 0.75rem;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 0.9rem;
-    }
-
-    .analysis-table tr:last-child td {
-      border-bottom: none;
-    }
-
-    .analysis-table tr:hover {
-      background: #f8fafc;
-    }
-
-    .rank-cell {
-      font-weight: 700;
-      color: #4338ca;
-      text-align: center;
-      width: 50px;
-    }
-
-    .item-name {
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .profit-positive {
-      color: #059669;
-      font-weight: 600;
-    }
-
-    .profit-negative {
-      color: #dc2626;
-      font-weight: 600;
-    }
-
-    .number-cell {
-      text-align: right;
-      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
-    }
-
-    /* KPI Dashboard Styles */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin: 1rem 0;
-    }
-
-    .kpi-card {
-      background: #f8fafc;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
-
-    .kpi-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
-
-    .kpi-title {
       font-size: 0.875rem;
-      color: #64748b;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-
-    .kpi-value {
+    .analysis-table td {
+      padding: 0.875rem;
+      border-bottom: 1px solid rgba(102, 126, 234, 0.08);
+      font-size: 0.9rem;
+    }
+    .analysis-table tr:last-child td { border-bottom: none; }
+    .analysis-table tr:hover { background: rgba(102, 126, 234, 0.03); }
+    .rank-cell { 
+      font-weight: 700; 
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center; 
+      width: 50px; 
+    }
+    .item-name { font-weight: 600; color: #1f2937; }
+    .profit-positive { color: #059669; font-weight: 600; }
+    .profit-negative { color: #dc2626; font-weight: 600; }
+    
+    /* Chat Header Styling */
+    .chat-title {
       font-size: 1.5rem;
       font-weight: 700;
-      margin-bottom: 0.5rem;
     }
-
-    .kpi-value.excellent { color: #059669; }
-    .kpi-value.good { color: #d97706; }
-    .kpi-value.needs_improvement { color: #dc2626; }
-
-    .kpi-benchmark {
-      font-size: 0.75rem;
-      color: #94a3b8;
-    }
-
-    .kpi-summary {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin: 1rem 0;
-    }
-
-    .summary-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1rem;
-    }
-
-    .stat-item {
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #1e293b;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: #64748b;
-      margin-top: 0.25rem;
-    }
-
-    .recommendations-section {
-      background: #f0f9ff;
-      border: 1px solid #bae6fd;
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin: 1rem 0;
-    }
-
-    .recommendations-section h3 {
-      margin: 0 0 1rem 0;
-      color: #0369a1;
-      font-size: 1.125rem;
-    }
-
-    .recommendations-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .recommendation-item {
-      background: white;
-      border-radius: 8px;
-      padding: 1rem;
-      border-left: 4px solid #0ea5e9;
-    }
-
-    .rec-category {
+    
+    .ai-badge {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+      color: #059669;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
       font-weight: 600;
-      color: #0369a1;
-      font-size: 0.875rem;
-      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid rgba(16, 185, 129, 0.3);
     }
-
-    .rec-action {
-      color: #1e293b;
-      margin-bottom: 0.25rem;
+    
+    .ai-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
     }
-
-    .rec-impact {
-      color: #64748b;
-      font-size: 0.875rem;
-      font-style: italic;
-    }
-
-    .analysis-summary {
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-      border: 1px solid #0ea5e9;
-      border-radius: 12px;
-      padding: 1rem;
-      margin: 1rem 0;
-    }
-
-    .summary-title {
-      font-weight: 700;
-      color: #0369a1;
-      margin-bottom: 0.5rem;
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      .chat-container {
-        margin: 1rem;
-        height: calc(100vh - 140px);
-      }
-      
-      .messages-area {
-        padding: 1rem;
-      }
-      
-      .input-section {
-        padding: 1rem;
-      }
-      
-      .chat-input {
-        font-size: 16px;
-      }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
     }
   </style>
 </head>
 <body>
+  <!-- Animated Background -->
+  <div class="animated-bg"></div>
+  <div class="floating-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
   <!-- Header -->
-  <header class="header">
+  <header class="glass-header">
     <div class="header-content">
-      <a href="/" class="back-button">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
+      <a href="/dashboard/" class="back-button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
         Back to Dashboard
       </a>
-      <h1 class="chat-title">AI Restaurant Consultant</h1>
-      <button onclick="clearChat()" class="back-button" style="background: #ef4444;">
-        Clear Chat
-      </button>
+      <h1 class="chat-title text-gradient">AI Chat Assistant</h1>
+      <div class="ai-badge">AI Assistant Active</div>
     </div>
   </header>
 
   <!-- Chat Container -->
-  <main class="chat-container">
-    <div class="messages-area" id="messages">
-      <!-- Welcome message -->
-      <div class="message assistant">
-        <div class="message-bubble">
-          Hello! I'm your AI restaurant consultant. Ask me anything about KPIs, operations, staffing, menu optimization, or business strategy. How can I help you today?
+  <main class="main-container">
+    <div class="chat-container">
+      <!-- Messages Area -->
+      <div class="messages-area" id="messages-area">
+        <div class="message assistant">
+          <div class="message-bubble">
+            <strong>Welcome!</strong> I'm your AI restaurant consultant. I can help you with:
+            <ul>
+              <li>KPI analysis and performance tracking</li>
+              <li>Labor and food cost optimization</li>
+              <li>Menu engineering and pricing strategies</li>
+              <li>HR solutions and staff retention</li>
+              <li>Beverage management and liquor costs</li>
+            </ul>
+            How can I assist you today?
+          </div>
+          <div class="message-time">Just now</div>
         </div>
-        <div class="message-time">Just now</div>
       </div>
-    </div>
 
-    <div class="input-section">
-      <div class="input-container">
-        <textarea 
-          id="chat-input" 
-          class="chat-input" 
-          placeholder="Ask me anything about your restaurant..."
-          rows="1"
-        ></textarea>
-        <input 
-          type="file" 
-          id="file-input" 
-          accept=".csv" 
-          style="display: none;"
-        />
-        <button id="upload-button" class="upload-button" title="Upload CSV for analysis">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-          </svg>
-        </button>
-        <button id="send-button" class="send-button">
-          <span>Send</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-          </svg>
-        </button>
+      <!-- Input Section -->
+      <div class="input-section">
+        <div class="input-container">
+          <textarea id="chat-input" class="chat-input" placeholder="Type your message here..." rows="1"></textarea>
+          <input type="file" id="file-input" accept=".csv" class="file-input"/>
+          <button id="upload-button" class="upload-button" title="Upload CSV for analysis">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,12L16,16H13.5V19H10.5V16H8L12,12Z"/>
+            </svg>
+          </button>
+          <button id="send-button" class="send-button">
+            <span>Send</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </main>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const textarea = document.getElementById('chat-input');
+      const messagesArea = document.getElementById('messages-area');
+      const chatInput = document.getElementById('chat-input');
       const sendButton = document.getElementById('send-button');
-      const uploadButton = document.getElementById('upload-button');
       const fileInput = document.getElementById('file-input');
-      const messagesArea = document.getElementById('messages');
+      const uploadButton = document.getElementById('upload-button');
 
-      // --- CSRF helper (Django) ---
       function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return null;
       }
-      const CSRF = getCookie('csrftoken');
+      const CSRF_TOKEN = getCookie('csrftoken');
 
-      // Auto-resize
-      textarea.addEventListener('input', function() {
+      // Check for initial message from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialMessage = urlParams.get('message');
+      if (initialMessage) {
+        setTimeout(() => {
+          chatInput.value = initialMessage;
+          sendMessage();
+        }, 500);
+      }
+
+      chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
       });
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const initialMessage = urlParams.get('message');
-      if (initialMessage) {
-        textarea.value = initialMessage;
-        sendMessage();
-      }
-
-      // Markdown conversion functions
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      function processInlineMarkdown(text) {
-        // Convert **bold** to <strong>
-        return text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-      }
-
-      function convertMarkdownToHTML(text) {
-        const lines = text.split('\n');
-        let inList = false;
-        let listType = null;
-        let processedLines = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i];
-          const trimmed = line.trim();
-
-          if (!trimmed) {
-            if (inList) {
-              processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              inList = false;
-              listType = null;
-            }
-            processedLines.push('<br>');
-            continue;
-          }
-
-          // Check for numbered lists (1., 2., 3., etc.)
-          const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
-          if (numberedMatch) {
-            if (!inList || listType !== 'ol') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ol>');
-              inList = true;
-              listType = 'ol';
-            }
-            const content = processInlineMarkdown(escapeHtml(numberedMatch[2]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          // Check for bullet lists (-, •, ·)
-          const bulletMatch = trimmed.match(/^[-•·]\s+(.+)$/);
-          if (bulletMatch) {
-            if (!inList || listType !== 'ul') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ul>');
-              inList = true;
-              listType = 'ul';
-            }
-            const content = processInlineMarkdown(escapeHtml(bulletMatch[1]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          // Close list if we're in one
-          if (inList) {
-            processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-            inList = false;
-            listType = null;
-          }
-
-          // Check for headings (###, or **Text:**)
-          if (trimmed.match(/^###\s+(.+)$/)) {
-            const heading = escapeHtml(trimmed.replace(/^###\s+/, ''));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          if (trimmed.match(/^\*\*(.+):\*\*$/)) {
-            const heading = escapeHtml(trimmed.replace(/^\*\*(.+):\*\*$/, '$1:'));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          // Regular line
-          const content = processInlineMarkdown(escapeHtml(line));
-          processedLines.push(content);
-        }
-
-        if (inList) {
-          processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-        }
-
-        let html = processedLines.join('\n');
-        html = html.replace(/<br>\s*<(ol|ul|h3)>/g, '<$1>');
-        html = html.replace(/<\/(ol|ul|h3)>\s*<br>/g, '</$1>');
-        html = html.replace(/(<br>\s*){3,}/g, '<br><br>');
-        return html;
-      }
-
-      function addMessage(content, isUser = false) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
-        const bubble = document.createElement('div');
-        bubble.className = 'message-bubble';
-        // Convert markdown to HTML for better formatting
-        bubble.innerHTML = convertMarkdownToHTML(content);
-        const time = document.createElement('div');
-        time.className = 'message-time';
-        time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        messageDiv.appendChild(bubble);
-        messageDiv.appendChild(time);
-        messagesArea.appendChild(messageDiv);
-        messagesArea.scrollTop = messagesArea.scrollHeight;
-      }
-
-      function addMessageHTML(htmlContent, isUser = false) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
-        const bubble = document.createElement('div');
-        bubble.className = 'message-bubble';
-        bubble.innerHTML = htmlContent;
-        bubble.style.maxWidth = '95%';
-        bubble.style.overflow = 'auto';
-        const time = document.createElement('div');
-        time.className = 'message-time';
-        time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        messageDiv.appendChild(bubble);
-        messageDiv.appendChild(time);
-        messagesArea.appendChild(messageDiv);
-        messagesArea.scrollTop = messagesArea.scrollHeight;
-      }
-
-      function clearChat() {
-        const msgs = messagesArea.querySelectorAll('.message:not(:first-child)');
-        msgs.forEach(m => m.remove());
-        textarea.value = '';
-        textarea.style.height = 'auto';
-        textarea.focus();
-      }
-      // make header button work
-      window.clearChat = clearChat;
-
-      async function sendMessage() {
-        const message = textarea.value.trim();
-        if (!message) return;
-        addMessage(message, true);
-        const original = sendButton.innerHTML;
-        sendButton.innerHTML = '<span>Sending...</span>';
-        sendButton.disabled = true;
-        textarea.value = '';
-        textarea.style.height = 'auto';
-        try {
-          const resp = await fetch('/chat/api/', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/x-www-form-urlencoded',
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: new URLSearchParams({ message })
-          });
-          const data = await resp.json().catch(() => ({}));
-          const aiResponse = data?.response || data?.error || 'No response received.';
-          addMessage(aiResponse, false);
-        } catch (err) {
-          addMessage('Network error. Please check your connection.', false);
-        } finally {
-          sendButton.innerHTML = original;
-          sendButton.disabled = false;
-          textarea.focus();
-        }
-      }
-
-      sendButton.addEventListener('click', sendMessage);
-      textarea.addEventListener('keydown', (e) => {
+      chatInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           sendMessage();
         }
       });
 
-      // --- File upload → /api/agent/ (task=product_mix) ---
+      sendButton.addEventListener('click', sendMessage);
       uploadButton.addEventListener('click', () => fileInput.click());
 
-      function isCSV(file) {
-        if (!file) return false;
-        const nameOK = /\.csv$/i.test(file.name);
-        const typeOK = /csv|comma-separated-values/.test(file.type) || file.type === '';
-        return nameOK || typeOK;
-      }
-
-      function safeNumber(n, decimals = 2) {
-        const val = Number(n);
-        if (Number.isFinite(val)) return val.toFixed(decimals);
-        return (0).toFixed(decimals);
-      }
-
-      fileInput.addEventListener('change', async (e) => {
+      fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
-        if (!isCSV(file)) {
-          addMessage('❌ Please upload a .csv file.', false);
-          fileInput.value = '';
-          return;
-        }
 
-        // Determine task based on URL parameters or default to product_mix
-        const urlParams = new URLSearchParams(window.location.search);
-        const task = urlParams.get('task') || 'product_mix';
+        addMessage(`📁 Uploading: ${file.name}`, true);
+        showTypingIndicator();
         
-        addMessage(`📁 Uploading ${file.name} for ${task === 'kpi_analysis' ? 'KPI analysis' : 'product mix analysis'}...`, true);
-
         const formData = new FormData();
-        formData.append('task', task);
+        formData.append('task', 'product_mix');
         formData.append('file', file);
 
         try {
-          uploadButton.disabled = true;
-          uploadButton.innerHTML = '<span>Processing...</span>';
-
-          const resp = await fetch('/api/agent/', {
+          const response = await fetch('/api/agent/', {
             method: 'POST',
-            headers: {
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
+            headers: { 'X-CSRFToken': CSRF_TOKEN },
             body: formData
           });
-
-          if (!resp.ok) {
-            const txt = await resp.text();
-            addMessage(`❌ Server error (${resp.status}). ${txt || ''}`, false);
-            return;
-          }
-
-          const data = await resp.json();
-
-          // Handle different response types based on task
-          if (task === 'kpi_analysis') {
-            // Handle KPI Analysis response
-            if (!data || data.status !== 'success') {
-              addMessage(`❌ ${data.message || 'KPI analysis failed'}`, false);
-              return;
-            }
-
-            let kpiHtml = `
-              <div class="analysis-summary">
-                <div class="summary-title">📊 KPI Analysis Complete</div>
-                <p>✅ Analyzed ${data.period_analyzed} from ${data.file_info}</p>
-                <p>📈 Total Sales: ${data.summary.total_sales}</p>
-                <p>📊 Prime Cost: ${data.summary.avg_prime_percent} (${data.summary.trend} trend)</p>
-              </div>
-            `;
-
-            if (data.kpis) {
-              // Single day KPI analysis
-              kpiHtml += `
-                <div class="kpi-grid">
-                  <div class="kpi-card">
-                    <div class="kpi-title">Labor Cost %</div>
-                    <div class="kpi-value ${data.kpis.labor_percent.assessment}">${data.kpis.labor_percent.icon} ${data.kpis.labor_percent.value}%</div>
-                    <div class="kpi-benchmark">Target: ${data.kpis.labor_percent.benchmark}</div>
-                  </div>
-                  <div class="kpi-card">
-                    <div class="kpi-title">Food Cost %</div>
-                    <div class="kpi-value ${data.kpis.food_percent.assessment}">${data.kpis.food_percent.icon} ${data.kpis.food_percent.value}%</div>
-                    <div class="kpi-benchmark">Target: ${data.kpis.food_percent.benchmark}</div>
-                  </div>
-                  <div class="kpi-card">
-                    <div class="kpi-title">Prime Cost %</div>
-                    <div class="kpi-value ${data.kpis.prime_percent.assessment}">${data.kpis.prime_percent.icon} ${data.kpis.prime_percent.value}%</div>
-                    <div class="kpi-benchmark">Target: ${data.kpis.prime_percent.benchmark}</div>
-                  </div>
-                  <div class="kpi-card">
-                    <div class="kpi-title">Sales per Hour</div>
-                    <div class="kpi-value ${data.kpis.sales_per_labor_hour.assessment}">${data.kpis.sales_per_labor_hour.icon} $${data.kpis.sales_per_labor_hour.value}</div>
-                    <div class="kpi-benchmark">Target: ${data.kpis.sales_per_labor_hour.benchmark}</div>
-                  </div>
-                </div>
-              `;
-            } else if (data.daily_kpis) {
-              // Multi-day KPI analysis
-              kpiHtml += `
-                <div class="kpi-summary">
-                  <div class="summary-stats">
-                    <div class="stat-item">
-                      <div class="stat-value">${data.summary.avg_labor_percent}</div>
-                      <div class="stat-label">Avg Labor %</div>
-                    </div>
-                    <div class="stat-item">
-                      <div class="stat-value">${data.summary.avg_food_percent}</div>
-                      <div class="stat-label">Avg Food %</div>
-                    </div>
-                    <div class="stat-item">
-                      <div class="stat-value">${data.summary.avg_prime_percent}</div>
-                      <div class="stat-label">Avg Prime %</div>
-                    </div>
-                    <div class="stat-item">
-                      <div class="stat-value">${data.summary.avg_sales_per_hour}</div>
-                      <div class="stat-label">Avg Sales/Hour</div>
-                    </div>
-                  </div>
-                </div>
-              `;
-            }
-
-            // Add recommendations
-            if (data.recommendations && data.recommendations.length > 0) {
-              kpiHtml += `
-                <div class="recommendations-section">
-                  <h3>💡 Recommendations</h3>
-                  <div class="recommendations-list">
-              `;
-              
-              data.recommendations.forEach(rec => {
-                if (typeof rec === 'string') {
-                  kpiHtml += `<div class="recommendation-item">• ${rec}</div>`;
-                } else {
-                  kpiHtml += `
-                    <div class="recommendation-item">
-                      <div class="rec-category">${rec.category}</div>
-                      <div class="rec-action">${rec.action}</div>
-                      <div class="rec-impact">${rec.impact}</div>
-                    </div>
-                  `;
-                }
-              });
-              
-              kpiHtml += `</div></div>`;
-            }
-
-            addMessageHTML(kpiHtml, false);
+          const data = await response.json();
+          removeTypingIndicator();
+          
+          if (data.error) {
+            addMessage(`❌ Error: ${data.error}`, false);
           } else {
-            // Handle Product Mix Analysis response
-            if (!data || !Array.isArray(data.pmix_report)) {
-              addMessage('❌ Unexpected response. Ensure backend returns { pmix_report: [...] }', false);
-              return;
-            }
-
-            const itemsProcessed = Number(data.items_processed) || data.pmix_report.length;
-            const fileInfo = data.file_info || file.name;
-            const costInfo = data.cost_info || 'Margins computed from CSV price/cost columns.';
-
-            let tableHtml = `
-              <div class="analysis-summary">
-                <div class="summary-title">📊 Product Mix Analysis Complete</div>
-                <p>✅ Processed ${itemsProcessed} menu items from ${fileInfo}</p>
-                <p>💡 ${costInfo}</p>
-              </div>
-              <table class="analysis-table">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Menu Item</th>
-                    <th>Qty Sold</th>
-                    <th>Price</th>
-                    <th>Cost</th>
-                    <th>Margin</th>
-                    <th>Total Profit</th>
-                  </tr>
-                </thead>
-                <tbody>
-            `;
-
-            data.pmix_report.slice(0, 50).forEach((item, idx) => {
-              const price = Number(item.price);
-              const cost = Number(item.cost);
-              const cm = Number(item.contribution_margin);
-              const tp = Number(item.total_profit);
-              const profitClass = tp > 0 ? 'profit-positive' : 'profit-negative';
-              tableHtml += `
-                <tr>
-                  <td class="rank-cell">${idx + 1}</td>
-                  <td class="item-name">${item.name ?? ''}</td>
-                  <td class="number-cell">${Number(item.quantity_sold) || 0}</td>
-                  <td class="number-cell">$${safeNumber(price)}</td>
-                  <td class="number-cell">$${safeNumber(cost)}</td>
-                  <td class="number-cell">$${safeNumber(cm)}</td>
-                  <td class="number-cell ${profitClass}">$${safeNumber(tp)}</td>
-                </tr>
-              `;
-            });
-
-            tableHtml += `</tbody></table>`;
-            addMessageHTML(tableHtml, false);
+            addMessage(formatAnalysisResponse(data), false);
           }
-
-        } catch (err) {
-          addMessage(`❌ Upload error: ${err.message}`, false);
-        } finally {
-          uploadButton.disabled = false;
-          uploadButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
-          fileInput.value = '';
+        } catch (error) {
+          removeTypingIndicator();
+          addMessage(`❌ Error uploading file: ${error.message}`, false);
         }
+        
+        fileInput.value = '';
       });
 
-      textarea.focus();
+      async function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+        showTypingIndicator();
+
+        try {
+          const response = await fetch('/chat/api/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': CSRF_TOKEN
+            },
+            body: `message=${encodeURIComponent(message)}`
+          });
+          const data = await response.json();
+          removeTypingIndicator();
+          
+          if (data.error) {
+            addMessage(`❌ Error: ${data.error}`, false);
+          } else {
+            addMessage(formatResponse(data.response || 'No response received'), false);
+          }
+        } catch (error) {
+          removeTypingIndicator();
+          addMessage(`❌ Error: ${error.message}`, false);
+        }
+      }
+
+      function addMessage(content, isUser) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.innerHTML = content;
+        
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.appendChild(bubble);
+        messageDiv.appendChild(time);
+        messagesArea.appendChild(messageDiv);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+      }
+
+      function showTypingIndicator() {
+        const indicator = document.createElement('div');
+        indicator.id = 'typing-indicator';
+        indicator.className = 'message assistant';
+        indicator.innerHTML = `
+          <div class="message-bubble">
+            <div class="loading-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        `;
+        messagesArea.appendChild(indicator);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+      }
+
+      function removeTypingIndicator() {
+        const indicator = document.getElementById('typing-indicator');
+        if (indicator) indicator.remove();
+      }
+
+      function formatResponse(text) {
+        if (!text) return '';
+        // Convert markdown-like formatting
+        return text
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\n/g, '<br>')
+          .replace(/^- /gm, '• ');
+      }
+
+      function formatAnalysisResponse(data) {
+        if (data.items && Array.isArray(data.items)) {
+          let html = '<strong>📊 Product Mix Analysis</strong><br><br>';
+          html += '<table class="analysis-table"><thead><tr>';
+          html += '<th>#</th><th>Item</th><th>Qty</th><th>Revenue</th><th>Cost</th><th>Profit</th>';
+          html += '</tr></thead><tbody>';
+          
+          data.items.forEach((item, i) => {
+            const profit = (item.revenue || 0) - (item.cost || 0);
+            const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
+            html += `<tr>
+              <td class="rank-cell">${i + 1}</td>
+              <td class="item-name">${item.name || 'N/A'}</td>
+              <td>${item.quantity || 0}</td>
+              <td>$${(item.revenue || 0).toFixed(2)}</td>
+              <td>$${(item.cost || 0).toFixed(2)}</td>
+              <td class="${profitClass}">$${profit.toFixed(2)}</td>
+            </tr>`;
+          });
+          
+          html += '</tbody></table>';
+          return html;
+        }
+        return JSON.stringify(data, null, 2);
+      }
     });
   </script>
 </body>

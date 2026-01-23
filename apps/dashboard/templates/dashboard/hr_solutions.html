@@ -5,178 +5,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title data-translate="hr_title">HR Solutions - Restaurant Consulting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-      min-height: 100vh;
-      color: #1f2937;
-    }
-
-    .header {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      padding: 1rem 2rem;
-    }
-
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .language-selector select {
-      background: #fff;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      color: #374151;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right .5rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-      padding-right: 2.5rem;
-      min-width: 140px;
-    }
-
-    .language-selector select:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .language-selector select:hover {
-      border-color: #9ca3af;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-circle {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 1.25rem;
-    }
-
-    .brand-text .company-name {
-      font-weight: 700;
-      color: #1f2937;
-      font-size: 1.125rem;
-    }
-
-    .brand-text .company-tagline {
-      color: #64748b;
-      font-size: 0.875rem;
-    }
-
-    .back-button {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      color: #374151;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-
-    .back-button:hover {
-      background: #e5e7eb;
-      transform: translateY(-1px);
-    }
-
-    .main-container {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 2rem;
-    }
-
+    /* Enhanced HR Solutions Styles */
     .hr-interface {
-      width: 100%;
-      max-width: 1000px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-      overflow: hidden;
-      border: 1px solid rgba(67, 56, 202, 0.1);
-    }
-
-    .page-header {
-      padding: 3rem;
-      text-align: center;
-      background: linear-gradient(180deg, rgba(67, 56, 202, 0.03) 0%, transparent 100%);
-    }
-
-    .page-title {
-      font-size: 2.5rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #4338ca 0%, #3b82f6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .page-subtitle {
-      font-size: 1.25rem;
-      color: #64748b;
-      margin-bottom: 3rem;
-      line-height: 1.6;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .core-tasks-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-      padding: 0 3rem;
+      max-width: 1200px;
     }
 
     .core-task-card {
-      background: #fff;
-      border: 2px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 2rem;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
       text-align: center;
-      transition: all 0.3s ease;
       cursor: pointer;
       position: relative;
       overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
 
     .core-task-card::before {
@@ -186,58 +33,90 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #4338ca, #3b82f6);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .core-task-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(102, 126, 234, 0.08) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s;
     }
 
     .core-task-card:hover::before {
-      transform: translateX(0);
+      transform: scaleX(1);
+    }
+
+    .core-task-card:hover::after {
+      opacity: 1;
     }
 
     .core-task-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 30px rgba(67, 56, 202, 0.2);
-      border-color: #4338ca;
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 
+        0 25px 50px rgba(102, 126, 234, 0.2),
+        0 0 0 1px rgba(102, 126, 234, 0.15);
     }
 
     .task-icon {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-      border-radius: 16px;
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: var(--radius-lg);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 1rem;
-      font-size: 1.5rem;
-      box-shadow: 0 8px 20px rgba(67, 56, 202, 0.25);
+      margin: 0 auto var(--spacing-md);
+      box-shadow: 
+        0 10px 30px rgba(102, 126, 234, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .core-task-card:hover .task-icon {
+      transform: scale(1.15) rotate(5deg);
+      box-shadow: 
+        0 15px 40px rgba(102, 126, 234, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .task-title {
       font-weight: 700;
-      color: #1f2937;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
-      font-size: 1.125rem;
+      font-size: 1.15rem;
+      position: relative;
+      z-index: 1;
     }
 
     .task-desc {
-      color: #64748b;
-      font-size: 0.875rem;
-      line-height: 1.4;
-      margin-bottom: 1rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: var(--spacing-md);
+      position: relative;
+      z-index: 1;
     }
 
     .task-features {
       list-style: none;
       text-align: left;
-      font-size: 0.8rem;
-      color: #6b7280;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      position: relative;
+      z-index: 1;
     }
 
     .task-features li {
-      margin-bottom: 0.25rem;
-      padding-left: 1rem;
+      margin-bottom: 0.5rem;
+      padding-left: 1.75rem;
       position: relative;
     }
 
@@ -249,361 +128,121 @@
       font-weight: bold;
     }
 
+    /* Chat Section Enhancement */
     .chat-section {
-      background: #f8fafc;
-      border-top: 1px solid #e5e7eb;
-      padding: 2rem 3rem;
-    }
-
-    .chat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
+      background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.98) 100%);
+      border-top: 1px solid rgba(102, 126, 234, 0.1);
+      padding: var(--spacing-xl) var(--spacing-2xl);
     }
 
     .chat-title {
       font-size: 1.25rem;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .clear-chat {
-      background: rgba(67, 56, 202, 0.1);
-      border: 1px solid rgba(67, 56, 202, 0.2);
-      color: #4338ca;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-
-    .clear-chat:hover {
-      background: rgba(67, 56, 202, 0.2);
-    }
-
-    .messages-area {
-      max-height: 400px;
-      overflow-y: auto;
-      padding: 1rem 0;
-      margin-bottom: 1.5rem;
-    }
-
-    .message {
-      margin-bottom: 1.5rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .message.user {
-      align-items: flex-end;
-    }
-
-    .message.assistant {
-      align-items: flex-start;
-    }
-
-    .message-bubble {
-      max-width: 80%;
-      padding: 1rem 1.5rem;
-      border-radius: 20px;
-      word-wrap: break-word;
-      line-height: 1.7;
-    }
-
-    .message.user .message-bubble {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: #fff;
-      border-bottom-right-radius: 8px;
-    }
-
-    .message.assistant .message-bubble {
-      background: #fff;
-      color: #374151;
-      border: 1px solid #e5e7eb;
-      border-bottom-left-radius: 8px;
-    }
-
-    .message-time {
-      font-size: 0.75rem;
-      color: #94a3b8;
-      margin-top: 0.5rem;
-      padding: 0 0.5rem;
-    }
-
-    .input-section {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-    }
-
-    .input-container {
-      flex: 1;
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-end;
-    }
-
-    .chat-input {
-      flex: 1;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      resize: none;
-      min-height: 44px;
-      max-height: 120px;
-      font-family: inherit;
-      transition: all 0.2s ease;
-    }
-
-    .chat-input:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .upload-button {
-      background: #f3f4f6;
-      border: 2px solid #d1d5db;
-      color: #374151;
-      padding: 0.75rem;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .upload-button:hover {
-      background: #e5e7eb;
-      border-color: #9ca3af;
-    }
-
-    .send-button {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.25rem;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .send-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);
-    }
-
-    .send-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .file-input {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .page-title {
-        font-size: 2rem;
-      }
-
-      .core-tasks-grid {
-        grid-template-columns: 1fr;
-        padding: 0 1.5rem;
-      }
-
-      .chat-section {
-        padding: 1.5rem;
-      }
-
-      .input-section {
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-
-      .input-container {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-    }
-
-    /* Report Styling */
-    .report {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      margin: 1rem 0;
-      overflow: hidden;
-      max-width: none !important;
-      padding: 0 !important;
-      border-radius: 12px !important;
-      word-wrap: normal !important;
-    }
-
-    /* Override message bubble styles for reports */
-    .message-bubble .report {
-      background: #fff !important;
-      border: none !important;
-      border-radius: 12px !important;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      max-width: none !important;
-      width: 100% !important;
-      display: block !important;
-    }
-
-    /* Ensure report content is visible */
-    .message-bubble .report * {
-      color: inherit !important;
-    }
-
-    .message-bubble .report .report__header {
-      background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%) !important;
-      color: white !important;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    .message-bubble .report .report__body {
-      color: #374151 !important;
-    }
-
-    .report__header {
-      background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
-      color: white;
-      padding: 1.5rem;
-      text-align: center;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .report__header h2 {
-      font-size: 1.5rem;
       font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .report__meta {
-      font-size: 0.875rem;
-      opacity: 0.9;
-      margin-bottom: 1rem;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .badge--excellent {
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-    }
-
-    .badge--good {
-      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
-    }
-
-    .badge--acceptable {
-      background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
-    }
-
-    .badge--needs-improvement {
-      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-    }
-
-    .report__body {
-      padding: 1.5rem;
-      background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
-    }
-
-    .report__body .lead {
-      font-size: 1.125rem;
-      font-weight: 500;
-      color: #1e293b;
-      margin-bottom: 1.5rem;
-      line-height: 1.6;
-      background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
+      background: var(--primary-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    .report__body h3 {
-      font-size: 1.25rem;
+    .input-container {
+      display: flex;
+      gap: var(--spacing-sm);
+      background: white;
+      border: 2px solid rgba(102, 126, 234, 0.15);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-sm);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transition: all var(--transition-normal);
+    }
+
+    .input-container:focus-within {
+      border-color: #667eea;
+      box-shadow: 
+        0 8px 30px rgba(102, 126, 234, 0.15),
+        0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .chat-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 0.875rem 1rem;
+      font-size: 1rem;
+      background: transparent;
+      color: var(--text-primary);
+      resize: none;
+    }
+
+    .send-button {
+      background: var(--primary-gradient);
+      border: none;
+      color: white;
+      padding: 0.875rem 1.5rem;
+      border-radius: var(--radius-lg);
       font-weight: 600;
-      color: #0f172a;
-      margin: 1.5rem 0 0.75rem 0;
-      border-bottom: 3px solid #0891b2;
-      padding-bottom: 0.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all var(--transition-normal);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
-    .report__body ul, .report__body ol {
-      margin: 0.75rem 0;
-      padding-left: 1.5rem;
+    .send-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
 
-    .report__body li {
-      margin: 0.5rem 0;
-      line-height: 1.7;
-      color: #475569;
+    .message.user .message-bubble {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
-    .report__body strong {
-      color: #0f172a;
-      font-weight: 600;
+    .message.assistant .message-bubble {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.15);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
   </style>
-  <script src="{% static 'dashboard/js/translations.js' %}"></script>
 </head>
 <body>
+  <!-- Animated Background -->
+  <div class="animated-bg"></div>
+  <div class="floating-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
   <!-- Header -->
-  <header class="header">
+  <header class="glass-header">
     <div class="header-content">
       <div class="logo">
-        <div class="logo-circle" aria-hidden="true">€</div>
-      <div class="brand-text">
-        <div class="company-name" data-translate="company_name">Curated Restaurant Consulting</div>
-        <div class="company-tagline" data-translate="company_tagline">Driven by Data. Crafted for Excellence.</div>
+        <div class="logo-circle" aria-hidden="true">C</div>
+        <div class="brand-text">
+          <div class="company-name" data-translate="company_name">Curated Restaurant Consulting</div>
+          <div class="company-tagline" data-translate="company_tagline">Driven by Data. Crafted for Excellence.</div>
+        </div>
       </div>
       <div class="header-actions">
         <div class="language-selector">
-          <select id="language-select">
+          <select id="language-select" onchange="changeLanguage(this.value)">
             <option value="en">🇺🇸 English</option>
             <option value="es">🇪🇸 Español</option>
           </select>
         </div>
+        <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
       </div>
-      </div>
-      <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
     </div>
   </header>
 
   <main class="main-container">
-    <div class="hr-interface">
+    <div class="glass-interface hr-interface">
       <!-- Page Header -->
       <section class="page-header">
-        <h1 class="page-title" data-translate="hr_solutions_title">HR Solutions</h1>
-        <p class="page-subtitle" data-translate="hr_solutions_page_subtitle">Optimize your workforce with data-driven HR strategies and staff management tools</p>
+        <h1 class="page-title" data-translate="hr_page_title">HR Solutions</h1>
+        <p class="page-subtitle" data-translate="hr_page_subtitle">Optimize your workforce with staff retention analysis, scheduling insights, and HR best practices</p>
 
         <!-- Core Tasks Grid -->
         <div class="core-tasks-grid">
@@ -618,12 +257,12 @@
                 <circle cx="20" cy="8" r="2" fill="white"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="staff_retention_title">Staff Retention</div>
-            <div class="task-desc" data-translate="staff_retention_desc">Reduce turnover and improve employee satisfaction</div>
+            <div class="task-title" data-translate="retention_title">Staff Retention</div>
+            <div class="task-desc" data-translate="retention_desc">Analyze turnover and improve retention</div>
             <ul class="task-features">
-              <li>Turnover rate analysis</li>
-              <li>Industry benchmarking</li>
+              <li>Turnover analysis</li>
               <li>Retention strategies</li>
+              <li>Cost impact assessment</li>
             </ul>
           </div>
 
@@ -632,42 +271,40 @@
             <div class="task-icon">
               <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
                 <rect x="6" y="8" width="28" height="24" rx="3" stroke="white" stroke-width="2"/>
-                <path d="M6 16H34" stroke="white" stroke-width="2"/>
-                <circle cx="13" cy="12" r="1.5" fill="white"/>
-                <circle cx="20" cy="12" r="1.5" fill="white"/>
-                <circle cx="27" cy="12" r="1.5" fill="white"/>
-                <rect x="10" y="20" width="8" height="2" rx="1" fill="white"/>
-                <rect x="10" y="24" width="12" height="2" rx="1" fill="white"/>
+                <path d="M6 14H34" stroke="white" stroke-width="2"/>
+                <path d="M12 8V4" stroke="white" stroke-width="2"/>
+                <path d="M28 8V4" stroke="white" stroke-width="2"/>
+                <rect x="10" y="18" width="4" height="4" rx="1" fill="white"/>
+                <rect x="18" y="18" width="4" height="4" rx="1" fill="white"/>
+                <rect x="26" y="18" width="4" height="4" rx="1" fill="white"/>
+                <rect x="10" y="24" width="4" height="4" rx="1" fill="white"/>
+                <rect x="18" y="24" width="4" height="4" rx="1" fill="white"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="labor_scheduling_title">Labor Scheduling</div>
-            <div class="task-desc" data-translate="labor_scheduling_desc">Optimize staff schedules for efficiency</div>
+            <div class="task-title" data-translate="scheduling_title">Labor Scheduling</div>
+            <div class="task-desc" data-translate="scheduling_desc">Optimize staff schedules for efficiency</div>
             <ul class="task-features">
-              <li>Peak hour analysis</li>
-              <li>Overtime reduction</li>
-              <li>Cost optimization</li>
+              <li>Shift optimization</li>
+              <li>Peak hour coverage</li>
+              <li>Overtime management</li>
             </ul>
           </div>
 
-          <!-- Performance Management -->
-          <div class="core-task-card" onclick="managePerformance()">
+          <!-- Training Programs -->
+          <div class="core-task-card" onclick="reviewTraining()">
             <div class="task-icon">
               <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <circle cx="20" cy="20" r="16" stroke="white" stroke-width="2"/>
-                <circle cx="20" cy="20" r="10" stroke="white" stroke-width="2"/>
-                <circle cx="20" cy="20" r="4" stroke="white" stroke-width="2"/>
-                <path d="M20 4V8" stroke="white" stroke-width="2"/>
-                <path d="M36 20H32" stroke="white" stroke-width="2"/>
-                <path d="M20 36V32" stroke="white" stroke-width="2"/>
-                <path d="M4 20H8" stroke="white" stroke-width="2"/>
+                <path d="M20 4L4 12L20 20L36 12L20 4Z" stroke="white" stroke-width="2" fill="none"/>
+                <path d="M8 14V26L20 32L32 26V14" stroke="white" stroke-width="2" fill="none"/>
+                <circle cx="20" cy="20" r="3" fill="white"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="performance_management_title">Performance Management</div>
-            <div class="task-desc" data-translate="performance_management_desc">Track and improve staff performance</div>
+            <div class="task-title" data-translate="training_title">Training Programs</div>
+            <div class="task-desc" data-translate="training_desc">Develop effective training strategies</div>
             <ul class="task-features">
-              <li>KPI tracking</li>
-              <li>Goal setting</li>
-              <li>Training recommendations</li>
+              <li>Onboarding optimization</li>
+              <li>Skill development</li>
+              <li>Performance tracking</li>
             </ul>
           </div>
         </div>
@@ -682,23 +319,23 @@
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you optimize your restaurant's HR operations. Ask me about staff retention, scheduling, performance management, or upload data for analysis.</div>
+            <div class="message-bubble">Hello! I'm here to help you with HR solutions. Ask me about staff retention, scheduling optimization, training programs, or any HR-related challenges.</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
 
         <div class="input-section">
           <div class="input-container">
-            <textarea id="chat-input" class="chat-input" placeholder="Ask me about HR strategies..." rows="1"></textarea>
+            <textarea id="chat-input" class="chat-input" placeholder="Ask me about HR solutions..." rows="1"></textarea>
             <input type="file" id="file-input" accept=".csv" class="file-input"/>
             <button id="upload-button" class="upload-button" title="Upload CSV for analysis">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
               </svg>
             </button>
-            <button id="send-button" class="send-button">
-              <span>Send</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <button id="send-button" class="send-button" onclick="sendMessage()">
+              <span data-translate="send">Send</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
             </button>
@@ -710,129 +347,86 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const textarea = document.getElementById('chat-input');
-      const sendButton = document.getElementById('send-button');
-      const uploadButton = document.getElementById('upload-button');
-      const fileInput = document.getElementById('file-input');
       const messagesArea = document.getElementById('messages-area');
+      const chatInput = document.getElementById('chat-input');
+      const fileInput = document.getElementById('file-input');
+      const uploadButton = document.getElementById('upload-button');
 
-      // CSRF helper
       function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return null;
       }
-      const CSRF = getCookie('csrftoken');
+      const CSRF_TOKEN = getCookie('csrftoken');
 
-      // Auto-resize textarea
-      textarea.addEventListener('input', function() {
+      chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
       });
 
-      function addMessage(content, isUser = false) {
-      // Markdown conversion functions
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      function processInlineMarkdown(text) {
-        return text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-      }
-
-      function convertMarkdownToHTML(text) {
-        const lines = text.split('\n');
-        let inList = false;
-        let listType = null;
-        let processedLines = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i];
-          const trimmed = line.trim();
-
-          if (!trimmed) {
-            if (inList) {
-              processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              inList = false;
-              listType = null;
-            }
-            processedLines.push('<br>');
-            continue;
-          }
-
-          const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
-          if (numberedMatch) {
-            if (!inList || listType !== 'ol') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ol>');
-              inList = true;
-              listType = 'ol';
-            }
-            const content = processInlineMarkdown(escapeHtml(numberedMatch[2]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          const bulletMatch = trimmed.match(/^[-•·]\s+(.+)$/);
-          if (bulletMatch) {
-            if (!inList || listType !== 'ul') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ul>');
-              inList = true;
-              listType = 'ul';
-            }
-            const content = processInlineMarkdown(escapeHtml(bulletMatch[1]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          if (inList) {
-            processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-            inList = false;
-            listType = null;
-          }
-
-          if (trimmed.match(/^###\s+(.+)$/)) {
-            const heading = escapeHtml(trimmed.replace(/^###\s+/, ''));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          if (trimmed.match(/^\*\*(.+):\*\*$/)) {
-            const heading = escapeHtml(trimmed.replace(/^\*\*(.+):\*\*$/, '$1:'));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          const content = processInlineMarkdown(escapeHtml(line));
-          processedLines.push(content);
+      chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
         }
+      });
 
-        if (inList) {
-          processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
+      uploadButton.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        addMessage(`Uploading file: ${file.name}`, true);
+        
+        const formData = new FormData();
+        formData.append('task', 'hr_retention');
+        formData.append('file', file);
+
+        try {
+          const response = await fetch('/api/agent/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN },
+            body: formData
+          });
+          const data = await response.json();
+          addMessage(data.error ? `Error: ${data.error}` : formatResponse(data), false);
+        } catch (error) {
+          addMessage(`Error uploading file: ${error.message}`, false);
         }
+        fileInput.value = '';
+      });
 
-        let html = processedLines.join('\n');
-        html = html.replace(/<br>\s*<(ol|ul|h3)>/g, '<$1>');
-        html = html.replace(/<\/(ol|ul|h3)>\s*<br>/g, '</$1>');
-        html = html.replace(/(<br>\s*){3,}/g, '<br><br>');
-        return html;
-      }
+      window.sendMessage = async function() {
+        const message = chatInput.value.trim();
+        if (!message) return;
 
+        addMessage(message, true);
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+
+        try {
+          const response = await fetch('/chat/api/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': CSRF_TOKEN
+            },
+            body: `message=${encodeURIComponent(message)}&context=hr`
+          });
+          const data = await response.json();
+          addMessage(data.error ? `Error: ${data.error}` : (data.response || 'No response'), false);
+        } catch (error) {
+          addMessage(`Error: ${error.message}`, false);
+        }
+      };
+
+      function addMessage(content, isUser) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-
-        // Check if content contains HTML (look for HTML tags)
-        if (content.includes('<') && content.includes('>')) {
-          bubble.innerHTML = content;
-        } else {
-          bubble.innerHTML = convertMarkdownToHTML(content);
-        }
-
+        bubble.innerHTML = content.replace(/\n/g, '<br>');
         const time = document.createElement('div');
         time.className = 'message-time';
         time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -842,222 +436,38 @@
         messagesArea.scrollTop = messagesArea.scrollHeight;
       }
 
-      function clearChat() {
-        const messages = messagesArea.querySelectorAll('.message:not(:first-child)');
-        messages.forEach(msg => msg.remove());
-        textarea.value = '';
-        textarea.style.height = 'auto';
-        textarea.focus();
+      function formatResponse(data) {
+        return typeof data === 'string' ? data : JSON.stringify(data, null, 2);
       }
 
-      window.clearChat = clearChat;
+      window.clearChat = function() {
+        messagesArea.innerHTML = `
+          <div class="message assistant">
+            <div class="message-bubble">Hello! I'm here to help you with HR solutions. Ask me about staff retention, scheduling optimization, training programs, or any HR-related challenges.</div>
+            <div class="message-time">Just now</div>
+          </div>
+        `;
+      };
 
-      async function sendMessage() {
-        const message = textarea.value.trim();
-        if (!message) return;
-
-        addMessage(message, true);
-        const original = sendButton.innerHTML;
-        sendButton.innerHTML = '<span>Sending...</span>';
-        sendButton.disabled = true;
-        textarea.value = '';
-        textarea.style.height = 'auto';
-
-        try {
-          const resp = await fetch('/chat/api/', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: new URLSearchParams({ message })
-          });
-          const data = await resp.json().catch(() => ({}));
-          const aiResponse = data?.response || data?.error || 'No response received.';
-          addMessage(aiResponse, false);
-        } catch (err) {
-          addMessage('Network error. Please check your connection.', false);
-        } finally {
-          sendButton.innerHTML = original;
-          sendButton.disabled = false;
-          textarea.focus();
-        }
-      }
-
-      // File upload functionality
-      uploadButton.addEventListener('click', () => fileInput.click());
-
-      fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        addMessage(`📁 Uploading ${file.name} for HR analysis...`, true);
-
-        const formData = new FormData();
-        formData.append('task', 'hr_retention');
-        formData.append('file', file);
-
-        try {
-          uploadButton.disabled = true;
-          uploadButton.innerHTML = '<span>Processing...</span>';
-
-          const resp = await fetch('/api/agent/', {
-            method: 'POST',
-            headers: {
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: formData
-          });
-
-          const data = await resp.json();
-
-          if (data.status === 'success') {
-            addMessage(`✅ HR analysis complete! Processed ${file.name}`, false);
-          } else {
-            addMessage(`❌ ${data.message || 'Analysis failed'}`, false);
-          }
-        } catch (err) {
-          addMessage(`❌ Upload error: ${err.message}`, false);
-        } finally {
-          uploadButton.disabled = false;
-          uploadButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
-          fileInput.value = '';
-        }
-      });
-
-      sendButton.addEventListener('click', sendMessage);
-      textarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-
-      // Core task functions
       window.analyzeRetention = function() {
-        addMessage("Let's analyze your staff retention! Please provide your current turnover rate and industry average.", false);
-        textarea.placeholder = "Enter: Turnover Rate, Industry Average (e.g., 65, 70)";
-        textarea.focus();
+        chatInput.value = 'Analyze staff retention and suggest strategies to reduce turnover';
+        chatInput.focus();
       };
 
       window.optimizeScheduling = function() {
-        addMessage("Let's optimize your staff scheduling! Please provide your total sales, labor hours, and hourly rate.", false);
-        textarea.placeholder = "Enter: Total Sales, Labor Hours, Hourly Rate (e.g., 10000, 120, 15)";
-        textarea.focus();
+        chatInput.value = 'Help me optimize labor scheduling for better efficiency';
+        chatInput.focus();
       };
 
-      window.managePerformance = function() {
-        addMessage("Let's manage staff performance! Please provide details about your current performance metrics.", false);
-        textarea.placeholder = "Describe your current performance tracking system...";
-        textarea.focus();
+      window.reviewTraining = function() {
+        chatInput.value = 'Suggest effective training programs for my restaurant staff';
+        chatInput.focus();
       };
 
-      textarea.focus();
+      window.changeLanguage = function(lang) {
+        console.log('Language changed to:', lang);
+      };
     });
-
-    // Language Translation System
-    const translations = {
-      en: {
-        company_name: "Curated Restaurant Consulting",
-        company_tagline: "Driven by Data. Crafted for Excellence.",
-        hr_solutions_title: "HR Solutions",
-        hr_solutions_page_subtitle: "Optimize your workforce with data-driven HR strategies and staff management tools",
-        staff_retention_title: "Staff Retention",
-        staff_retention_desc: "Reduce turnover and improve employee satisfaction",
-        labor_scheduling_title: "Labor Scheduling",
-        labor_scheduling_desc: "Optimize staff schedules for efficiency",
-        performance_management_title: "Performance Management",
-        performance_management_desc: "Track and improve staff performance",
-        ai_assistant: "AI Assistant",
-        clear_chat: "Clear Chat"
-      },
-      es: {
-        company_name: "Consultoría de Restaurantes Curada",
-        company_tagline: "Impulsado por Datos. Creado para la Excelencia.",
-        hr_solutions_title: "Soluciones RRHH",
-        hr_solutions_page_subtitle: "Optimiza tu fuerza laboral con estrategias de RRHH basadas en datos y herramientas de gestión de personal",
-        staff_retention_title: "Retención de Personal",
-        staff_retention_desc: "Reduce la rotación y mejora la satisfacción de los empleados",
-        labor_scheduling_title: "Programación Laboral",
-        labor_scheduling_desc: "Optimiza los horarios del personal para mayor eficiencia",
-        performance_management_title: "Gestión del Rendimiento",
-        performance_management_desc: "Rastrea y mejora el rendimiento del personal",
-        ai_assistant: "Asistente IA",
-        clear_chat: "Limpiar Chat"
-      }
-    };
-
-    function changeLanguage(lang) {
-      // Save language preference
-      localStorage.setItem('selectedLanguage', lang);
-
-      // Update all elements with data-translate attribute
-      document.querySelectorAll('[data-translate]').forEach(element => {
-        const key = element.getAttribute('data-translate');
-        if (translations[lang] && translations[lang][key]) {
-          element.textContent = translations[lang][key];
-        }
-      });
-
-      // Update select value
-      document.getElementById('language-select').value = lang;
-    }
-
-    // Enhanced language switching with server communication
-    function changeLanguageWithServer(lang) {
-      // Update UI immediately
-      changeLanguage(lang);
-
-      // Send to server to update session
-      fetch('/set-language/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: 'language=' + encodeURIComponent(lang)
-      }).then(response => {
-        if (!response.ok) {
-          console.error('Failed to update language on server');
-        }
-      }).catch(error => {
-        console.error('Error updating language:', error);
-      });
-    }
-
-    // CSRF token helper
-    function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-          }
-        }
-      }
-      return cookieValue;
-    }
-
-    // Load saved language on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      const savedLang = localStorage.getItem('preferred_language') || 'en';
-      changeLanguage(savedLang);
-
-      // Update language selector to use server communication
-      const languageSelect = document.getElementById('language-select');
-      if (languageSelect) {
-        languageSelect.value = savedLang;
-        languageSelect.onchange = function() {
-          changeLanguageWithServer(this.value);
-        };
-      }
-    });
-
-    // Make changeLanguage globally available
-    window.changeLanguage = changeLanguage;
   </script>
 </body>
 </html>

@@ -1,567 +1,467 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Recipe Management - Restaurant Consulting</title>
+  <title>Recipes - Restaurant Consulting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-      min-height: 100vh;
-      color: #1f2937;
-    }
-
-    .header {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      padding: 1rem 2rem;
-    }
-
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .language-selector select {
-      background: #fff;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      color: #374151;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right .5rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-      padding-right: 2.5rem;
-      min-width: 140px;
-    }
-
-    .language-selector select:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .language-selector select:hover {
-      border-color: #9ca3af;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-circle {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 1.25rem;
-    }
-
-    .brand-text .company-name {
-      font-weight: 700;
-      color: #1f2937;
-      font-size: 1.125rem;
-    }
-
-    .brand-text .company-tagline {
-      color: #64748b;
-      font-size: 0.875rem;
-    }
-
-    .back-button {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      color: #374151;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-
-    .back-button:hover {
-      background: #e5e7eb;
-      transform: translateY(-1px);
-    }
-
-    .main-container {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 2rem;
-    }
-
-    .recipes-interface {
-      width: 100%;
-      max-width: 1000px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-      overflow: hidden;
-      border: 1px solid rgba(67, 56, 202, 0.1);
-    }
-
-    .page-header {
-      padding: 3rem;
-      text-align: center;
-      background: linear-gradient(180deg, rgba(67, 56, 202, 0.03) 0%, transparent 100%);
-    }
-
-    .page-title {
-      font-size: 2.5rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #4338ca 0%, #3b82f6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .page-subtitle {
-      font-size: 1.25rem;
-      color: #64748b;
-      margin-bottom: 3rem;
-      line-height: 1.6;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .core-tasks-grid {
+    /* Enhanced Recipe Management Styles */
+    .recipe-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-      padding: 0 3rem;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: var(--spacing-lg);
+      margin: var(--spacing-xl) 0;
     }
-
-    .core-task-card {
-      background: #fff;
-      border: 2px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 2rem;
-      text-align: center;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      position: relative;
+    .recipe-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      border-radius: var(--radius-xl);
       overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: card-reveal 0.5s ease-out forwards;
+      opacity: 0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      position: relative;
     }
-
-    .core-task-card::before {
+    .recipe-card::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #4338ca, #3b82f6);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
-    .core-task-card:hover::before {
-      transform: translateX(0);
+    .recipe-card:hover::before {
+      transform: scaleX(1);
     }
-
-    .core-task-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 30px rgba(67, 56, 202, 0.2);
-      border-color: #4338ca;
+    .recipe-card:nth-child(1) { animation-delay: 0.1s; }
+    .recipe-card:nth-child(2) { animation-delay: 0.15s; }
+    .recipe-card:nth-child(3) { animation-delay: 0.2s; }
+    .recipe-card:nth-child(4) { animation-delay: 0.25s; }
+    .recipe-card:nth-child(5) { animation-delay: 0.3s; }
+    .recipe-card:nth-child(6) { animation-delay: 0.35s; }
+    
+    .recipe-card:hover {
+      transform: translateY(-12px) scale(1.02);
+      box-shadow: 
+        0 30px 60px rgba(102, 126, 234, 0.25),
+        0 0 0 1px rgba(102, 126, 234, 0.15);
     }
-
-    .task-icon {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-      border-radius: 16px;
+    .recipe-image {
+      height: 200px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 1rem;
-      font-size: 1.5rem;
-      box-shadow: 0 8px 20px rgba(67, 56, 202, 0.25);
-    }
-
-    .task-title {
-      font-weight: 700;
-      color: #1f2937;
-      margin-bottom: 0.5rem;
-      font-size: 1.125rem;
-    }
-
-    .task-desc {
-      color: #64748b;
-      font-size: 0.875rem;
-      line-height: 1.4;
-      margin-bottom: 1rem;
-    }
-
-    .task-features {
-      list-style: none;
-      text-align: left;
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-
-    .task-features li {
-      margin-bottom: 0.25rem;
-      padding-left: 1rem;
       position: relative;
+      overflow: hidden;
     }
-
-    .task-features li::before {
-      content: '✓';
+    .recipe-image::before {
+      content: '';
       position: absolute;
-      left: 0;
-      color: #10b981;
-      font-weight: bold;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
     }
-
-    .chat-section {
-      background: #f8fafc;
-      border-top: 1px solid #e5e7eb;
-      padding: 2rem 3rem;
+    .recipe-image::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
     }
-
-    .chat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
+    .recipe-image svg { 
+      width: 72px; 
+      height: 72px; 
+      color: rgba(255,255,255,0.25);
+      transition: all 0.4s ease;
     }
-
-    .chat-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #1f2937;
+    .recipe-card:hover .recipe-image svg {
+      transform: scale(1.15) rotate(10deg);
+      color: rgba(255,255,255,0.4);
     }
-
-    .clear-chat {
-      background: rgba(67, 56, 202, 0.1);
-      border: 1px solid rgba(67, 56, 202, 0.2);
-      color: #4338ca;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-
-    .clear-chat:hover {
-      background: rgba(67, 56, 202, 0.2);
-    }
-
-    .messages-area {
-      max-height: 400px;
-      overflow-y: auto;
-      padding: 1rem 0;
-      margin-bottom: 1.5rem;
-    }
-
-    .message {
-      margin-bottom: 1.5rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .message.user {
-      align-items: flex-end;
-    }
-
-    .message.assistant {
-      align-items: flex-start;
-    }
-
-    .message-bubble {
-      max-width: 80%;
-      padding: 1rem 1.5rem;
-      border-radius: 20px;
-      word-wrap: break-word;
-      line-height: 1.7;
-    }
-
-    .message.user .message-bubble {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: #fff;
-      border-bottom-right-radius: 8px;
-    }
-
-    .message.assistant .message-bubble {
-      background: #fff;
-      color: #374151;
-      border: 1px solid #e5e7eb;
-      border-bottom-left-radius: 8px;
-    }
-
-    .message-time {
+    .recipe-category {
+      position: absolute;
+      top: var(--spacing-md);
+      right: var(--spacing-md);
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(12px);
+      padding: 0.35rem 0.875rem;
+      border-radius: var(--radius-full);
       font-size: 0.75rem;
-      color: #94a3b8;
-      margin-top: 0.5rem;
-      padding: 0 0.5rem;
-    }
-
-    .input-section {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-    }
-
-    .input-container {
-      flex: 1;
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-end;
-    }
-
-    .chat-input {
-      flex: 1;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      resize: none;
-      min-height: 44px;
-      max-height: 120px;
-      font-family: inherit;
-      transition: all 0.2s ease;
-    }
-
-    .chat-input:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .upload-button {
-      background: #f3f4f6;
-      border: 2px solid #d1d5db;
-      color: #374151;
-      padding: 0.75rem;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .upload-button:hover {
-      background: #e5e7eb;
-      border-color: #9ca3af;
-    }
-
-    .send-button {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.25rem;
-      border-radius: 12px;
-      cursor: pointer;
       font-weight: 600;
-      transition: all 0.2s ease;
+      color: white;
+      z-index: 1;
+      border: 1px solid rgba(255,255,255,0.2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .recipe-content { padding: var(--spacing-xl); }
+    .recipe-name { 
+      font-size: 1.2rem; 
+      font-weight: 700; 
+      color: var(--text-primary); 
+      margin-bottom: 0.6rem;
+      transition: color 0.3s;
+    }
+    .recipe-card:hover .recipe-name {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .recipe-desc { 
+      font-size: 0.9rem; 
+      color: var(--text-secondary); 
+      margin-bottom: var(--spacing-lg); 
+      line-height: 1.6;
+    }
+    .recipe-stats {
+      display: flex;
+      gap: var(--spacing-md);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    .recipe-stat { 
+      text-align: center; 
+      flex: 1;
+      padding: var(--spacing-sm);
+      background: rgba(102, 126, 234, 0.04);
+      border-radius: var(--radius-md);
+      transition: all 0.3s;
+    }
+    .recipe-stat:hover {
+      background: rgba(102, 126, 234, 0.08);
+    }
+    .recipe-stat-value { 
+      font-size: 1.1rem; 
+      font-weight: 700; 
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .recipe-stat-label { 
+      font-size: 0.7rem; 
+      color: var(--text-tertiary); 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.25rem;
+    }
+    
+    .filters-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-xl);
+    }
+    .filter-btn {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.15);
+      border-radius: var(--radius-full);
+      padding: 0.6rem 1.25rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .filter-btn:hover {
+      border-color: #667eea;
+      color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+    }
+    .filter-btn.active {
+      background: var(--primary-gradient);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .search-bar {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      border: 2px solid rgba(102, 126, 234, 0.12);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-md) var(--spacing-lg);
+      display: flex;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .search-bar:focus-within {
+      border-color: #667eea;
+      box-shadow: 
+        0 8px 30px rgba(102, 126, 234, 0.12),
+        0 0 0 4px rgba(102, 126, 234, 0.08);
+    }
+    .search-bar input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1rem;
+      outline: none;
+    }
+    .search-bar input::placeholder { color: var(--text-tertiary); }
+    .search-bar button {
+      background: var(--primary-gradient);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 0.5rem 1rem;
+      color: white;
+      cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
-
-    .send-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);
-    }
-
-    .send-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .file-input {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .page-title {
-        font-size: 2rem;
-      }
-      
-      .core-tasks-grid {
-        grid-template-columns: 1fr;
-        padding: 0 1.5rem;
-      }
-      
-      .chat-section {
-        padding: 1.5rem;
-      }
-      
-      .input-section {
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      
-      .input-container {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-    }
   </style>
 </head>
 <body>
+  <!-- Animated Background -->
+  <div class="animated-bg"></div>
+  <div class="floating-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
   <!-- Header -->
-  <header class="header">
+  <header class="glass-header">
     <div class="header-content">
       <div class="logo">
-        <div class="logo-circle" aria-hidden="true">€</div>
-      <div class="brand-text">
-        <div class="company-name" data-translate="company_name">Curated Restaurant Consulting</div>
-        <div class="company-tagline" data-translate="company_tagline">Driven by Data. Crafted for Excellence.</div>
-      </div>
-      <div class="header-actions">
-        <div class="language-selector">
-          <select id="language-select" onchange="changeLanguage(this.value)">
-            <option value="en">🇺🇸 English</option>
-            <option value="es">🇪🇸 Español</option>
-          </select>
+        <div class="logo-circle" aria-hidden="true">C</div>
+        <div class="brand-text">
+          <div class="company-name">Curated Restaurant Consulting</div>
+          <div class="company-tagline">Driven by Data. Crafted for Excellence.</div>
         </div>
       </div>
+      <div class="header-actions">
+        <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
       </div>
-      <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
     </div>
   </header>
 
   <main class="main-container">
-    <div class="recipes-interface">
+    <div class="glass-interface">
       <!-- Page Header -->
       <section class="page-header">
-        <h1 class="page-title" data-translate="recipes_title">Recipe Management</h1>
-        <p class="page-subtitle" data-translate="recipes_page_subtitle">Optimize your recipes for cost efficiency and consistent quality</p>
+        <h1 class="page-title">Recipe Management</h1>
+        <p class="page-subtitle">Create, optimize, and cost your recipes with AI-powered assistance</p>
 
         <!-- Core Tasks Grid -->
         <div class="core-tasks-grid">
-          <!-- Recipe Costing -->
-          <div class="core-task-card" onclick="calculateRecipeCosts()">
-            <div class="task-icon">
-              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <rect x="8" y="6" width="24" height="28" rx="2" stroke="white" stroke-width="2" fill="none"/>
-                <path d="M12 12H28" stroke="white" stroke-width="2"/>
-                <path d="M12 16H24" stroke="white" stroke-width="2"/>
-                <path d="M12 20H26" stroke="white" stroke-width="2"/>
-                <path d="M12 24H22" stroke="white" stroke-width="2"/>
-                <path d="M12 28H20" stroke="white" stroke-width="2"/>
-                <circle cx="26" cy="26" r="3" stroke="white" stroke-width="2" fill="none"/>
-                <path d="M24 24L28 28" stroke="white" stroke-width="2"/>
-              </svg>
-            </div>
-            <div class="task-title" data-translate="recipe_costing_title">Recipe Costing</div>
-            <div class="task-desc" data-translate="recipe_costing_desc">Calculate accurate recipe costs</div>
-            <ul class="task-features">
-              <li>Ingredient cost tracking</li>
-              <li>Portion cost calculation</li>
-              <li>Margin analysis</li>
-            </ul>
-          </div>
-
-          <!-- Ingredient Optimization -->
-          <div class="core-task-card" onclick="optimizeIngredients()">
+          <!-- Create Recipe -->
+          <div class="core-task-card" onclick="createRecipe()">
             <div class="task-icon">
               <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
                 <circle cx="20" cy="20" r="16" stroke="white" stroke-width="2"/>
-                <circle cx="20" cy="20" r="10" stroke="white" stroke-width="2"/>
-                <circle cx="20" cy="20" r="4" stroke="white" stroke-width="2"/>
-                <path d="M20 4V8" stroke="white" stroke-width="2"/>
-                <path d="M36 20H32" stroke="white" stroke-width="2"/>
-                <path d="M20 36V32" stroke="white" stroke-width="2"/>
-                <path d="M4 20H8" stroke="white" stroke-width="2"/>
+                <path d="M20 12V28M12 20H28" stroke="white" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="ingredient_optimization_title">Ingredient Optimization</div>
-            <div class="task-desc" data-translate="ingredient_optimization_desc">Optimize ingredient usage and sourcing</div>
+            <div class="task-title">Create Recipe</div>
+            <div class="task-desc">Build new recipes with AI assistance</div>
             <ul class="task-features">
-              <li>Supplier comparison</li>
-              <li>Waste reduction</li>
-              <li>Quality consistency</li>
+              <li>Ingredient suggestions</li>
+              <li>Auto-costing</li>
+              <li>Nutrition analysis</li>
             </ul>
           </div>
 
-          <!-- Recipe Scaling -->
-          <div class="core-task-card" onclick="scaleRecipes()">
+          <!-- Cost Analysis -->
+          <div class="core-task-card" onclick="costAnalysis()">
             <div class="task-icon">
               <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <rect x="4" y="28" width="4" height="8" rx="2" fill="white"/>
-                <rect x="10" y="22" width="4" height="14" rx="2" fill="white"/>
-                <rect x="16" y="18" width="4" height="18" rx="2" fill="white"/>
-                <rect x="22" y="12" width="4" height="24" rx="2" fill="white"/>
-                <rect x="28" y="8" width="4" height="28" rx="2" fill="white"/>
-                <path d="M6 16L12 10L18 14L26 6L32 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="20" cy="20" r="16" stroke="white" stroke-width="2"/>
+                <path d="M20 10V30" stroke="white" stroke-width="2"/>
+                <path d="M14 14C14 14 16 12 20 12C24 12 26 14 26 16C26 18 24 20 20 20C16 20 14 22 14 24C14 26 16 28 20 28C24 28 26 26 26 26" stroke="white" stroke-width="2"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="recipe_scaling_title">Recipe Scaling</div>
-            <div class="task-desc" data-translate="recipe_scaling_desc">Scale recipes for different batch sizes</div>
+            <div class="task-title">Cost Analysis</div>
+            <div class="task-desc">Track recipe costs and margins</div>
             <ul class="task-features">
-              <li>Batch size optimization</li>
-              <li>Yield calculations</li>
-              <li>Consistency maintenance</li>
+              <li>Ingredient costs</li>
+              <li>Margin calculator</li>
+              <li>Price recommendations</li>
+            </ul>
+          </div>
+
+          <!-- Scale Recipes -->
+          <div class="core-task-card" onclick="scaleRecipe()">
+            <div class="task-icon">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <rect x="6" y="6" width="12" height="12" rx="2" stroke="white" stroke-width="2"/>
+                <rect x="22" y="22" width="12" height="12" rx="2" stroke="white" stroke-width="2"/>
+                <path d="M18 12H28V18M12 22V28H22" stroke="white" stroke-width="2"/>
+              </svg>
+            </div>
+            <div class="task-title">Scale Recipes</div>
+            <div class="task-desc">Adjust portions and batch sizes</div>
+            <ul class="task-features">
+              <li>Batch scaling</li>
+              <li>Unit conversion</li>
+              <li>Yield optimization</li>
             </ul>
           </div>
         </div>
       </section>
 
+      <!-- Search Bar -->
+      <div class="search-bar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-secondary);">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input type="text" id="recipe-search" placeholder="Search recipes by name, ingredient, or category...">
+        <button onclick="searchRecipes()">
+          <span>Search</span>
+        </button>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <button class="filter-btn active" data-filter="all">All Recipes</button>
+        <button class="filter-btn" data-filter="appetizers">Appetizers</button>
+        <button class="filter-btn" data-filter="mains">Main Courses</button>
+        <button class="filter-btn" data-filter="desserts">Desserts</button>
+        <button class="filter-btn" data-filter="beverages">Beverages</button>
+        <button class="filter-btn" data-filter="sauces">Sauces</button>
+      </div>
+
+      <!-- Recipe Grid -->
+      <div class="recipe-grid" id="recipe-grid">
+        <!-- Sample Recipe Cards -->
+        <div class="recipe-card" data-category="mains">
+          <div class="recipe-image">
+            <span class="recipe-category">Main Course</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="recipe-content">
+            <div class="recipe-name">Grilled Salmon</div>
+            <div class="recipe-desc">Pan-seared Atlantic salmon with lemon butter sauce and seasonal vegetables</div>
+            <div class="recipe-stats">
+              <div class="recipe-stat"><div class="recipe-stat-value">$8.50</div><div class="recipe-stat-label">Cost</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">$24.00</div><div class="recipe-stat-label">Price</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">65%</div><div class="recipe-stat-label">Margin</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="recipe-card" data-category="appetizers">
+          <div class="recipe-image">
+            <span class="recipe-category">Appetizer</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="recipe-content">
+            <div class="recipe-name">Truffle Bruschetta</div>
+            <div class="recipe-desc">Toasted ciabatta with truffle oil, heirloom tomatoes, and fresh basil</div>
+            <div class="recipe-stats">
+              <div class="recipe-stat"><div class="recipe-stat-value">$3.20</div><div class="recipe-stat-label">Cost</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">$12.00</div><div class="recipe-stat-label">Price</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">73%</div><div class="recipe-stat-label">Margin</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="recipe-card" data-category="mains">
+          <div class="recipe-image">
+            <span class="recipe-category">Main Course</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="recipe-content">
+            <div class="recipe-name">Ribeye Steak</div>
+            <div class="recipe-desc">12oz prime ribeye with herb butter, roasted potatoes, and asparagus</div>
+            <div class="recipe-stats">
+              <div class="recipe-stat"><div class="recipe-stat-value">$14.50</div><div class="recipe-stat-label">Cost</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">$42.00</div><div class="recipe-stat-label">Price</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">66%</div><div class="recipe-stat-label">Margin</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="recipe-card" data-category="desserts">
+          <div class="recipe-image">
+            <span class="recipe-category">Dessert</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="recipe-content">
+            <div class="recipe-name">Chocolate Lava Cake</div>
+            <div class="recipe-desc">Warm chocolate cake with molten center, vanilla ice cream, and raspberry coulis</div>
+            <div class="recipe-stats">
+              <div class="recipe-stat"><div class="recipe-stat-value">$2.80</div><div class="recipe-stat-label">Cost</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">$11.00</div><div class="recipe-stat-label">Price</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">75%</div><div class="recipe-stat-label">Margin</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="recipe-card" data-category="sauces">
+          <div class="recipe-image">
+            <span class="recipe-category">Sauce</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="recipe-content">
+            <div class="recipe-name">Béarnaise Sauce</div>
+            <div class="recipe-desc">Classic French sauce with tarragon, shallots, and clarified butter</div>
+            <div class="recipe-stats">
+              <div class="recipe-stat"><div class="recipe-stat-value">$1.20</div><div class="recipe-stat-label">Cost</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">$3.00</div><div class="recipe-stat-label">Price</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">60%</div><div class="recipe-stat-label">Margin</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="recipe-card" data-category="beverages">
+          <div class="recipe-image">
+            <span class="recipe-category">Beverage</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div class="recipe-content">
+            <div class="recipe-name">Signature Mojito</div>
+            <div class="recipe-desc">Fresh mint, lime, white rum, and house-made simple syrup</div>
+            <div class="recipe-stats">
+              <div class="recipe-stat"><div class="recipe-stat-value">$2.50</div><div class="recipe-stat-label">Cost</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">$12.00</div><div class="recipe-stat-label">Price</div></div>
+              <div class="recipe-stat"><div class="recipe-stat-value">79%</div><div class="recipe-stat-label">Margin</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Chat Section -->
       <section class="chat-section">
         <div class="chat-header">
-          <h3 class="chat-title" data-translate="ai_assistant">AI Assistant</h3>
-          <button class="clear-chat" onclick="clearChat()" data-translate="clear_chat">Clear Chat</button>
+          <h3 class="chat-title">Recipe AI Assistant</h3>
+          <button class="clear-chat" onclick="clearChat()">Clear Chat</button>
         </div>
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you optimize your recipes for cost efficiency and quality. Ask me about recipe costing, ingredient optimization, or upload your recipe data for analysis.</div>
+            <div class="message-bubble">Hello! I can help you create new recipes, calculate costs, scale portions, or optimize your existing recipes. What would you like to work on today?</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
 
         <div class="input-section">
           <div class="input-container">
-            <textarea id="chat-input" class="chat-input" placeholder="Ask me about recipe management..." rows="1"></textarea>
-            <input type="file" id="file-input" accept=".csv" class="file-input"/>
-            <button id="upload-button" class="upload-button" title="Upload CSV for analysis">
+            <textarea id="chat-input" class="chat-input" placeholder="Describe a recipe or ask for help..." rows="1"></textarea>
+            <input type="file" id="file-input" accept=".csv,.xlsx,.pdf" class="file-input"/>
+            <button id="upload-button" class="upload-button" title="Upload recipe file">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,12L16,16H13.5V19H10.5V16H8L12,12Z"/>
               </svg>
             </button>
-            <button id="send-button" class="send-button">
+            <button id="send-button" class="send-button" onclick="sendMessage()">
               <span>Send</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
             </button>
@@ -573,122 +473,231 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const textarea = document.getElementById('chat-input');
-      const sendButton = document.getElementById('send-button');
-      const uploadButton = document.getElementById('upload-button');
-      const fileInput = document.getElementById('file-input');
       const messagesArea = document.getElementById('messages-area');
+      const chatInput = document.getElementById('chat-input');
+      const fileInput = document.getElementById('file-input');
+      const uploadButton = document.getElementById('upload-button');
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      const recipeCards = document.querySelectorAll('.recipe-card');
 
-      // CSRF helper
       function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return null;
       }
-      const CSRF = getCookie('csrftoken');
+      const CSRF_TOKEN = getCookie('csrftoken');
 
-      // Auto-resize textarea
-      textarea.addEventListener('input', function() {
+      // Filter functionality
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          filterBtns.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          const filter = this.dataset.filter;
+          
+          recipeCards.forEach(card => {
+            if (filter === 'all' || card.dataset.category === filter) {
+              card.style.display = 'block';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      });
+
+      chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
       });
 
-      function addMessage(content, isUser = false) {
-      // Markdown conversion functions
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      function processInlineMarkdown(text) {
-        return text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-      }
-
-      function convertMarkdownToHTML(text) {
-        const lines = text.split('\n');
-        let inList = false;
-        let listType = null;
-        let processedLines = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i];
-          const trimmed = line.trim();
-
-          if (!trimmed) {
-            if (inList) {
-              processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              inList = false;
-              listType = null;
-            }
-            processedLines.push('<br>');
-            continue;
-          }
-
-          const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
-          if (numberedMatch) {
-            if (!inList || listType !== 'ol') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ol>');
-              inList = true;
-              listType = 'ol';
-            }
-            const content = processInlineMarkdown(escapeHtml(numberedMatch[2]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          const bulletMatch = trimmed.match(/^[-•·]\s+(.+)$/);
-          if (bulletMatch) {
-            if (!inList || listType !== 'ul') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ul>');
-              inList = true;
-              listType = 'ul';
-            }
-            const content = processInlineMarkdown(escapeHtml(bulletMatch[1]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          if (inList) {
-            processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-            inList = false;
-            listType = null;
-          }
-
-          if (trimmed.match(/^###\s+(.+)$/)) {
-            const heading = escapeHtml(trimmed.replace(/^###\s+/, ''));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          if (trimmed.match(/^\*\*(.+):\*\*$/)) {
-            const heading = escapeHtml(trimmed.replace(/^\*\*(.+):\*\*$/, '$1:'));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          const content = processInlineMarkdown(escapeHtml(line));
-          processedLines.push(content);
+      chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
         }
+      });
 
-        if (inList) {
-          processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
+      uploadButton.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        addMessage(`📁 Uploading: ${file.name}`, true);
+        
+        const formData = new FormData();
+        formData.append('task', 'recipe_management');
+        formData.append('file', file);
+
+        try {
+          const response = await fetch('/api/agent/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN },
+            body: formData
+          });
+          const data = await response.json();
+          
+          if (data.error) {
+            addMessage(`❌ Error: ${data.error}`, false);
+          } else if (data.status === 'success') {
+            // Format recipe analysis report
+            const formattedReport = formatRecipeReport(data);
+            addMessage(formattedReport, false);
+          } else if (data.message) {
+            addMessage(`❌ ${data.message}`, false);
+          } else {
+            addMessage(JSON.stringify(data, null, 2), false);
+          }
+        } catch (error) {
+          addMessage(`❌ Error: ${error.message}`, false);
         }
+        fileInput.value = '';
+      });
 
-        let html = processedLines.join('\n');
-        html = html.replace(/<br>\s*<(ol|ul|h3)>/g, '<$1>');
-        html = html.replace(/<\/(ol|ul|h3)>\s*<br>/g, '</$1>');
-        html = html.replace(/(<br>\s*){3,}/g, '<br><br>');
+      // Format Recipe Analysis Report
+      function formatRecipeReport(data) {
+        let html = '<div class="recipe-analysis-report">';
+        
+        // Header
+        html += '<h3 style="color: var(--accent-primary); margin-bottom: 1rem;">📊 Recipe Portfolio Analysis</h3>';
+        
+        // Summary Section
+        if (data.summary) {
+          const s = data.summary;
+          html += '<div style="background: rgba(102, 126, 234, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">';
+          html += '<h4 style="margin-bottom: 0.5rem;">📋 Portfolio Summary</h4>';
+          html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem;">';
+          html += `<div><strong>Total Recipes:</strong> ${s.total_recipes || 'N/A'}</div>`;
+          html += `<div><strong>Avg Food Cost:</strong> ${s.avg_food_cost_percent || 'N/A'}</div>`;
+          html += `<div><strong>Avg Margin:</strong> ${s.avg_profit_margin || 'N/A'}</div>`;
+          html += `<div><strong>Profitable:</strong> ${s.profitable_recipes || 0} recipes</div>`;
+          html += `<div><strong>Needs Review:</strong> ${s.needs_review || 0} recipes</div>`;
+          html += '</div></div>';
+        }
+        
+        // Top Performers
+        if (data.top_performers && data.top_performers.length > 0) {
+          html += '<div style="margin-bottom: 1rem;">';
+          html += '<h4 style="color: #10b981; margin-bottom: 0.5rem;">⭐ Top Performers</h4>';
+          html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
+          html += '<tr style="background: rgba(16, 185, 129, 0.1);"><th style="padding: 0.5rem; text-align: left;">Recipe</th><th>Cost/Serving</th><th>Price</th><th>Margin</th><th>Status</th></tr>';
+          data.top_performers.forEach(r => {
+            html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">`;
+            html += `<td style="padding: 0.5rem;">${r.recipe_name}</td>`;
+            html += `<td style="text-align: center;">$${r.cost_per_serving}</td>`;
+            html += `<td style="text-align: center;">$${r.recipe_price}</td>`;
+            html += `<td style="text-align: center; color: #10b981;">${r.profit_margin}%</td>`;
+            html += `<td style="text-align: center;"><span style="background: #10b981; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${r.status}</span></td>`;
+            html += '</tr>';
+          });
+          html += '</table></div>';
+        }
+        
+        // Needs Attention
+        if (data.needs_attention && data.needs_attention.length > 0) {
+          html += '<div style="margin-bottom: 1rem;">';
+          html += '<h4 style="color: #f59e0b; margin-bottom: 0.5rem;">⚠️ Needs Attention</h4>';
+          html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
+          html += '<tr style="background: rgba(245, 158, 11, 0.1);"><th style="padding: 0.5rem; text-align: left;">Recipe</th><th>Cost/Serving</th><th>Price</th><th>Margin</th><th>Status</th></tr>';
+          data.needs_attention.forEach(r => {
+            html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">`;
+            html += `<td style="padding: 0.5rem;">${r.recipe_name}</td>`;
+            html += `<td style="text-align: center;">$${r.cost_per_serving}</td>`;
+            html += `<td style="text-align: center;">$${r.recipe_price}</td>`;
+            html += `<td style="text-align: center; color: #f59e0b;">${r.profit_margin}%</td>`;
+            html += `<td style="text-align: center;"><span style="background: #f59e0b; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">${r.status}</span></td>`;
+            html += '</tr>';
+          });
+          html += '</table></div>';
+        }
+        
+        // Recommendations
+        if (data.recommendations && data.recommendations.length > 0) {
+          html += '<div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">';
+          html += '<h4 style="margin-bottom: 0.5rem;">💡 Recommendations</h4>';
+          html += '<ul style="margin: 0; padding-left: 1.5rem;">';
+          data.recommendations.forEach(rec => {
+            html += `<li style="margin-bottom: 0.25rem;">${rec}</li>`;
+          });
+          html += '</ul></div>';
+        }
+        
+        // AI Analysis
+        if (data.ai_analysis && !data.ai_analysis.startsWith('AI analysis unavailable')) {
+          html += '<div style="background: rgba(139, 92, 246, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">';
+          html += '<h4 style="margin-bottom: 0.5rem;">🤖 AI Strategic Analysis</h4>';
+          html += '<div style="white-space: pre-wrap; font-size: 0.875rem; line-height: 1.6;">' + formatMarkdown(data.ai_analysis) + '</div>';
+          html += '</div>';
+        }
+        
+        // All Recipes Table (collapsible)
+        if (data.recipes && data.recipes.length > 0) {
+          html += '<details style="margin-top: 1rem;">';
+          html += '<summary style="cursor: pointer; color: var(--accent-primary); font-weight: 600;">📋 View All Recipes (' + data.recipes.length + ')</summary>';
+          html += '<table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 0.5rem;">';
+          html += '<tr style="background: rgba(102, 126, 234, 0.2);"><th style="padding: 0.5rem;">Recipe</th><th>Ingredient</th><th>Labor</th><th>Total</th><th>Price</th><th>Margin</th><th>Status</th></tr>';
+          data.recipes.forEach(r => {
+            const statusColor = r.status === 'Excellent' ? '#10b981' : r.status === 'Good' ? '#3b82f6' : r.status === 'Acceptable' ? '#f59e0b' : '#ef4444';
+            html += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">`;
+            html += `<td style="padding: 0.5rem;">${r.recipe_name}</td>`;
+            html += `<td style="text-align: center;">$${r.ingredient_cost}</td>`;
+            html += `<td style="text-align: center;">$${r.labor_cost}</td>`;
+            html += `<td style="text-align: center;">$${r.total_cost}</td>`;
+            html += `<td style="text-align: center;">$${r.recipe_price}</td>`;
+            html += `<td style="text-align: center; color: ${statusColor};">${r.profit_margin}%</td>`;
+            html += `<td style="text-align: center;"><span style="background: ${statusColor}; color: white; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.7rem;">${r.status}</span></td>`;
+            html += '</tr>';
+          });
+          html += '</table></details>';
+        }
+        
+        html += '</div>';
         return html;
       }
+      
+      // Helper to format markdown
+      function formatMarkdown(text) {
+        if (!text) return '';
+        return text
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+          .replace(/^### (.*$)/gim, '<h5 style="color: var(--accent-primary); margin: 0.75rem 0 0.25rem;">$1</h5>')
+          .replace(/^## (.*$)/gim, '<h4 style="color: var(--accent-primary); margin: 1rem 0 0.5rem;">$1</h4>')
+          .replace(/^# (.*$)/gim, '<h3 style="color: var(--accent-primary); margin: 1rem 0 0.5rem;">$1</h3>')
+          .replace(/^\d+\. (.*$)/gim, '<div style="margin-left: 1rem;">• $1</div>')
+          .replace(/^- (.*$)/gim, '<div style="margin-left: 1rem;">• $1</div>')
+          .replace(/\n/g, '<br>');
+      }
 
+      window.sendMessage = async function() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+
+        try {
+          const response = await fetch('/chat/api/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': CSRF_TOKEN
+            },
+            body: `message=${encodeURIComponent(message)}&context=recipes`
+          });
+          const data = await response.json();
+          addMessage(data.error ? `❌ Error: ${data.error}` : (data.response || 'No response'), false);
+        } catch (error) {
+          addMessage(`❌ Error: ${error.message}`, false);
+        }
+      };
+
+      function addMessage(content, isUser) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        bubble.innerHTML = convertMarkdownToHTML(content);
+        bubble.innerHTML = content;
         const time = document.createElement('div');
         time.className = 'message-time';
         time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -698,170 +707,27 @@
         messagesArea.scrollTop = messagesArea.scrollHeight;
       }
 
-      function clearChat() {
-        const messages = messagesArea.querySelectorAll('.message:not(:first-child)');
-        messages.forEach(msg => msg.remove());
-        textarea.value = '';
-        textarea.style.height = 'auto';
-        textarea.focus();
-      }
-
-      window.clearChat = clearChat;
-
-      async function sendMessage() {
-        const message = textarea.value.trim();
-        if (!message) return;
-        
-        addMessage(message, true);
-        const original = sendButton.innerHTML;
-        sendButton.innerHTML = '<span>Sending...</span>';
-        sendButton.disabled = true;
-        textarea.value = '';
-        textarea.style.height = 'auto';
-        
-        try {
-          const resp = await fetch('/chat/api/', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/x-www-form-urlencoded',
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: new URLSearchParams({ message })
-          });
-          const data = await resp.json().catch(() => ({}));
-          const aiResponse = data?.response || data?.error || 'No response received.';
-          addMessage(aiResponse, false);
-        } catch (err) {
-          addMessage('Network error. Please check your connection.', false);
-        } finally {
-          sendButton.innerHTML = original;
-          sendButton.disabled = false;
-          textarea.focus();
-        }
-      }
-
-      // File upload functionality
-      uploadButton.addEventListener('click', () => fileInput.click());
-      
-      fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        addMessage(`📁 Uploading ${file.name} for recipe analysis...`, true);
-        
-        const formData = new FormData();
-        formData.append('task', 'recipe_costing');
-        formData.append('file', file);
-        
-        try {
-          uploadButton.disabled = true;
-          uploadButton.innerHTML = '<span>Processing...</span>';
-          
-          const resp = await fetch('/api/agent/', {
-            method: 'POST',
-            headers: {
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: formData
-          });
-          
-          const data = await resp.json();
-          
-          if (data.status === 'success') {
-            addMessage(`✅ Recipe analysis complete! Processed ${file.name}`, false);
-          } else {
-            addMessage(`❌ ${data.message || 'Analysis failed'}`, false);
-          }
-        } catch (err) {
-          addMessage(`❌ Upload error: ${err.message}`, false);
-        } finally {
-          uploadButton.disabled = false;
-          uploadButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
-          fileInput.value = '';
-        }
-      });
-
-      sendButton.addEventListener('click', sendMessage);
-      textarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-
-      // Core task functions
-      window.calculateRecipeCosts = function() {
-        addMessage("Let's calculate your recipe costs! Please provide recipe details with ingredients and quantities.", false);
-        textarea.placeholder = "Enter: Recipe Name, Ingredient, Quantity, Unit Cost (e.g., Pasta, Flour, 2 cups, 0.50)";
-        textarea.focus();
+      window.clearChat = function() {
+        messagesArea.innerHTML = `
+          <div class="message assistant">
+            <div class="message-bubble">Hello! I can help you create new recipes, calculate costs, scale portions, or optimize your existing recipes. What would you like to work on today?</div>
+            <div class="message-time">Just now</div>
+          </div>
+        `;
       };
 
-      window.optimizeIngredients = function() {
-        addMessage("Let's optimize your ingredients! Please provide details about your current ingredient usage and costs.", false);
-        textarea.placeholder = "Describe your current ingredient sourcing and usage...";
-        textarea.focus();
+      window.createRecipe = () => { chatInput.value = 'Help me create a new recipe with cost analysis'; chatInput.focus(); };
+      window.costAnalysis = () => { chatInput.value = 'Calculate the food cost for my recipes and suggest pricing'; chatInput.focus(); };
+      window.scaleRecipe = () => { chatInput.value = 'Help me scale a recipe for a larger batch size'; chatInput.focus(); };
+      window.searchRecipes = () => {
+        const query = document.getElementById('recipe-search').value.toLowerCase();
+        recipeCards.forEach(card => {
+          const name = card.querySelector('.recipe-name').textContent.toLowerCase();
+          const desc = card.querySelector('.recipe-desc').textContent.toLowerCase();
+          card.style.display = (name.includes(query) || desc.includes(query)) ? 'block' : 'none';
+        });
       };
-
-      window.scaleRecipes = function() {
-        addMessage("Let's scale your recipes! Please provide the recipe details and desired batch size.", false);
-        textarea.placeholder = "Enter: Recipe Name, Current Yield, Desired Yield (e.g., Soup, 4 servings, 20 servings)";
-        textarea.focus();
-      };
-
-      textarea.focus();
     });
-
-    // Language Translation System
-    const translations = {
-      en: {
-        company_name: "Curated Restaurant Consulting",
-        company_tagline: "Driven by Data. Crafted for Excellence.",
-        recipes_title: "Recipe Management",
-        recipes_page_subtitle: "Optimize your recipes for cost efficiency and consistent quality",
-        recipe_costing_title: "Recipe Costing",
-        recipe_costing_desc: "Calculate accurate recipe costs",
-        ingredient_optimization_title: "Ingredient Optimization",
-        ingredient_optimization_desc: "Optimize ingredient usage and sourcing",
-        recipe_scaling_title: "Recipe Scaling",
-        recipe_scaling_desc: "Scale recipes for different batch sizes",
-        ai_assistant: "AI Assistant",
-        clear_chat: "Clear Chat"
-      },
-      es: {
-        company_name: "Consultoría de Restaurantes Curada",
-        company_tagline: "Impulsado por Datos. Creado para la Excelencia.",
-        recipes_title: "Gestión de Recetas",
-        recipes_page_subtitle: "Optimiza tus recetas para eficiencia de costos y calidad consistente",
-        recipe_costing_title: "Costeo de Recetas",
-        recipe_costing_desc: "Calcula costos precisos de recetas",
-        ingredient_optimization_title: "Optimización de Ingredientes",
-        ingredient_optimization_desc: "Optimiza el uso y abastecimiento de ingredientes",
-        recipe_scaling_title: "Escalado de Recetas",
-        recipe_scaling_desc: "Escala recetas para diferentes tamaños de lote",
-        ai_assistant: "Asistente IA",
-        clear_chat: "Limpiar Chat"
-      }
-    };
-
-    function changeLanguage(lang) {
-      localStorage.setItem('selectedLanguage', lang);
-      document.querySelectorAll('[data-translate]').forEach(element => {
-        const key = element.getAttribute('data-translate');
-        if (translations[lang] && translations[lang][key]) {
-          element.textContent = translations[lang][key];
-        }
-      });
-      document.getElementById('language-select').value = lang;
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const savedLang = localStorage.getItem('selectedLanguage') || 'en';
-      const select = document.getElementById('language-select');
-      if (select) select.value = savedLang;
-      changeLanguage(savedLang);
-    });
-
-    window.changeLanguage = changeLanguage;
   </script>
 </body>
 </html>

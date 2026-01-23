@@ -1,181 +1,194 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>KPI Analysis - Restaurant Consulting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-      min-height: 100vh;
-      color: #1f2937;
-    }
-
-    .header {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      padding: 1rem 2rem;
-    }
-
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .language-selector select {
-      background: #fff;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      color: #374151;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right .5rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-      padding-right: 2.5rem;
-      min-width: 140px;
-    }
-
-    .language-selector select:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .language-selector select:hover {
-      border-color: #9ca3af;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-circle {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 1.25rem;
-    }
-
-    .brand-text .company-name {
-      font-weight: 700;
-      color: #1f2937;
-      font-size: 1.125rem;
-    }
-
-    .brand-text .company-tagline {
-      color: #64748b;
-      font-size: 0.875rem;
-    }
-
-    .back-button {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      color: #374151;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-
-    .back-button:hover {
-      background: #e5e7eb;
-      transform: translateY(-1px);
-    }
-
-    .main-container {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 2rem;
-    }
-
+    /* Enhanced KPI Page Styles */
     .kpi-interface {
-      width: 100%;
-      max-width: 1000px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      max-width: 1200px;
+    }
+
+    .report {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+      border-radius: var(--radius-xl);
+      box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      margin: var(--spacing-lg) 0;
       overflow: hidden;
-      border: 1px solid rgba(67, 56, 202, 0.1);
+      border: 1px solid rgba(102, 126, 234, 0.1);
     }
 
-    .page-header {
-      padding: 3rem;
+    .report__header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      color: white;
+      padding: var(--spacing-xl);
       text-align: center;
-      background: linear-gradient(180deg, rgba(67, 56, 202, 0.03) 0%, transparent 100%);
+      position: relative;
+      overflow: hidden;
     }
 
-    .page-title {
-      font-size: 2.5rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #4338ca 0%, #3b82f6 100%);
+    .report__header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+      animation: rotate-slow 20s linear infinite;
+    }
+
+    .report__header h2 { 
+      font-size: 1.75rem; 
+      font-weight: 800; 
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .report__meta { 
+      font-size: 0.9rem; 
+      opacity: 0.95;
+      position: relative;
+      z-index: 1;
+    }
+
+    .report__body { 
+      padding: var(--spacing-xl);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .kpi-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      border: 1px solid rgba(102, 126, 234, 0.15);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+    }
+
+    .kpi-card::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(102, 126, 234, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 
+        0 20px 50px rgba(102, 126, 234, 0.2),
+        0 0 0 1px rgba(102, 126, 234, 0.2);
+    }
+
+    .kpi-value { 
+      font-size: 2.5rem; 
+      font-weight: 800; 
+      background: var(--primary-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      position: relative;
+      z-index: 1;
     }
 
-    .page-subtitle {
-      font-size: 1.25rem;
-      color: #64748b;
-      margin-bottom: 3rem;
-      line-height: 1.6;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+    .kpi-label { 
+      font-size: 0.9rem; 
+      color: var(--text-secondary); 
+      margin-top: 0.5rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 1;
     }
 
-    .core-tasks-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-      padding: 0 3rem;
+    .kpi-status { 
+      font-size: 0.8rem; 
+      margin-top: 0.75rem; 
+      padding: 0.375rem 0.875rem; 
+      border-radius: var(--radius-full); 
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-weight: 600;
+      position: relative;
+      z-index: 1;
     }
 
+    .kpi-status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: status-pulse 2s infinite;
+    }
+
+    .kpi-status.good { 
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.15) 100%);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .kpi-status.warning { 
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 191, 36, 0.15) 100%);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .kpi-status.alert { 
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(248, 113, 113, 0.15) 100%);
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    @keyframes status-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Enhanced Core Task Cards */
     .core-task-card {
-      background: #fff;
-      border: 2px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 2rem;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
       text-align: center;
-      transition: all 0.3s ease;
       cursor: pointer;
       position: relative;
       overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
 
     .core-task-card::before {
@@ -185,409 +198,73 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #4338ca, #3b82f6);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .core-task-card:hover::before {
-      transform: translateX(0);
+      transform: scaleX(1);
     }
 
     .core-task-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 30px rgba(67, 56, 202, 0.2);
-      border-color: #4338ca;
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 
+        0 25px 50px rgba(102, 126, 234, 0.2),
+        0 0 0 1px rgba(102, 126, 234, 0.15);
     }
 
-    .task-icon {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-      border-radius: 16px;
+    .core-task-card:hover .task-icon {
+      transform: scale(1.15) rotate(5deg);
+      box-shadow: 
+        0 15px 40px rgba(102, 126, 234, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    /* AI Analysis Section */
+    .ai-analysis-section {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      margin-top: var(--spacing-lg);
+    }
+
+    .ai-analysis-section h4 {
       display: flex;
       align-items: center;
-      justify-content: center;
-      margin: 0 auto 1rem;
-      font-size: 1.5rem;
-      box-shadow: 0 8px 20px rgba(67, 56, 202, 0.25);
-    }
-
-    .task-title {
-      font-weight: 700;
-      color: #1f2937;
-      margin-bottom: 0.5rem;
-      font-size: 1.125rem;
-    }
-
-    .task-desc {
-      color: #64748b;
-      font-size: 0.875rem;
-      line-height: 1.4;
-      margin-bottom: 1rem;
-    }
-
-    .task-features {
-      list-style: none;
-      text-align: left;
-      font-size: 0.8rem;
-      color: #6b7280;
-    }
-
-    .task-features li {
-      margin-bottom: 0.25rem;
-      padding-left: 1rem;
-      position: relative;
-    }
-
-    .task-features li::before {
-      content: '✓';
-      position: absolute;
-      left: 0;
-      color: #10b981;
-      font-weight: bold;
-    }
-
-    .chat-section {
-      background: #f8fafc;
-      border-top: 1px solid #e5e7eb;
-      padding: 2rem 3rem;
-    }
-
-    .chat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-
-    .chat-title {
+      gap: var(--spacing-sm);
       font-size: 1.25rem;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .clear-chat {
-      background: rgba(67, 56, 202, 0.1);
-      border: 1px solid rgba(67, 56, 202, 0.2);
-      color: #4338ca;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-
-    .clear-chat:hover {
-      background: rgba(67, 56, 202, 0.2);
-    }
-
-    .messages-area {
-      max-height: 400px;
-      overflow-y: auto;
-      padding: 1rem 0;
-      margin-bottom: 1.5rem;
-    }
-
-    .message {
-      margin-bottom: 1.5rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .message.user {
-      align-items: flex-end;
-    }
-
-    .message.assistant {
-      align-items: flex-start;
-    }
-
-    .message-bubble {
-      max-width: 80%;
-      padding: 1rem 1.5rem;
-      border-radius: 20px;
-      word-wrap: break-word;
-      line-height: 1.7;
-    }
-
-    .message.user .message-bubble {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: #fff;
-      border-bottom-right-radius: 8px;
-    }
-
-    .message.assistant .message-bubble {
-      background: #fff;
-      color: #374151;
-      border: 1px solid #e5e7eb;
-      border-bottom-left-radius: 8px;
-    }
-
-    .message-time {
-      font-size: 0.75rem;
-      color: #94a3b8;
-      margin-top: 0.5rem;
-      padding: 0 0.5rem;
-    }
-
-    .input-section {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-    }
-
-    .input-container {
-      flex: 1;
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-end;
-    }
-
-    .chat-input {
-      flex: 1;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      resize: none;
-      min-height: 44px;
-      max-height: 120px;
-      font-family: inherit;
-      transition: all 0.2s ease;
-    }
-
-    .chat-input:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .upload-button {
-      background: #f3f4f6;
-      border: 2px solid #d1d5db;
-      color: #374151;
-      padding: 0.75rem;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .upload-button:hover {
-      background: #e5e7eb;
-      border-color: #9ca3af;
-    }
-
-    .send-button {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.25rem;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .send-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);
-    }
-
-    .send-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .file-input {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .page-title {
-        font-size: 2rem;
-      }
-
-      .core-tasks-grid {
-        grid-template-columns: 1fr;
-        padding: 0 1.5rem;
-      }
-
-      .chat-section {
-        padding: 1.5rem;
-      }
-
-      .input-section {
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-
-      .input-container {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-    }
-
-    /* Report Styling */
-    .report {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      margin: 1rem 0;
-      overflow: hidden;
-      max-width: none !important;
-      padding: 0 !important;
-      border-radius: 12px !important;
-      word-wrap: normal !important;
-    }
-
-    /* Override message bubble styles for reports */
-    .message-bubble .report {
-      background: #fff !important;
-      border: none !important;
-      border-radius: 12px !important;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      max-width: none !important;
-      width: 100% !important;
-      display: block !important;
-    }
-
-    /* Ensure report content is visible */
-    .message-bubble .report * {
-      color: inherit !important;
-    }
-
-    .message-bubble .report .report__header {
-      background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%) !important;
-      color: white !important;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    .message-bubble .report .report__body {
-      color: #374151 !important;
-    }
-
-    .report__header {
-      background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%);
-      color: white;
-      padding: 1.5rem;
-      text-align: center;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .report__header h2 {
-      font-size: 1.5rem;
       font-weight: 700;
-      margin-bottom: 0.5rem;
+      color: #7c3aed;
+      margin-bottom: var(--spacing-md);
     }
 
-    .report__meta {
-      font-size: 0.875rem;
-      opacity: 0.9;
-      margin-bottom: 1rem;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .badge--excellent {
-      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-    }
-
-    .badge--good {
-      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
-    }
-
-    .badge--acceptable {
-      background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
-    }
-
-    .badge--needs-improvement {
-      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-    }
-
-    .badge--blue {
-      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-      color: white;
-      box-shadow: 0 2px 4px rgba(14, 165, 233, 0.3);
-    }
-
-    .report__body {
-      padding: 1.5rem;
-      background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
-    }
-
-    .report__body .lead {
-      font-size: 1.125rem;
-      font-weight: 500;
-      color: #1e293b;
-      margin-bottom: 1.5rem;
-      line-height: 1.6;
-      background: linear-gradient(135deg, #0891b2 0%, #0284c7 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .report__body h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #0f172a;
-      margin: 1.5rem 0 0.75rem 0;
-      border-bottom: 3px solid #0891b2;
-      padding-bottom: 0.5rem;
-    }
-
-    .report__body ul, .report__body ol {
-      margin: 0.75rem 0;
-      padding-left: 1.5rem;
-    }
-
-    .report__body li {
-      margin: 0.5rem 0;
-      line-height: 1.7;
-      color: #475569;
-    }
-
-    .report__body strong {
-      color: #0f172a;
-      font-weight: 600;
+    .ai-analysis-section h4::before {
+      content: '🤖';
+      font-size: 1.5rem;
     }
   </style>
 </head>
 <body>
+  <!-- Animated Background -->
+  <div class="animated-bg"></div>
+  <div class="floating-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
   <!-- Header -->
-  <header class="header">
+  <header class="glass-header">
     <div class="header-content">
       <div class="logo">
-        <div class="logo-circle" aria-hidden="true">€</div>
-      <div class="brand-text">
-        <div class="company-name" data-translate="company_name">Curated Restaurant Consulting</div>
-        <div class="company-tagline" data-translate="company_tagline">Driven by Data. Crafted for Excellence.</div>
+        <div class="logo-circle" aria-hidden="true">C</div>
+        <div class="brand-text">
+          <div class="company-name">Curated Restaurant Consulting</div>
+          <div class="company-tagline">Driven by Data. Crafted for Excellence.</div>
+        </div>
       </div>
       <div class="header-actions">
         <div class="language-selector">
@@ -596,18 +273,17 @@
             <option value="es">🇪🇸 Español</option>
           </select>
         </div>
+        <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
       </div>
-      </div>
-      <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
     </div>
   </header>
 
   <main class="main-container">
-    <div class="kpi-interface">
+    <div class="glass-interface kpi-interface">
       <!-- Page Header -->
       <section class="page-header">
-        <h1 class="page-title" data-translate="kpi_analysis_title">KPI Analysis</h1>
-        <p class="page-subtitle" data-translate="kpi_analysis_page_subtitle">Choose a core KPI analysis task or chat with our AI assistant for personalized insights</p>
+        <h1 class="page-title">KPI Analysis</h1>
+        <p class="page-subtitle">Comprehensive performance tracking with real-time KPI monitoring, benchmarking, and actionable insights</p>
 
         <!-- Core Tasks Grid -->
         <div class="core-tasks-grid">
@@ -615,19 +291,36 @@
           <div class="core-task-card" onclick="analyzeLaborCost()">
             <div class="task-icon">
               <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <circle cx="14" cy="12" r="4" stroke="white" stroke-width="2"/>
-                <circle cx="26" cy="12" r="4" stroke="white" stroke-width="2"/>
-                <path d="M8 32V30C8 26.6863 10.6863 24 14 24C17.3137 24 20 26.6863 20 30V32" stroke="white" stroke-width="2"/>
-                <path d="M20 32V30C20 26.6863 22.6863 24 26 24C29.3137 24 32 26.6863 32 30V32" stroke="white" stroke-width="2"/>
-                <circle cx="20" cy="8" r="2" fill="white"/>
+                <circle cx="20" cy="12" r="6" stroke="white" stroke-width="2"/>
+                <path d="M8 36V34C8 28.4772 12.4772 24 18 24H22C27.5228 24 32 28.4772 32 34V36" stroke="white" stroke-width="2"/>
+                <path d="M28 8L32 12L28 16" stroke="white" stroke-width="2"/>
+                <path d="M32 12H24" stroke="white" stroke-width="2"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="labor_cost_title">Labor Cost Analysis</div>
-            <div class="task-desc" data-translate="labor_cost_desc">Optimize staffing and reduce labor costs</div>
+            <div class="task-title">Labor Cost Analysis</div>
+            <div class="task-desc">Track and optimize labor expenses</div>
             <ul class="task-features">
-              <li>Calculate labor percentage</li>
-              <li>Identify scheduling inefficiencies</li>
-              <li>Benchmark against industry standards</li>
+              <li>Labor cost percentage</li>
+              <li>Overtime tracking</li>
+              <li>Productivity metrics</li>
+            </ul>
+          </div>
+
+          <!-- Food Cost Analysis -->
+          <div class="core-task-card" onclick="analyzeFoodCost()">
+            <div class="task-icon">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <circle cx="20" cy="20" r="14" stroke="white" stroke-width="2"/>
+                <path d="M20 10V20L26 26" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="20" cy="20" r="3" fill="white"/>
+              </svg>
+            </div>
+            <div class="task-title">Food Cost Analysis</div>
+            <div class="task-desc">Monitor and control food expenses</div>
+            <ul class="task-features">
+              <li>Food cost percentage</li>
+              <li>Waste tracking</li>
+              <li>Menu costing</li>
             </ul>
           </div>
 
@@ -643,12 +336,12 @@
                 <path d="M6 16L12 10L18 14L26 6L32 12" stroke="white" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="prime_cost_title">Prime Cost Analysis</div>
-            <div class="task-desc" data-translate="prime_cost_desc">Monitor total controllable costs</div>
+            <div class="task-title">Prime Cost Analysis</div>
+            <div class="task-desc">Combined labor and food cost tracking</div>
             <ul class="task-features">
-              <li>Labor + Food cost tracking</li>
-              <li>Industry benchmarking</li>
-              <li>Cost optimization recommendations</li>
+              <li>Prime cost percentage</li>
+              <li>Target benchmarking</li>
+              <li>Trend analysis</li>
             </ul>
           </div>
 
@@ -656,21 +349,19 @@
           <div class="core-task-card" onclick="analyzeSalesPerformance()">
             <div class="task-icon">
               <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <circle cx="20" cy="20" r="16" stroke="white" stroke-width="2"/>
-                <circle cx="20" cy="20" r="10" stroke="white" stroke-width="2"/>
-                <circle cx="20" cy="20" r="4" stroke="white" stroke-width="2"/>
-                <path d="M20 4V8" stroke="white" stroke-width="2"/>
-                <path d="M36 20H32" stroke="white" stroke-width="2"/>
-                <path d="M20 36V32" stroke="white" stroke-width="2"/>
-                <path d="M4 20H8" stroke="white" stroke-width="2"/>
+                <path d="M20 4V36" stroke="white" stroke-width="2"/>
+                <path d="M14 10C14 10 14 8 20 8C26 8 26 12 20 12C14 12 14 16 20 16C26 16 26 14 26 14" stroke="white" stroke-width="2"/>
+                <circle cx="20" cy="24" r="8" stroke="white" stroke-width="2"/>
+                <path d="M20 20V28" stroke="white" stroke-width="2"/>
+                <path d="M16 24H24" stroke="white" stroke-width="2"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="sales_performance_title">Sales Performance</div>
-            <div class="task-desc" data-translate="sales_performance_desc">Analyze revenue and sales trends</div>
+            <div class="task-title">Sales Performance</div>
+            <div class="task-desc">Revenue analysis and forecasting</div>
             <ul class="task-features">
               <li>Sales per labor hour</li>
-              <li>Revenue trend analysis</li>
-              <li>Performance forecasting</li>
+              <li>Revenue trends</li>
+              <li>Growth analysis</li>
             </ul>
           </div>
         </div>
@@ -679,29 +370,29 @@
       <!-- Chat Section -->
       <section class="chat-section">
         <div class="chat-header">
-          <h3 class="chat-title" data-translate="ai_assistant">AI Assistant</h3>
-          <button class="clear-chat" onclick="clearChat()" data-translate="clear_chat">Clear Chat</button>
+          <h3 class="chat-title">AI Assistant</h3>
+          <button class="clear-chat" onclick="clearChat()">Clear Chat</button>
         </div>
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you analyze your restaurant's KPIs. You can ask me about labor costs, prime costs, sales performance, or upload a CSV file for detailed analysis.</div>
+            <div class="message-bubble">Hello! I'm here to help you analyze your restaurant's KPIs. Enter your data below or ask me about labor costs, food costs, prime costs, or sales performance.</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
 
         <div class="input-section">
           <div class="input-container">
-            <textarea id="chat-input" class="chat-input" placeholder="Ask me about your KPIs..." rows="1"></textarea>
+            <textarea id="chat-input" class="chat-input" placeholder="Enter KPI data or ask a question..." rows="1"></textarea>
             <input type="file" id="file-input" accept=".csv" class="file-input"/>
             <button id="upload-button" class="upload-button" title="Upload CSV for analysis">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,12L16,16H13.5V19H10.5V16H8L12,12Z"/>
               </svg>
             </button>
-            <button id="send-button" class="send-button">
+            <button id="send-button" class="send-button" onclick="sendMessage()">
               <span>Send</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
             </button>
@@ -713,129 +404,97 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const textarea = document.getElementById('chat-input');
-      const sendButton = document.getElementById('send-button');
-      const uploadButton = document.getElementById('upload-button');
-      const fileInput = document.getElementById('file-input');
       const messagesArea = document.getElementById('messages-area');
+      const chatInput = document.getElementById('chat-input');
+      const fileInput = document.getElementById('file-input');
+      const uploadButton = document.getElementById('upload-button');
 
-      // CSRF helper
       function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return null;
       }
-      const CSRF = getCookie('csrftoken');
+      const CSRF_TOKEN = getCookie('csrftoken');
 
-      // Auto-resize textarea
-      textarea.addEventListener('input', function() {
+      chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
       });
 
-      function addMessage(content, isUser = false) {
-      // Markdown conversion functions
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      function processInlineMarkdown(text) {
-        return text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-      }
-
-      function convertMarkdownToHTML(text) {
-        const lines = text.split('\n');
-        let inList = false;
-        let listType = null;
-        let processedLines = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i];
-          const trimmed = line.trim();
-
-          if (!trimmed) {
-            if (inList) {
-              processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              inList = false;
-              listType = null;
-            }
-            processedLines.push('<br>');
-            continue;
-          }
-
-          const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
-          if (numberedMatch) {
-            if (!inList || listType !== 'ol') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ol>');
-              inList = true;
-              listType = 'ol';
-            }
-            const content = processInlineMarkdown(escapeHtml(numberedMatch[2]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          const bulletMatch = trimmed.match(/^[-•·]\s+(.+)$/);
-          if (bulletMatch) {
-            if (!inList || listType !== 'ul') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ul>');
-              inList = true;
-              listType = 'ul';
-            }
-            const content = processInlineMarkdown(escapeHtml(bulletMatch[1]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          if (inList) {
-            processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-            inList = false;
-            listType = null;
-          }
-
-          if (trimmed.match(/^###\s+(.+)$/)) {
-            const heading = escapeHtml(trimmed.replace(/^###\s+/, ''));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          if (trimmed.match(/^\*\*(.+):\*\*$/)) {
-            const heading = escapeHtml(trimmed.replace(/^\*\*(.+):\*\*$/, '$1:'));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          const content = processInlineMarkdown(escapeHtml(line));
-          processedLines.push(content);
+      chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
         }
+      });
 
-        if (inList) {
-          processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
+      uploadButton.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        addMessage(`📁 Uploading: ${file.name}`, true);
+        
+        const formData = new FormData();
+        formData.append('task', 'kpi_analysis');
+        formData.append('file', file);
+
+        try {
+          const response = await fetch('/api/agent/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN, 'X-KPI-Analysis-Entitled': 'true' },
+            body: formData
+          });
+          const data = await response.json();
+          console.log('KPI Analysis Response:', data); // Debug logging
+          if (data.error) {
+            addMessage(`❌ Error: ${data.error}`, false);
+          } else if (data.code && data.message) {
+            // Handle API error response format
+            addMessage(`❌ Error: ${data.message}`, false);
+          } else {
+            const report = formatKPIReport(data);
+            console.log('Formatted Report HTML:', report.substring(0, 500)); // Debug logging
+            addMessage(report, false);
+          }
+        } catch (error) {
+          console.error('KPI Analysis Error:', error);
+          addMessage(`❌ Error: ${error.message}`, false);
         }
+        fileInput.value = '';
+      });
 
-        let html = processedLines.join('\n');
-        html = html.replace(/<br>\s*<(ol|ul|h3)>/g, '<$1>');
-        html = html.replace(/<\/(ol|ul|h3)>\s*<br>/g, '</$1>');
-        html = html.replace(/(<br>\s*){3,}/g, '<br><br>');
-        return html;
-      }
+      window.sendMessage = async function() {
+        const message = chatInput.value.trim();
+        if (!message) return;
 
+        addMessage(message, true);
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+
+        try {
+          const response = await fetch('/chat/api/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': CSRF_TOKEN
+            },
+            body: `message=${encodeURIComponent(message)}&context=kpi`
+          });
+          const data = await response.json();
+          addMessage(data.error ? `❌ Error: ${data.error}` : (data.response || 'No response'), false);
+        } catch (error) {
+          addMessage(`❌ Error: ${error.message}`, false);
+        }
+      };
+
+      function addMessage(content, isUser) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-
-        // Check if content contains HTML (look for HTML tags)
-        if (content.includes('<') && content.includes('>')) {
-          bubble.innerHTML = content;
-        } else {
-          bubble.innerHTML = convertMarkdownToHTML(content);
-        }
-
+        bubble.innerHTML = content;
         const time = document.createElement('div');
         time.className = 'message-time';
         time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -845,182 +504,199 @@
         messagesArea.scrollTop = messagesArea.scrollHeight;
       }
 
-      function clearChat() {
-        const messages = messagesArea.querySelectorAll('.message:not(:first-child)');
-        messages.forEach(msg => msg.remove());
-        textarea.value = '';
-        textarea.style.height = 'auto';
-        textarea.focus();
-      }
-
-      window.clearChat = clearChat;
-
-      async function sendMessage() {
-        const message = textarea.value.trim();
-        if (!message) return;
-
-        addMessage(message, true);
-        const original = sendButton.innerHTML;
-        sendButton.innerHTML = '<span>Sending...</span>';
-        sendButton.disabled = true;
-        textarea.value = '';
-        textarea.style.height = 'auto';
-
-        try {
-          const resp = await fetch('/chat/api/', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: new URLSearchParams({ message })
-          });
-          const data = await resp.json().catch(() => ({}));
-          const aiResponse = data?.response || data?.error || 'No response received.';
-          addMessage(aiResponse, false);
-        } catch (err) {
-          addMessage('Network error. Please check your connection.', false);
-        } finally {
-          sendButton.innerHTML = original;
-          sendButton.disabled = false;
-          textarea.focus();
+      function formatKPIReport(data) {
+        if (!data) return '<div class="report"><div class="report__header" style="background: linear-gradient(135deg, #ef4444, #dc2626);"><h2>❌ No Data</h2></div><div class="report__body"><p>No data received from server</p></div></div>';
+        
+        console.log('formatKPIReport received data:', JSON.stringify(data, null, 2));
+        
+        // Handle error responses
+        if (data.status === 'error') {
+          let errorHtml = `<div class="report"><div class="report__header" style="background: linear-gradient(135deg, #ef4444, #dc2626);"><h2>❌ Analysis Error</h2></div>`;
+          errorHtml += `<div class="report__body"><p><strong>Error:</strong> ${data.message || 'Unknown error'}</p>`;
+          if (data.help) errorHtml += `<p><strong>Help:</strong> ${data.help}</p>`;
+          if (data.found_columns) errorHtml += `<p><strong>Found columns:</strong> ${data.found_columns.join(', ')}</p>`;
+          errorHtml += '</div></div>';
+          return errorHtml;
         }
-      }
-
-      // File upload functionality
-      uploadButton.addEventListener('click', () => fileInput.click());
-
-      fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        addMessage(`📁 Uploading ${file.name} for KPI analysis...`, true);
-
-        const formData = new FormData();
-        formData.append('task', 'kpi_analysis');
-        formData.append('file', file);
-
-        try {
-          uploadButton.disabled = true;
-          uploadButton.innerHTML = '<span>Processing...</span>';
-
-          const resp = await fetch('/api/agent/', {
-            method: 'POST',
-            headers: {
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: formData
-          });
-
-          const data = await resp.json();
-
-          if (data.status === 'success') {
-            addMessage(`✅ KPI analysis complete! Analyzed ${data.period_analyzed} from ${data.file_info}`, false);
-            addMessage(`📊 Prime Cost: ${data.summary.avg_prime_percent} | Labor: ${data.summary.avg_labor_percent} | Food: ${data.summary.avg_food_percent}`, false);
+        
+        // Handle CSV upload response format (with summary, daily_kpis, recommendations)
+        if (data.summary || data.recommendations || data.daily_kpis) {
+          let html = `<div class="report"><div class="report__header"><h2>📊 KPI Analysis Report</h2>`;
+          html += `<div class="report__meta">Generated: ${new Date().toLocaleString()}</div>`;
+          if (data.file_info) html += `<div class="report__meta">File: ${data.file_info} | Period: ${data.period_analyzed || 'N/A'}</div>`;
+          html += `</div><div class="report__body">`;
+          
+          // Summary KPI Grid
+          if (data.summary) {
+            html += '<h3 style="color: #667eea; margin-bottom: 1rem;">📈 Summary Metrics</h3><div class="kpi-grid">';
+            
+            const summary = data.summary;
+            if (summary.total_sales) {
+              html += `<div class="kpi-card"><div class="kpi-value">${summary.total_sales}</div><div class="kpi-label">Total Sales</div></div>`;
+            }
+            if (summary.avg_labor_percent) {
+              const laborVal = parseFloat(summary.avg_labor_percent);
+              const status = laborVal <= 30 ? 'good' : laborVal <= 35 ? 'warning' : 'alert';
+              html += `<div class="kpi-card"><div class="kpi-value">${summary.avg_labor_percent}</div><div class="kpi-label">Avg Labor Cost</div><span class="kpi-status ${status}">${status === 'good' ? '✓ Good' : status === 'warning' ? '⚠ Watch' : '⚠ Alert'}</span></div>`;
+            }
+            if (summary.avg_food_percent) {
+              const foodVal = parseFloat(summary.avg_food_percent);
+              const status = foodVal <= 30 ? 'good' : foodVal <= 35 ? 'warning' : 'alert';
+              html += `<div class="kpi-card"><div class="kpi-value">${summary.avg_food_percent}</div><div class="kpi-label">Avg Food Cost</div><span class="kpi-status ${status}">${status === 'good' ? '✓ Good' : status === 'warning' ? '⚠ Watch' : '⚠ Alert'}</span></div>`;
+            }
+            if (summary.avg_prime_percent) {
+              const primeVal = parseFloat(summary.avg_prime_percent);
+              const status = primeVal <= 60 ? 'good' : primeVal <= 65 ? 'warning' : 'alert';
+              html += `<div class="kpi-card"><div class="kpi-value">${summary.avg_prime_percent}</div><div class="kpi-label">Avg Prime Cost</div><span class="kpi-status ${status}">${status === 'good' ? '✓ Good' : status === 'warning' ? '⚠ Watch' : '⚠ Alert'}</span></div>`;
+            }
+            if (summary.avg_sales_per_hour) {
+              html += `<div class="kpi-card"><div class="kpi-value">${summary.avg_sales_per_hour}</div><div class="kpi-label">Avg Sales/Hour</div></div>`;
+            }
+            if (summary.trend) {
+              const trendIcon = summary.trend === 'improving' ? '📈' : summary.trend === 'declining' ? '📉' : '➡️';
+              const trendStatus = summary.trend === 'improving' ? 'good' : summary.trend === 'declining' ? 'alert' : 'warning';
+              html += `<div class="kpi-card"><div class="kpi-value">${trendIcon} ${summary.trend.charAt(0).toUpperCase() + summary.trend.slice(1)}</div><div class="kpi-label">Performance Trend</div><span class="kpi-status ${trendStatus}">${summary.trend === 'improving' ? '✓ Positive' : summary.trend === 'declining' ? '⚠ Negative' : '○ Stable'}</span></div>`;
+            }
+            html += '</div>';
           } else {
-            addMessage(`❌ ${data.message || 'Analysis failed'}`, false);
+            html += '<p style="color: #888;">No summary data available</p>';
           }
-        } catch (err) {
-          addMessage(`❌ Upload error: ${err.message}`, false);
-        } finally {
-          uploadButton.disabled = false;
-          uploadButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
-          fileInput.value = '';
+          
+          // Recommendations
+          if (data.recommendations && data.recommendations.length > 0) {
+            html += '<h3 style="color: #667eea; margin: 1.5rem 0 1rem;">💡 Strategic Recommendations</h3>';
+            html += '<div class="recommendations-grid" style="display: grid; gap: 1rem;">';
+            data.recommendations.forEach(rec => {
+              const priorityClass = rec.priority === 'Critical' ? 'alert' : rec.priority === 'High' ? 'warning' : 'good';
+              html += `<div style="background: rgba(102, 126, 234, 0.1); border-radius: 0.5rem; padding: 1rem; border-left: 4px solid ${priorityClass === 'alert' ? '#ef4444' : priorityClass === 'warning' ? '#f59e0b' : '#10b981'};">`;
+              html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">`;
+              html += `<strong style="color: #667eea;">${rec.category}</strong>`;
+              html += `<span class="kpi-status ${priorityClass}">${rec.priority}</span>`;
+              html += `</div>`;
+              html += `<p style="margin: 0.5rem 0; color: var(--text-primary);">${rec.action}</p>`;
+              html += `<p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);"><em>Impact: ${rec.impact}</em></p>`;
+              html += `</div>`;
+            });
+            html += '</div>';
+          }
+          
+          // Daily KPIs Table
+          if (data.daily_kpis && data.daily_kpis.length > 0) {
+            html += '<h3 style="color: #667eea; margin: 1.5rem 0 1rem;">📅 Daily Performance (Last ' + data.daily_kpis.length + ' Days)</h3>';
+            html += '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">';
+            html += '<thead><tr style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">';
+            html += '<th style="padding: 0.75rem; text-align: left;">Date</th>';
+            html += '<th style="padding: 0.75rem; text-align: right;">Sales</th>';
+            html += '<th style="padding: 0.75rem; text-align: right;">Labor %</th>';
+            html += '<th style="padding: 0.75rem; text-align: right;">Food %</th>';
+            html += '<th style="padding: 0.75rem; text-align: right;">Prime %</th>';
+            html += '<th style="padding: 0.75rem; text-align: right;">Sales/Hour</th>';
+            html += '</tr></thead><tbody>';
+            
+            data.daily_kpis.forEach((day, idx) => {
+              const rowBg = idx % 2 === 0 ? 'rgba(102, 126, 234, 0.05)' : 'transparent';
+              html += `<tr style="background: ${rowBg}; border-bottom: 1px solid rgba(102, 126, 234, 0.1);">`;
+              html += `<td style="padding: 0.75rem;">${day.date}</td>`;
+              html += `<td style="padding: 0.75rem; text-align: right;">$${day.sales?.toLocaleString() || 'N/A'}</td>`;
+              html += `<td style="padding: 0.75rem; text-align: right;"><span class="kpi-status ${day.labor_percent <= 30 ? 'good' : day.labor_percent <= 35 ? 'warning' : 'alert'}">${day.labor_percent?.toFixed(1) || 'N/A'}%</span></td>`;
+              html += `<td style="padding: 0.75rem; text-align: right;"><span class="kpi-status ${day.food_percent <= 30 ? 'good' : day.food_percent <= 35 ? 'warning' : 'alert'}">${day.food_percent?.toFixed(1) || 'N/A'}%</span></td>`;
+              html += `<td style="padding: 0.75rem; text-align: right;"><span class="kpi-status ${day.prime_percent <= 60 ? 'good' : day.prime_percent <= 65 ? 'warning' : 'alert'}">${day.prime_percent?.toFixed(1) || 'N/A'}%</span></td>`;
+              html += `<td style="padding: 0.75rem; text-align: right;">$${day.sales_per_hour?.toFixed(2) || 'N/A'}</td>`;
+              html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+          }
+          
+          // AI Analysis Section
+          if (data.ai_analysis) {
+            html += '<h3 style="color: #667eea; margin: 1.5rem 0 1rem;">🤖 AI-Powered Analysis</h3>';
+            html += '<div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid rgba(102, 126, 234, 0.2);">';
+            // Convert markdown-style formatting to HTML
+            let aiContent = data.ai_analysis
+              .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #667eea;">$1</strong>')
+              .replace(/\n\n/g, '</p><p style="margin: 1rem 0; line-height: 1.6;">')
+              .replace(/\n- /g, '</p><li style="margin-left: 1.5rem; padding: 0.25rem 0;">')
+              .replace(/\n\d+\. /g, '</p><li style="margin-left: 1.5rem; padding: 0.25rem 0;">');
+            html += `<div style="color: var(--text-primary); line-height: 1.6;"><p style="margin: 0 0 1rem 0;">${aiContent}</p></div>`;
+            html += '</div>';
+          }
+          
+          html += '</div></div>';
+          return html;
         }
-      });
-
-      sendButton.addEventListener('click', sendMessage);
-      textarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
+        
+        // Handle business report format (with business_report_html)
+        if (data.business_report_html) {
+          return data.business_report_html;
         }
-      });
-
-      // Core task functions
-      window.analyzeLaborCost = function() {
-        addMessage("Let's analyze your labor costs! Please provide your total sales, labor cost, and hours worked.", false);
-        textarea.placeholder = "Enter: Total Sales, Labor Cost, Hours Worked (e.g., 10000, 3000, 120)";
-        textarea.focus();
-      };
-
-      window.analyzePrimeCost = function() {
-        addMessage("Let's analyze your prime costs! Please provide your total sales, labor cost, and food cost.", false);
-        textarea.placeholder = "Enter: Total Sales, Labor Cost, Food Cost (e.g., 10000, 3000, 3200)";
-        textarea.focus();
-      };
-
-      window.analyzeSalesPerformance = function() {
-        addMessage("Let's analyze your sales performance! Please provide your total sales, labor cost, food cost, and hours worked.", false);
-        textarea.placeholder = "Enter: Total Sales, Labor Cost, Food Cost, Hours Worked (e.g., 10000, 3000, 3200, 120)";
-        textarea.focus();
-      };
-
-      textarea.focus();
-    });
-
-    // Language Translation System
-    const translations = {
-      en: {
-        company_name: "Curated Restaurant Consulting",
-        company_tagline: "Driven by Data. Crafted for Excellence.",
-        kpi_analysis_title: "KPI Analysis",
-        kpi_analysis_page_subtitle: "Choose a core KPI analysis task or chat with our AI assistant for personalized insights",
-        labor_cost_title: "Labor Cost Analysis",
-        labor_cost_desc: "Optimize staffing and reduce labor costs",
-        prime_cost_title: "Prime Cost Analysis",
-        prime_cost_desc: "Monitor total controllable costs",
-        sales_performance_title: "Sales Performance",
-        sales_performance_desc: "Analyze revenue and sales trends",
-        ai_assistant: "AI Assistant",
-        clear_chat: "Clear Chat"
-      },
-      es: {
-        company_name: "Consultoría de Restaurantes Curada",
-        company_tagline: "Impulsado por Datos. Creado para la Excelencia.",
-        kpi_analysis_title: "Análisis KPI",
-        kpi_analysis_page_subtitle: "Elige una tarea de análisis KPI principal o chatea con nuestro asistente IA para insights personalizados",
-        labor_cost_title: "Análisis de Costos Laborales",
-        labor_cost_desc: "Optimiza el personal y reduce los costos laborales",
-        prime_cost_title: "Análisis de Costos Primarios",
-        prime_cost_desc: "Monitorea los costos totales controlables",
-        sales_performance_title: "Rendimiento de Ventas",
-        sales_performance_desc: "Analiza ingresos y tendencias de ventas",
-        ai_assistant: "Asistente IA",
-        clear_chat: "Limpiar Chat"
+        
+        // Handle legacy format with direct KPI values
+        let html = '<div class="report"><div class="report__header"><h2>📊 KPI Analysis Report</h2>';
+        html += `<div class="report__meta">Generated: ${new Date().toLocaleString()}</div></div>`;
+        html += '<div class="report__body">';
+        
+        // Debug: Show raw data keys for troubleshooting
+        console.log('Legacy format - data keys:', Object.keys(data));
+        
+        html += '<div class="kpi-grid">';
+        
+        if (data.labor_cost_percent !== undefined) {
+          const status = data.labor_cost_percent <= 30 ? 'good' : data.labor_cost_percent <= 35 ? 'warning' : 'alert';
+          html += `<div class="kpi-card"><div class="kpi-value">${data.labor_cost_percent.toFixed(1)}%</div><div class="kpi-label">Labor Cost</div><span class="kpi-status ${status}">${status === 'good' ? '✓ Good' : status === 'warning' ? '⚠ Watch' : '⚠ Alert'}</span></div>`;
+        }
+        if (data.food_cost_percent !== undefined) {
+          const status = data.food_cost_percent <= 30 ? 'good' : data.food_cost_percent <= 35 ? 'warning' : 'alert';
+          html += `<div class="kpi-card"><div class="kpi-value">${data.food_cost_percent.toFixed(1)}%</div><div class="kpi-label">Food Cost</div><span class="kpi-status ${status}">${status === 'good' ? '✓ Good' : status === 'warning' ? '⚠ Watch' : '⚠ Alert'}</span></div>`;
+        }
+        if (data.prime_cost_percent !== undefined) {
+          const status = data.prime_cost_percent <= 60 ? 'good' : data.prime_cost_percent <= 65 ? 'warning' : 'alert';
+          html += `<div class="kpi-card"><div class="kpi-value">${data.prime_cost_percent.toFixed(1)}%</div><div class="kpi-label">Prime Cost</div><span class="kpi-status ${status}">${status === 'good' ? '✓ Good' : status === 'warning' ? '⚠ Watch' : '⚠ Alert'}</span></div>`;
+        }
+        if (data.sales_per_labor_hour !== undefined) {
+          html += `<div class="kpi-card"><div class="kpi-value">$${data.sales_per_labor_hour.toFixed(2)}</div><div class="kpi-label">Sales/Labor Hour</div></div>`;
+        }
+        
+        // Show simple scalar fields from the response (not objects/arrays)
+        const excludeKeys = ['status', 'labor_cost_percent', 'food_cost_percent', 'prime_cost_percent', 'sales_per_labor_hour', 'summary', 'daily_kpis', 'recommendations', 'ai_analysis', 'file_info', 'period_analyzed', 'kpis', 'business_report', 'industry_benchmarks'];
+        for (const [key, value] of Object.entries(data)) {
+          if (!excludeKeys.includes(key) && value !== undefined && value !== null && typeof value !== 'object') {
+            html += `<div class="kpi-card"><div class="kpi-value">${typeof value === 'number' ? value.toFixed(2) : value}</div><div class="kpi-label">${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div></div>`;
+          }
+        }
+        
+        html += '</div>';
+        
+        // If we have summary or kpis as objects, display them properly
+        if (data.kpis && typeof data.kpis === 'object') {
+          html += '<h3 style="color: #667eea; margin: 1.5rem 0 1rem;">📊 KPI Metrics</h3><div class="kpi-grid">';
+          for (const [key, kpi] of Object.entries(data.kpis)) {
+            if (kpi && typeof kpi === 'object' && kpi.value !== undefined) {
+              const statusClass = kpi.assessment === 'excellent' ? 'good' : kpi.assessment === 'good' ? 'good' : kpi.assessment === 'needs_improvement' ? 'alert' : 'warning';
+              html += `<div class="kpi-card"><div class="kpi-value">${kpi.icon || ''} ${typeof kpi.value === 'number' ? (key.includes('percent') ? kpi.value.toFixed(1) + '%' : '$' + kpi.value.toFixed(2)) : kpi.value}</div><div class="kpi-label">${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</div><span class="kpi-status ${statusClass}">${kpi.assessment || ''}</span><div style="font-size: 0.75rem; color: #888; margin-top: 0.25rem;">Benchmark: ${kpi.benchmark || 'N/A'}</div></div>`;
+            }
+          }
+          html += '</div>';
+        }
+        
+        html += '</div></div>';
+        return html;
       }
-    };
 
-    function changeLanguage(lang) {
-      // Save language preference
-      localStorage.setItem('selectedLanguage', lang);
+      window.clearChat = function() {
+        messagesArea.innerHTML = `
+          <div class="message assistant">
+            <div class="message-bubble">Hello! I'm here to help you analyze your restaurant's KPIs. Enter your data below or ask me about labor costs, food costs, prime costs, or sales performance.</div>
+            <div class="message-time">Just now</div>
+          </div>
+        `;
+      };
 
-      // Update all elements with data-translate attribute
-      document.querySelectorAll('[data-translate]').forEach(element => {
-        const key = element.getAttribute('data-translate');
-        if (translations[lang] && translations[lang][key]) {
-          element.textContent = translations[lang][key];
-        }
-      });
-
-      // Update select value
-      document.getElementById('language-select').value = lang;
-    }
-
-    // Load saved language on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      const savedLang = localStorage.getItem('selectedLanguage') || 'en';
-      // Set the select value first
-      const select = document.getElementById('language-select');
-      if (select) {
-        select.value = savedLang;
-      }
-      // Then apply translations
-      changeLanguage(savedLang);
+      window.analyzeLaborCost = () => { chatInput.value = 'Analyze my labor cost percentage and suggest improvements'; chatInput.focus(); };
+      window.analyzeFoodCost = () => { chatInput.value = 'Help me analyze food costs and identify areas for reduction'; chatInput.focus(); };
+      window.analyzePrimeCost = () => { chatInput.value = 'Calculate my prime cost and compare to industry benchmarks'; chatInput.focus(); };
+      window.analyzeSalesPerformance = () => { chatInput.value = 'Analyze sales performance and provide growth recommendations'; chatInput.focus(); };
+      window.changeLanguage = (lang) => console.log('Language:', lang);
     });
-
-    // Make changeLanguage globally available
-    window.changeLanguage = changeLanguage;
   </script>
 </body>
 </html>

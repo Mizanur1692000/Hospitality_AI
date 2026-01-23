@@ -1,85 +1,388 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Curated Restaurant Consulting - AI Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
   <style>
-    /* ——— Your CSS, unchanged except the < fix in the stats text ——— */
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);min-height:100vh;display:flex;flex-direction:column}
-    .header{background:rgba(255,255,255,.98);backdrop-filter:blur(10px);padding:1.5rem 0;border-bottom:1px solid rgba(67,56,202,.1);box-shadow:0 2px 20px rgba(0,0,0,.08)}
-    .header-content{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 2rem}
-    .header-actions{display:flex;align-items:center;gap:1rem}
-    .logo{display:flex;align-items:center;gap:1rem}
-    .logo-circle{width:56px;height:56px;background:conic-gradient(from 180deg at 50% 50%,#4338ca 0deg,#6366f1 180deg,#4338ca 360deg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.75rem;font-weight:700;color:#fff;box-shadow:0 8px 24px rgba(67,56,202,.35);animation:float 3s ease-in-out infinite}
-    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-    .brand-text{display:flex;flex-direction:column;gap:.25rem}
-    .company-name{font-size:1.5rem;font-weight:700;background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2}
-    .company-tagline{font-size:.875rem;color:#64748b;font-weight:500;line-height:1.2}
-    .ai-badge{background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#fff;padding:.5rem 1rem;border-radius:25px;font-size:.875rem;font-weight:600;display:flex;align-items:center;gap:.5rem;animation:pulse 2s infinite}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.8}}
-    .ai-badge::before{content:'';width:8px;height:8px;background:#fff;border-radius:50%;animation:blink 1.5s infinite}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-    .main-container{flex:1;display:flex;align-items:center;justify-content:center;padding:3rem 2rem}
-    .chat-interface{width:100%;max-width:900px;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.15);overflow:hidden;border:1px solid rgba(67,56,202,.1)}
-    .welcome-section{padding:3rem;text-align:center;background:linear-gradient(180deg,rgba(67,56,202,.03) 0%,transparent 100%)}
-    .welcome-title{font-size:2.5rem;font-weight:800;margin-bottom:1rem;background:linear-gradient(135deg,#4338ca 0%,#3b82f6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .welcome-subtitle{font-size:1.25rem;color:#64748b;margin-bottom:3rem;line-height:1.6;max-width:600px;margin-left:auto;margin-right:auto}
-    .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:1rem}
-    .service-card{background:#fff;border:2px solid #e5e7eb;border-radius:16px;padding:1.5rem;text-align:center;transition:all .3s ease;cursor:pointer;position:relative;overflow:hidden}
-    .service-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4338ca,#3b82f6);transform:translateX(-100%);transition:transform .3s ease}
-    .service-card:hover::before{transform:translateX(0)}
-    .service-card:hover{transform:translateY(-5px);box-shadow:0 12px 30px rgba(67,56,202,.2);border-color:#4338ca}
-    .service-icon{width:64px;height:64px;background:linear-gradient(135deg,#4338ca 0%,#6366f1 100%);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;box-shadow:0 8px 20px rgba(67,56,202,.25)}
-    .service-title{font-weight:700;color:#1f2937;margin-bottom:.5rem;font-size:1.125rem}
-    .service-desc{color:#64748b;font-size:.875rem;line-height:1.4}
-    .chat-messages-container{background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-radius:24px;margin:2rem;margin-bottom:1rem;box-shadow:0 20px 60px rgba(0,0,0,.15);border:1px solid rgba(67,56,202,.1);max-height:500px;overflow:hidden;display:none}
-    .chat-messages-header{padding:1.5rem 2rem;background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);color:#fff;display:flex;justify-content:space-between;align-items:center}
-    .chat-messages-header h3{margin:0;font-size:1.2rem;font-weight:600}
-    .clear-chat{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;padding:.5rem 1rem;border-radius:12px;cursor:pointer;font-size:.9rem;transition:all .2s ease}
-    .clear-chat:hover{background:rgba(255,255,255,.3)}
-    .chat-messages{max-height:400px;overflow-y:auto;padding:1rem 2rem}
-    .message{margin-bottom:1.5rem;display:flex;flex-direction:column}
-    .message.user{align-items:flex-end}
-    .message.assistant{align-items:flex-start}
-    .message-bubble{max-width:80%;padding:1rem 1.5rem;border-radius:20px;word-wrap:break-word;line-height:1.5}
-    .message.user .message-bubble{background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);color:#fff;border-bottom-right-radius:8px}
-    .message.assistant .message-bubble{background:#f8fafc;color:#374151;border:1px solid #e5e7eb;border-bottom-left-radius:8px}
-    .message-time{font-size:.75rem;color:#94a3b8;margin-top:.5rem;padding:0 .5rem}
-    .chat-input-section{padding:1rem 2rem 2rem 2rem;margin-top:-1rem;background:linear-gradient(180deg,transparent 0%,rgba(67,56,202,.02) 100%)}
-    .input-container{position:relative;display:flex;flex-direction:column;gap:1rem;align-items:stretch}
-    .chat-input{flex:1;padding:1.25rem 1.5rem;border:2px solid #e5e7eb;border-radius:16px;font-size:1rem;color:#1f2937;background:#fff;transition:all .3s ease;resize:vertical;min-height:60px;max-height:150px}
-    .chat-input:focus{outline:none;border-color:#4338ca;box-shadow:0 0 0 4px rgba(67,56,202,.1)}
-    .chat-input::placeholder{color:#94a3b8}
-    .send-button{padding:1rem 1.5rem;background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);color:#fff;border:none;border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .3s ease;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 8px 20px rgba(67,56,202,.3);align-self:flex-end;max-width:120px}
-    .send-button:hover{transform:translateY(-2px);box-shadow:0 12px 25px rgba(67,56,202,.4)}
-    .quick-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1.5rem;justify-content:center}
-    .quick-action{padding:.625rem 1.25rem;background:#fff;border:2px solid #e5e7eb;border-radius:25px;font-size:.875rem;color:#64748b;cursor:pointer;transition:all .2s ease;font-weight:500}
-    .quick-action:hover{background:linear-gradient(135deg,#4338ca 0%,#3730a3 100%);color:#fff;border-color:#4338ca;transform:scale(1.05)}
-    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;padding:2rem;background:linear-gradient(90deg,rgba(67,56,202,.02) 0%,rgba(59,130,246,.02) 100%);border-top:1px solid rgba(67,56,202,.1)}
-    .stat-item{text-align:center}
-    .stat-number{font-size:1.75rem;font-weight:800;background:linear-gradient(135deg,#4338ca 0%,#3b82f6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .stat-label{font-size:.875rem;color:#64748b;margin-top:.25rem}
-    @media (max-width:768px){
-      .welcome-title{font-size:2rem}
-      .services-grid{grid-template-columns:1fr}
-      .header-content{flex-direction:column;gap:1rem}
-      .stats-row{grid-template-columns:1fr 1fr}
-      .chat-input{font-size:16px;min-height:80px;padding:1.5rem}
-      .send-button{padding:1rem 1.25rem;max-width:100px;font-size:.9rem}
-      .input-container{gap:.75rem}
-      .chat-input-section{padding:1.5rem}
+    /* Enhanced Homepage Styles */
+    .welcome-section {
+      padding: var(--spacing-2xl);
+      text-align: center;
+      background: linear-gradient(180deg, rgba(102, 126, 234, 0.08) 0%, transparent 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-section::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%);
+      animation: rotate-slow 40s linear infinite;
+    }
+
+    .welcome-title {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      z-index: 1;
+      animation: title-reveal 0.8s ease-out;
+      text-shadow: 0 4px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .welcome-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      margin-bottom: var(--spacing-2xl);
+      line-height: 1.8;
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+      position: relative;
+      z-index: 1;
+    }
+
+    .service-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+      transform: translateX(-100%);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .service-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(102, 126, 234, 0.08) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .service-card:hover::before {
+      transform: translateX(0);
+    }
+
+    .service-card:hover::after {
+      opacity: 1;
+    }
+
+    .service-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 
+        0 25px 50px rgba(102, 126, 234, 0.2),
+        0 0 0 1px rgba(102, 126, 234, 0.15);
+    }
+
+    .service-icon {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--spacing-md);
+      box-shadow: 
+        0 10px 30px rgba(102, 126, 234, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .service-card:hover .service-icon {
+      transform: scale(1.15) rotate(5deg);
+      box-shadow: 
+        0 15px 40px rgba(102, 126, 234, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .service-title {
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .service-desc {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Chat Input Enhancement */
+    .chat-input-section {
+      padding: var(--spacing-xl) var(--spacing-2xl);
+      background: linear-gradient(180deg, transparent 0%, rgba(248, 250, 252, 0.5) 100%);
+    }
+
+    .input-container {
+      display: flex;
+      gap: var(--spacing-sm);
+      background: white;
+      border: 2px solid rgba(102, 126, 234, 0.15);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-sm);
+      box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      transition: all var(--transition-normal);
+    }
+
+    .input-container:focus-within {
+      border-color: #667eea;
+      box-shadow: 
+        0 8px 30px rgba(102, 126, 234, 0.15),
+        0 0 0 4px rgba(102, 126, 234, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .chat-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 0.875rem 1rem;
+      font-size: 1rem;
+      background: transparent;
+      color: var(--text-primary);
+      resize: none;
+      font-family: inherit;
+    }
+
+    .chat-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .send-button {
+      padding: 0.875rem 1.5rem !important;
+      border-radius: var(--radius-lg) !important;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+
+    /* Quick Actions Enhancement */
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-lg);
+      justify-content: center;
+    }
+
+    .quick-action {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.15);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius-full);
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all var(--transition-normal);
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .quick-action::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: opacity var(--transition-normal);
+    }
+
+    .quick-action:hover {
+      background: var(--primary-gradient);
+      border-color: transparent;
+      color: white;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Stats Row Enhancement */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-md);
+      padding: var(--spacing-xl) var(--spacing-2xl);
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+      border-top: 1px solid rgba(102, 126, 234, 0.1);
+      border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: var(--spacing-md);
+      position: relative;
+    }
+
+    .stat-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 50%;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(102, 126, 234, 0.3), transparent);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Chat Messages Enhancement */
+    .chat-messages-container {
+      display: none;
+      padding: var(--spacing-xl) var(--spacing-2xl);
+      background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.98) 100%);
+      border-top: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .chat-messages-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .chat-messages-header h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .chat-messages {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: var(--spacing-sm);
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 3px;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(102, 126, 234, 0.3);
+      border-radius: 3px;
+    }
+
+    @media (max-width: 768px) {
+      .welcome-title {
+        font-size: 2rem;
+      }
+      
+      .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .stat-item:nth-child(2)::after {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .services-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .stat-item::after {
+        display: none;
+      }
     }
   </style>
 </head>
 <body>
+  <!-- Animated Background -->
+  <div class="animated-bg"></div>
+  <div class="floating-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
   <!-- Header -->
-  <header class="header">
+  <header class="glass-header">
     <div class="header-content">
       <div class="logo" aria-label="Curated Restaurant Consulting">
-        <div class="logo-circle" aria-hidden="true">€</div>
+        <div class="logo-circle" aria-hidden="true">C</div>
         <div class="brand-text">
           <div class="company-name">Curated Restaurant Consulting</div>
           <div class="company-tagline">Driven by Data. Crafted for Excellence.</div>
@@ -93,7 +396,7 @@
 
   <!-- Main Container -->
   <main class="main-container">
-    <div class="chat-interface" role="application" aria-label="AI Assistant chat">
+    <div class="glass-interface" role="application" aria-label="AI Assistant chat">
       <!-- Welcome Section -->
       <section class="welcome-section">
         <h1 class="welcome-title">Your AI Restaurant Consultant</h1>
@@ -141,7 +444,6 @@
                 <circle cx="20" cy="16" r="2" fill="white"/>
                 <path d="M16 22H24" stroke="white" stroke-width="2"/>
                 <path d="M16 26H24" stroke="white" stroke-width="2"/>
-                <path d="M18 30H22" stroke="white" stroke-width="2"/>
               </svg>
             </div>
             <div class="service-title">Beverage</div>
@@ -175,8 +477,6 @@
                 <path d="M12 20H26" stroke="white" stroke-width="2"/>
                 <path d="M12 24H22" stroke="white" stroke-width="2"/>
                 <path d="M12 28H20" stroke="white" stroke-width="2"/>
-                <circle cx="26" cy="26" r="3" stroke="white" stroke-width="2" fill="none"/>
-                <path d="M24 24L28 28" stroke="white" stroke-width="2"/>
               </svg>
             </div>
             <div class="service-title">Recipes</div>
@@ -209,11 +509,6 @@
                 <rect x="14" y="16" width="4" height="12" rx="1" fill="white"/>
                 <rect x="20" y="10" width="4" height="18" rx="1" fill="white"/>
                 <rect x="26" y="14" width="4" height="14" rx="1" fill="white"/>
-                <path d="M10 20L16 16L22 18L28 14" stroke="white" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="10" cy="20" r="2" fill="white"/>
-                <circle cx="16" cy="16" r="2" fill="white"/>
-                <circle cx="22" cy="18" r="2" fill="white"/>
-                <circle cx="28" cy="14" r="2" fill="white"/>
               </svg>
             </div>
             <div class="service-title">KPI Dashboard</div>
@@ -225,9 +520,9 @@
       <!-- Chat Input Section -->
       <section class="chat-input-section" aria-label="Message composer">
         <div class="input-container">
-          <label for="chat-input" class="visually-hidden" style="position:absolute;left:-10000px;">Type your message</label>
+          <label for="chat-input" class="visually-hidden">Type your message</label>
           <textarea id="chat-input" class="chat-input" placeholder="Ask me anything about your restaurant operations, KPIs, staffing, menu optimization, or business strategy..." rows="1"></textarea>
-          <button class="send-button" id="send-button" type="button" aria-label="Send message">
+          <button class="send-button glass-btn-primary" id="send-button" type="button" aria-label="Send message">
             <span>Send</span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
@@ -274,202 +569,106 @@
           <button class="clear-chat" id="clear-chat" type="button" aria-label="Clear chat history">Clear Chat</button>
         </div>
         <div class="chat-messages" id="messages" aria-live="polite" aria-labelledby="chat-title">
-          <!-- Messages are injected here -->
         </div>
       </section>
     </div>
   </main>
 
   <script>
-    // Wait for DOM to be fully loaded
     document.addEventListener('DOMContentLoaded', function() {
       const qs = (sel, root=document) => root.querySelector(sel);
       const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
 
-    function getCookie(name) {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-      return null;
-    }
-    const CSRF_TOKEN = getCookie('csrftoken');
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return null;
+      }
+      const CSRF_TOKEN = getCookie('csrftoken');
 
-    function safeTextToNode(text) {
-      const div = document.createElement('div');
-      const safe = document.createTextNode(text);
-      div.appendChild(safe);
-      return div.innerHTML.replace(/\n/g, '<br>');
-    }
+      function safeTextToNode(text) {
+        const div = document.createElement('div');
+        const safe = document.createTextNode(text);
+        div.appendChild(safe);
+        return div.innerHTML.replace(/\n/g, '<br>');
+      }
 
-    const textarea = qs('#chat-input');
-    const sendButton = qs('#send-button');
-    const clearButton = qs('#clear-chat');
-    const messagesContainer = qs('#messages');
-    const chatContainer = qs('#chat-messages');
+      const textarea = qs('#chat-input');
+      const sendButton = qs('#send-button');
+      const clearButton = qs('#clear-chat');
+      const messagesContainer = qs('#messages');
+      const chatContainer = qs('#chat-messages');
 
-    // Debug: Check if elements exist
-    if (!textarea) console.error('Textarea not found');
-    if (!sendButton) console.error('Send button not found');
-    if (!messagesContainer) console.error('Messages container not found');
-    if (!chatContainer) console.error('Chat container not found');
+      if (textarea) {
+        textarea.addEventListener('input', function () {
+          this.style.height = 'auto';
+          this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+      }
 
-    if (textarea) {
-      textarea.addEventListener('input', function () {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+      qsa('.quick-action').forEach(btn => {
+        btn.addEventListener('click', () => {
+          textarea.value = btn.textContent.trim();
+          textarea.focus();
+          textarea.dispatchEvent(new Event('input'));
+        });
       });
-    }
 
-    qsa('.quick-action').forEach(btn => {
-      btn.addEventListener('click', () => {
-        textarea.value = btn.textContent.trim();
+      function addMessage(content, isUser = false) {
+        if (!chatContainer || !messagesContainer) return;
+        chatContainer.style.display = 'block';
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.innerHTML = safeTextToNode(content);
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        messageDiv.appendChild(bubble);
+        messageDiv.appendChild(time);
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+      function clearChat() {
+        messagesContainer.innerHTML = '';
+        chatContainer.style.display = 'none';
+        textarea.value = '';
+        textarea.style.height = 'auto';
         textarea.focus();
-        textarea.dispatchEvent(new Event('input'));
-      });
+      }
+
+      if (clearButton) clearButton.addEventListener('click', clearChat);
+
+      async function sendMessage() {
+        const message = textarea.value.trim();
+        if (!message) return;
+        window.location.href = `/dashboard/chat/?message=${encodeURIComponent(message)}`;
+      }
+
+      if (sendButton) {
+        sendButton.addEventListener('click', () => {
+          sendButton.style.transform = 'scale(0.95)';
+          setTimeout(() => { sendButton.style.transform = ''; sendMessage(); }, 120);
+        });
+      }
+
+      if (textarea) {
+        textarea.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        });
+      }
+
+      window.goToKPIAnalysis = () => window.location.href = '/dashboard/kpi-analysis/';
+      window.goToHRSolutions = () => window.location.href = '/dashboard/hr-solutions/';
+      window.goToBeverage = () => window.location.href = '/dashboard/beverage/';
+      window.goToMenuEngineering = () => window.location.href = '/dashboard/menu-engineering/';
+      window.goToRecipes = () => window.location.href = '/dashboard/recipes/';
+      window.goToStrategicPlanning = () => window.location.href = '/dashboard/strategic-planning/';
+      window.goToKPIDashboard = () => window.location.href = '/dashboard/kpi-dashboard/';
     });
-
-    qsa('.service-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const title = card.querySelector('.service-title').textContent.trim();
-        textarea.value = `Tell me about ${title} for my restaurant`;
-        textarea.focus();
-        textarea.dispatchEvent(new Event('input'));
-      });
-    });
-
-    function addMessage(content, isUser = false) {
-      console.log('addMessage called with:', content, 'isUser:', isUser);
-      
-      if (!chatContainer) {
-        console.error('chatContainer not found!');
-        return;
-      }
-      
-      if (!messagesContainer) {
-        console.error('messagesContainer not found!');
-        return;
-      }
-
-      // Make sure chat container is visible
-      chatContainer.style.display = 'block';
-      console.log('Chat container made visible');
-
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
-
-      const bubble = document.createElement('div');
-      bubble.className = 'message-bubble';
-      bubble.innerHTML = safeTextToNode(content);
-
-      const time = document.createElement('div');
-      time.className = 'message-time';
-      const now = new Date();
-      time.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      messageDiv.appendChild(bubble);
-      messageDiv.appendChild(time);
-      messagesContainer.appendChild(messageDiv);
-
-      console.log('Message added to DOM');
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    function clearChat() {
-      messagesContainer.innerHTML = '';
-      chatContainer.style.display = 'none';
-      textarea.value = '';
-      textarea.style.height = 'auto';
-      textarea.focus();
-    }
-
-    clearButton.addEventListener('click', clearChat);
-
-    async function sendMessage() {
-      console.log('sendMessage called');
-      const message = textarea.value.trim();
-      console.log('Message:', message);
-      if (!message) {
-        console.log('No message, returning');
-        return;
-      }
-
-      // Redirect to dedicated chat page with the message
-      const chatUrl = `/dashboard/chat/?message=${encodeURIComponent(message)}`;
-      window.location.href = chatUrl;
-    }
-
-    if (sendButton) {
-      sendButton.addEventListener('click', () => {
-        sendButton.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-          sendButton.style.transform = '';
-          sendMessage();
-        }, 120);
-      });
-    }
-
-    if (textarea) {
-      textarea.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-    }
-
-    // Navigation functions for all service pages
-    window.goToKPIAnalysis = function() {
-      window.location.href = '/dashboard/kpi-analysis/';
-    };
-
-    window.goToHRSolutions = function() {
-      window.location.href = '/dashboard/hr-solutions/';
-    };
-
-    window.goToBeverage = function() {
-      window.location.href = '/dashboard/beverage/';
-    };
-
-    window.goToMenuEngineering = function() {
-      window.location.href = '/dashboard/menu-engineering/';
-    };
-
-    window.goToRecipes = function() {
-      window.location.href = '/dashboard/recipes/';
-    };
-
-    window.goToStrategicPlanning = function() {
-      window.location.href = '/dashboard/strategic-planning/';
-    };
-
-    window.goToKPIDashboard = function() {
-      window.location.href = '/dashboard/kpi-dashboard/';
-    };
-
-    // KPI Dashboard upload function
-    window.uploadKPI = function() {
-      // Create a hidden file input
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = '.csv';
-      fileInput.style.display = 'none';
-      
-      fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // Redirect to chat page with KPI upload
-        const chatUrl = `/dashboard/chat/?task=kpi_analysis&file=${encodeURIComponent(file.name)}`;
-        window.location.href = chatUrl;
-      });
-      
-      // Trigger file selection
-      document.body.appendChild(fileInput);
-      fileInput.click();
-      document.body.removeChild(fileInput);
-    };
-    }); // End DOMContentLoaded
-
   </script>
 </body>
 </html>

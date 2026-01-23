@@ -193,11 +193,16 @@ def agent_view(request: HttpRequest) -> JsonResponse:
                 result = process_kpi_csv_data(uploaded_file)
                 status_code = 400 if result.get("status") == "error" else 200
                 return JsonResponse(result, status=status_code)
+            elif task == "recipe_management":
+                from backend.consulting_services.recipe.analysis_functions import process_recipe_csv_data
+                result = process_recipe_csv_data(uploaded_file)
+                status_code = 400 if result.get("status") == "error" else 200
+                return JsonResponse(result, status=status_code)
             else:
                 return build_error_response(
                     ErrorCodes.UNKNOWN_TASK,
                     f"File upload not supported for task: {task}",
-                    details={"supported_tasks": ["product_mix", "kpi_analysis"]}
+                    details={"supported_tasks": ["product_mix", "kpi_analysis", "recipe_management"]}
                 )
         except Exception as e:
             trace_id = uuid4().hex

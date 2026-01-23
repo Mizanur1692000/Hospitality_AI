@@ -1,181 +1,29 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Beverage Management - Restaurant Consulting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-      min-height: 100vh;
-      color: #1f2937;
-    }
-
-    .header {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      padding: 1rem 2rem;
-    }
-
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .language-selector select {
-      background: #fff;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      color: #374151;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right .5rem center;
-      background-repeat: no-repeat;
-      background-size: 1.5em 1.5em;
-      padding-right: 2.5rem;
-      min-width: 140px;
-    }
-
-    .language-selector select:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .language-selector select:hover {
-      border-color: #9ca3af;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-circle {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 1.25rem;
-    }
-
-    .brand-text .company-name {
-      font-weight: 700;
-      color: #1f2937;
-      font-size: 1.125rem;
-    }
-
-    .brand-text .company-tagline {
-      color: #64748b;
-      font-size: 0.875rem;
-    }
-
-    .back-button {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      color: #374151;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
-    }
-
-    .back-button:hover {
-      background: #e5e7eb;
-      transform: translateY(-1px);
-    }
-
-    .main-container {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 2rem;
-    }
-
+    /* Enhanced Beverage Page Styles */
     .beverage-interface {
-      width: 100%;
-      max-width: 1000px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-      overflow: hidden;
-      border: 1px solid rgba(67, 56, 202, 0.1);
-    }
-
-    .page-header {
-      padding: 3rem;
-      text-align: center;
-      background: linear-gradient(180deg, rgba(67, 56, 202, 0.03) 0%, transparent 100%);
-    }
-
-    .page-title {
-      font-size: 2.5rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #4338ca 0%, #3b82f6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .page-subtitle {
-      font-size: 1.25rem;
-      color: #64748b;
-      margin-bottom: 3rem;
-      line-height: 1.6;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .core-tasks-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-      padding: 0 3rem;
+      max-width: 1200px;
     }
 
     .core-task-card {
-      background: #fff;
-      border: 2px solid #e5e7eb;
-      border-radius: 16px;
-      padding: 2rem;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
       text-align: center;
-      transition: all 0.3s ease;
       cursor: pointer;
       position: relative;
       overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
 
     .core-task-card::before {
@@ -185,58 +33,90 @@
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #4338ca, #3b82f6);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .core-task-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(102, 126, 234, 0.08) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s;
     }
 
     .core-task-card:hover::before {
-      transform: translateX(0);
+      transform: scaleX(1);
+    }
+
+    .core-task-card:hover::after {
+      opacity: 1;
     }
 
     .core-task-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 30px rgba(67, 56, 202, 0.2);
-      border-color: #4338ca;
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 
+        0 25px 50px rgba(102, 126, 234, 0.2),
+        0 0 0 1px rgba(102, 126, 234, 0.15);
     }
 
     .task-icon {
-      width: 64px;
-      height: 64px;
-      background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
-      border-radius: 16px;
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: var(--radius-lg);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 1rem;
-      font-size: 1.5rem;
-      box-shadow: 0 8px 20px rgba(67, 56, 202, 0.25);
+      margin: 0 auto var(--spacing-md);
+      box-shadow: 
+        0 10px 30px rgba(102, 126, 234, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .core-task-card:hover .task-icon {
+      transform: scale(1.15) rotate(5deg);
+      box-shadow: 
+        0 15px 40px rgba(102, 126, 234, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .task-title {
       font-weight: 700;
-      color: #1f2937;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
-      font-size: 1.125rem;
+      font-size: 1.15rem;
+      position: relative;
+      z-index: 1;
     }
 
     .task-desc {
-      color: #64748b;
-      font-size: 0.875rem;
-      line-height: 1.4;
-      margin-bottom: 1rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: var(--spacing-md);
+      position: relative;
+      z-index: 1;
     }
 
     .task-features {
       list-style: none;
       text-align: left;
-      font-size: 0.8rem;
-      color: #6b7280;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      position: relative;
+      z-index: 1;
     }
 
     .task-features li {
-      margin-bottom: 0.25rem;
-      padding-left: 1rem;
+      margin-bottom: 0.5rem;
+      padding-left: 1.75rem;
       position: relative;
     }
 
@@ -246,245 +126,154 @@
       left: 0;
       color: #10b981;
       font-weight: bold;
+      font-size: 0.9rem;
     }
 
+    /* Enhanced Chat Section */
     .chat-section {
-      background: #f8fafc;
-      border-top: 1px solid #e5e7eb;
-      padding: 2rem 3rem;
-    }
-
-    .chat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
+      background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.98) 100%);
+      border-top: 1px solid rgba(102, 126, 234, 0.1);
+      padding: var(--spacing-xl) var(--spacing-2xl);
     }
 
     .chat-title {
       font-size: 1.25rem;
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .input-container {
+      display: flex;
+      gap: var(--spacing-sm);
+      background: white;
+      border: 2px solid rgba(102, 126, 234, 0.15);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-sm);
+      box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      transition: all var(--transition-normal);
+    }
+
+    .input-container:focus-within {
+      border-color: #667eea;
+      box-shadow: 
+        0 8px 30px rgba(102, 126, 234, 0.15),
+        0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .chat-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 0.875rem 1rem;
+      font-size: 1rem;
+      background: transparent;
+      color: var(--text-primary);
+      resize: none;
+      font-family: inherit;
+    }
+
+    .send-button {
+      background: var(--primary-gradient);
+      border: none;
+      color: white;
+      padding: 0.875rem 1.5rem;
+      border-radius: var(--radius-lg);
       font-weight: 600;
-      color: #1f2937;
-    }
-
-    .clear-chat {
-      background: rgba(67, 56, 202, 0.1);
-      border: 1px solid rgba(67, 56, 202, 0.2);
-      color: #4338ca;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
       cursor: pointer;
-      font-size: 0.875rem;
-      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all var(--transition-normal);
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
-    .clear-chat:hover {
-      background: rgba(67, 56, 202, 0.2);
+    .send-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
 
     .messages-area {
       max-height: 400px;
       overflow-y: auto;
-      padding: 1rem 0;
-      margin-bottom: 1.5rem;
+      padding: var(--spacing-md) 0;
+      margin-bottom: var(--spacing-lg);
     }
 
     .message {
-      margin-bottom: 1.5rem;
+      margin-bottom: var(--spacing-lg);
       display: flex;
       flex-direction: column;
+      animation: message-appear 0.4s ease-out;
     }
 
     .message.user {
       align-items: flex-end;
     }
 
-    .message.assistant {
-      align-items: flex-start;
-    }
-
     .message-bubble {
       max-width: 80%;
-      padding: 1rem 1.5rem;
-      border-radius: 20px;
-      word-wrap: break-word;
-      line-height: 1.7;
-    }
-
-    /* Markdown formatting */
-    .message-bubble strong {
-      font-weight: 700;
-    }
-
-    .message-bubble ol,
-    .message-bubble ul {
-      margin: 10px 0;
-      padding-left: 25px;
-    }
-
-    .message-bubble ol {
-      list-style-type: decimal;
-    }
-
-    .message-bubble ul {
-      list-style-type: disc;
-    }
-
-    .message-bubble li {
-      margin: 6px 0;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-lg);
+      font-size: 0.95rem;
       line-height: 1.6;
     }
 
-    .message-bubble h3 {
-      margin: 15px 0 8px 0;
-      font-size: 1.05rem;
-      font-weight: 700;
-      border-bottom: 2px solid rgba(0,0,0,0.1);
-      padding-bottom: 4px;
-    }
-
-    .message.assistant .message-bubble strong {
-      color: #4338ca;
-    }
-
-    .message.user .message-bubble h3 {
-      border-bottom-color: rgba(255,255,255,0.3);
-    }
-
     .message.user .message-bubble {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: #fff;
-      border-bottom-right-radius: 8px;
+      background: var(--primary-gradient);
+      color: white;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
     .message.assistant .message-bubble {
-      background: #fff;
-      color: #374151;
-      border: 1px solid #e5e7eb;
-      border-bottom-left-radius: 8px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+      color: var(--text-primary);
+      border: 1px solid rgba(102, 126, 234, 0.15);
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
 
     .message-time {
       font-size: 0.75rem;
-      color: #94a3b8;
+      color: var(--text-secondary);
       margin-top: 0.5rem;
-      padding: 0 0.5rem;
     }
 
-    .input-section {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-end;
-    }
-
-    .input-container {
-      flex: 1;
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-end;
-    }
-
-    .chat-input {
-      flex: 1;
-      border: 2px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      resize: none;
-      min-height: 44px;
-      max-height: 120px;
-      font-family: inherit;
-      transition: all 0.2s ease;
-    }
-
-    .chat-input:focus {
-      outline: none;
-      border-color: #4338ca;
-      box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1);
-    }
-
-    .upload-button {
-      background: #f3f4f6;
-      border: 2px solid #d1d5db;
-      color: #374151;
-      padding: 0.75rem;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .upload-button:hover {
-      background: #e5e7eb;
-      border-color: #9ca3af;
-    }
-
-    .send-button {
-      background: linear-gradient(135deg, #4338ca 0%, #3730a3 100%);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.25rem;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .send-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);
-    }
-
-    .send-button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .file-input {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .page-title {
-        font-size: 2rem;
+    @keyframes message-appear {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
       }
-      
-      .core-tasks-grid {
-        grid-template-columns: 1fr;
-        padding: 0 1.5rem;
-      }
-      
-      .chat-section {
-        padding: 1.5rem;
-      }
-      
-      .input-section {
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      
-      .input-container {
-        flex-direction: column;
-        gap: 0.5rem;
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
   </style>
 </head>
 <body>
+  <!-- Animated Background -->
+  <div class="animated-bg"></div>
+  <div class="floating-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
   <!-- Header -->
-  <header class="header">
+  <header class="glass-header">
     <div class="header-content">
       <div class="logo">
-        <div class="logo-circle" aria-hidden="true">€</div>
-      <div class="brand-text">
-        <div class="company-name" data-translate="company_name">Curated Restaurant Consulting</div>
-        <div class="company-tagline" data-translate="company_tagline">Driven by Data. Crafted for Excellence.</div>
+        <div class="logo-circle" aria-hidden="true">C</div>
+        <div class="brand-text">
+          <div class="company-name" data-translate="company_name">Curated Restaurant Consulting</div>
+          <div class="company-tagline" data-translate="company_tagline">Driven by Data. Crafted for Excellence.</div>
+        </div>
       </div>
       <div class="header-actions">
         <div class="language-selector">
@@ -493,14 +282,13 @@
             <option value="es">🇪🇸 Español</option>
           </select>
         </div>
+        <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
       </div>
-      </div>
-      <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
     </div>
   </header>
 
   <main class="main-container">
-    <div class="beverage-interface">
+    <div class="glass-interface beverage-interface">
       <!-- Page Header -->
       <section class="page-header">
         <h1 class="page-title" data-translate="beverage_title">Beverage Management</h1>
@@ -539,8 +327,6 @@
                 <path d="M12 20H26" stroke="white" stroke-width="2"/>
                 <path d="M12 24H22" stroke="white" stroke-width="2"/>
                 <path d="M12 28H20" stroke="white" stroke-width="2"/>
-                <circle cx="26" cy="26" r="3" stroke="white" stroke-width="2" fill="none"/>
-                <path d="M24 24L28 28" stroke="white" stroke-width="2"/>
               </svg>
             </div>
             <div class="task-title" data-translate="bar_inventory_title">Bar Inventory</div>
@@ -599,9 +385,9 @@
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
               </svg>
             </button>
-            <button id="send-button" class="send-button">
-              <span>Send</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <button id="send-button" class="send-button" onclick="sendMessage()">
+              <span data-translate="send">Send</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
             </button>
@@ -613,295 +399,143 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      const textarea = document.getElementById('chat-input');
-      const sendButton = document.getElementById('send-button');
-      const uploadButton = document.getElementById('upload-button');
-      const fileInput = document.getElementById('file-input');
       const messagesArea = document.getElementById('messages-area');
+      const chatInput = document.getElementById('chat-input');
+      const fileInput = document.getElementById('file-input');
+      const uploadButton = document.getElementById('upload-button');
 
-      // CSRF helper
       function getCookie(name) {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return parts.pop().split(';').shift();
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return null;
       }
-      const CSRF = getCookie('csrftoken');
+      const CSRF_TOKEN = getCookie('csrftoken');
 
-      // Auto-resize textarea
-      textarea.addEventListener('input', function() {
+      chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
       });
 
-      // Markdown conversion functions
-      function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-      }
-
-      function processInlineMarkdown(text) {
-        return text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-      }
-
-      function convertMarkdownToHTML(text) {
-        const lines = text.split('\n');
-        let inList = false;
-        let listType = null;
-        let processedLines = [];
-
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i];
-          const trimmed = line.trim();
-
-          if (!trimmed) {
-            if (inList) {
-              processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              inList = false;
-              listType = null;
-            }
-            processedLines.push('<br>');
-            continue;
-          }
-
-          const numberedMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
-          if (numberedMatch) {
-            if (!inList || listType !== 'ol') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ol>');
-              inList = true;
-              listType = 'ol';
-            }
-            const content = processInlineMarkdown(escapeHtml(numberedMatch[2]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          const bulletMatch = trimmed.match(/^[-•·]\s+(.+)$/);
-          if (bulletMatch) {
-            if (!inList || listType !== 'ul') {
-              if (inList) processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-              processedLines.push('<ul>');
-              inList = true;
-              listType = 'ul';
-            }
-            const content = processInlineMarkdown(escapeHtml(bulletMatch[1]));
-            processedLines.push(`<li>${content}</li>`);
-            continue;
-          }
-
-          if (inList) {
-            processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-            inList = false;
-            listType = null;
-          }
-
-          if (trimmed.match(/^###\s+(.+)$/)) {
-            const heading = escapeHtml(trimmed.replace(/^###\s+/, ''));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          if (trimmed.match(/^\*\*(.+):\*\*$/)) {
-            const heading = escapeHtml(trimmed.replace(/^\*\*(.+):\*\*$/, '$1:'));
-            processedLines.push(`<h3>${heading}</h3>`);
-            continue;
-          }
-
-          const content = processInlineMarkdown(escapeHtml(line));
-          processedLines.push(content);
-        }
-
-        if (inList) {
-          processedLines.push(listType === 'ol' ? '</ol>' : '</ul>');
-        }
-
-        let html = processedLines.join('\n');
-        html = html.replace(/<br>\s*<(ol|ul|h3)>/g, '<$1>');
-        html = html.replace(/<\/(ol|ul|h3)>\s*<br>/g, '</$1>');
-        html = html.replace(/(<br>\s*){3,}/g, '<br><br>');
-        return html;
-      }
-
-      function addMessage(content, isUser = false) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
-        const bubble = document.createElement('div');
-        bubble.className = 'message-bubble';
-        bubble.innerHTML = convertMarkdownToHTML(content);
-        const time = document.createElement('div');
-        time.className = 'message-time';
-        time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        messageDiv.appendChild(bubble);
-        messageDiv.appendChild(time);
-        messagesArea.appendChild(messageDiv);
-        messagesArea.scrollTop = messagesArea.scrollHeight;
-      }
-
-      function clearChat() {
-        const messages = messagesArea.querySelectorAll('.message:not(:first-child)');
-        messages.forEach(msg => msg.remove());
-        textarea.value = '';
-        textarea.style.height = 'auto';
-        textarea.focus();
-      }
-
-      window.clearChat = clearChat;
-
-      async function sendMessage() {
-        const message = textarea.value.trim();
-        if (!message) return;
-        
-        addMessage(message, true);
-        const original = sendButton.innerHTML;
-        sendButton.innerHTML = '<span>Sending...</span>';
-        sendButton.disabled = true;
-        textarea.value = '';
-        textarea.style.height = 'auto';
-        
-        try {
-          const resp = await fetch('/chat/api/', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/x-www-form-urlencoded',
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: new URLSearchParams({ message })
-          });
-          const data = await resp.json().catch(() => ({}));
-          const aiResponse = data?.response || data?.error || 'No response received.';
-          addMessage(aiResponse, false);
-        } catch (err) {
-          addMessage('Network error. Please check your connection.', false);
-        } finally {
-          sendButton.innerHTML = original;
-          sendButton.disabled = false;
-          textarea.focus();
-        }
-      }
-
-      // File upload functionality
-      uploadButton.addEventListener('click', () => fileInput.click());
-      
-      fileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        addMessage(`📁 Uploading ${file.name} for beverage analysis...`, true);
-        
-        const formData = new FormData();
-        formData.append('task', 'liquor_variance');
-        formData.append('file', file);
-        
-        try {
-          uploadButton.disabled = true;
-          uploadButton.innerHTML = '<span>Processing...</span>';
-          
-          const resp = await fetch('/api/agent/', {
-            method: 'POST',
-            headers: {
-              ...(CSRF ? {'X-CSRFToken': CSRF} : {})
-            },
-            body: formData
-          });
-          
-          const data = await resp.json();
-          
-          if (data.status === 'success') {
-            addMessage(`✅ Beverage analysis complete! Processed ${file.name}`, false);
-          } else {
-            addMessage(`❌ ${data.message || 'Analysis failed'}`, false);
-          }
-        } catch (err) {
-          addMessage(`❌ Upload error: ${err.message}`, false);
-        } finally {
-          uploadButton.disabled = false;
-          uploadButton.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>';
-          fileInput.value = '';
-        }
-      });
-
-      sendButton.addEventListener('click', sendMessage);
-      textarea.addEventListener('keydown', (e) => {
+      chatInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           sendMessage();
         }
       });
 
-      // Core task functions
+      uploadButton.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        addMessage(`Uploading file: ${file.name}`, true);
+        
+        const formData = new FormData();
+        formData.append('task', 'liquor_variance');
+        formData.append('file', file);
+
+        try {
+          const response = await fetch('/api/agent/', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN },
+            body: formData
+          });
+          const data = await response.json();
+          
+          if (data.error) {
+            addMessage(`Error: ${data.error}`, false);
+          } else {
+            addMessage(formatResponse(data), false);
+          }
+        } catch (error) {
+          addMessage(`Error uploading file: ${error.message}`, false);
+        }
+        
+        fileInput.value = '';
+      });
+
+      window.sendMessage = async function() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, true);
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+
+        try {
+          const response = await fetch('/chat/api/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRFToken': CSRF_TOKEN
+            },
+            body: `message=${encodeURIComponent(message)}&context=beverage`
+          });
+          const data = await response.json();
+          
+          if (data.error) {
+            addMessage(`Error: ${data.error}`, false);
+          } else {
+            addMessage(data.response || 'No response received', false);
+          }
+        } catch (error) {
+          addMessage(`Error: ${error.message}`, false);
+        }
+      };
+
+      function addMessage(content, isUser) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.innerHTML = content.replace(/\n/g, '<br>');
+        
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.appendChild(bubble);
+        messageDiv.appendChild(time);
+        messagesArea.appendChild(messageDiv);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+      }
+
+      function formatResponse(data) {
+        if (typeof data === 'string') return data;
+        return JSON.stringify(data, null, 2);
+      }
+
+      window.clearChat = function() {
+        messagesArea.innerHTML = `
+          <div class="message assistant">
+            <div class="message-bubble">Hello! I'm here to help you optimize your bar operations. Ask me about liquor costs, inventory management, pricing strategies, or upload data for analysis.</div>
+            <div class="message-time">Just now</div>
+          </div>
+        `;
+      };
+
       window.analyzeLiquorCosts = function() {
-        addMessage("Let's analyze your liquor costs! Please provide your expected and actual liquor usage.", false);
-        textarea.placeholder = "Enter: Expected Oz, Actual Oz (e.g., 100, 95)";
-        textarea.focus();
+        chatInput.value = 'Analyze my liquor costs and identify areas for improvement';
+        chatInput.focus();
       };
 
       window.manageBarInventory = function() {
-        addMessage("Let's manage your bar inventory! Please provide details about your current stock levels.", false);
-        textarea.placeholder = "Describe your current inventory tracking system...";
-        textarea.focus();
+        chatInput.value = 'Help me manage my bar inventory and optimize stock levels';
+        chatInput.focus();
       };
 
       window.optimizeBeveragePricing = function() {
-        addMessage("Let's optimize your beverage pricing! Please provide your current drink prices and costs.", false);
-        textarea.placeholder = "Enter: Drink Name, Price, Cost (e.g., Margarita, 12, 3)";
-        textarea.focus();
+        chatInput.value = 'Suggest optimal pricing strategies for my beverage menu';
+        chatInput.focus();
       };
 
-      textarea.focus();
+      window.changeLanguage = function(lang) {
+        console.log('Language changed to:', lang);
+      };
     });
-
-    // Language Translation System
-    const translations = {
-      en: {
-        company_name: "Curated Restaurant Consulting",
-        company_tagline: "Driven by Data. Crafted for Excellence.",
-        beverage_title: "Beverage Management",
-        beverage_page_subtitle: "Optimize your bar operations with liquor cost analysis and beverage management tools",
-        liquor_cost_title: "Liquor Cost Analysis",
-        liquor_cost_desc: "Track and optimize liquor costs",
-        bar_inventory_title: "Bar Inventory",
-        bar_inventory_desc: "Manage beverage inventory efficiently",
-        beverage_pricing_title: "Beverage Pricing",
-        beverage_pricing_desc: "Optimize drink pricing for profitability",
-        ai_assistant: "AI Assistant",
-        clear_chat: "Clear Chat"
-      },
-      es: {
-        company_name: "Consultoría de Restaurantes Curada",
-        company_tagline: "Impulsado por Datos. Creado para la Excelencia.",
-        beverage_title: "Gestión de Bebidas",
-        beverage_page_subtitle: "Optimiza las operaciones de tu bar con análisis de costos de licor y herramientas de gestión de bebidas",
-        liquor_cost_title: "Análisis de Costos de Licor",
-        liquor_cost_desc: "Rastrea y optimiza los costos de licor",
-        bar_inventory_title: "Inventario de Bar",
-        bar_inventory_desc: "Gestiona el inventario de bebidas de manera eficiente",
-        beverage_pricing_title: "Precios de Bebidas",
-        beverage_pricing_desc: "Optimiza los precios de bebidas para la rentabilidad",
-        ai_assistant: "Asistente IA",
-        clear_chat: "Limpiar Chat"
-      }
-    };
-
-    function changeLanguage(lang) {
-      localStorage.setItem('selectedLanguage', lang);
-      document.querySelectorAll('[data-translate]').forEach(element => {
-        const key = element.getAttribute('data-translate');
-        if (translations[lang] && translations[lang][key]) {
-          element.textContent = translations[lang][key];
-        }
-      });
-      document.getElementById('language-select').value = lang;
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const savedLang = localStorage.getItem('selectedLanguage') || 'en';
-      const select = document.getElementById('language-select');
-      if (select) select.value = savedLang;
-      changeLanguage(savedLang);
-    });
-
-    window.changeLanguage = changeLanguage;
   </script>
 </body>
 </html>

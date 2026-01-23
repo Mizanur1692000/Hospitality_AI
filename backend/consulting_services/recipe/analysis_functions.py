@@ -356,3 +356,239 @@ def calculate_recipe_scaling_analysis(current_batch, target_batch, yield_percent
         "business_report_html": business_report_html,
         "business_report": business_report
     }
+
+
+def process_recipe_csv_data(csv_file) -> dict:
+    """
+    Process uploaded CSV file for comprehensive recipe management analysis.
+
+    Expected CSV columns: recipe_name, ingredient_cost, portion_cost, recipe_price, servings, labor_cost
+    """
+    import pandas as pd
+    import os
+    from openai import OpenAI
+
+    try:
+        df = pd.read_csv(csv_file)
+
+        # Flexible column mapping
+        column_mapping = {
+            "recipe_name": ["recipe_name", "name", "recipe", "item", "menu_item", "dish"],
+            "ingredient_cost": ["ingredient_cost", "ingredients", "food_cost", "cost"],
+            "portion_cost": ["portion_cost", "portion", "per_portion"],
+            "recipe_price": ["recipe_price", "price", "selling_price", "menu_price", "sell_price"],
+            "servings": ["servings", "portions", "yield", "serves", "quantity"],
+            "labor_cost": ["labor_cost", "labor", "prep_cost", "preparation_cost"],
+        }
+
+        # Find matching columns
+        mapped_columns = {}
+        for target, variations in column_mapping.items():
+            for col in df.columns:
+                if any(var.lower() in col.lower() for var in variations):
+                    mapped_columns[target] = col
+                    break
+
+        # Check for required columns (at least recipe_name and one cost metric)
+        required = ["recipe_name"]
+        cost_columns = ["ingredient_cost", "portion_cost", "recipe_price"]
+        
+        missing_required = [col for col in required if col not in mapped_columns]
+        has_cost_column = any(col in mapped_columns for col in cost_columns)
+        
+        if missing_required or not has_cost_column:
+            return {
+                "status": "error",
+                "message": f"Missing required columns. Need: recipe_name and at least one of ingredient_cost, portion_cost, recipe_price",
+                "found_columns": list(df.columns),
+                "help": "Please ensure your CSV has: recipe_name, ingredient_cost, portion_cost, recipe_price, servings, labor_cost",
+            }
+
+        # Clean and process data
+        df_clean = df.copy()
+        
+        # Map columns
+        for target, source_col in mapped_columns.items():
+            if target == "recipe_name":
+                df_clean[target] = df_clean[source_col].astype(str)
+            else:
+                df_clean[target] = pd.to_numeric(df_clean[source_col], errors="coerce").fillna(0)
+
+        # Set defaults for missing optional columns
+        for col in ["ingredient_cost", "portion_cost", "recipe_price", "servings", "labor_cost"]:
+            if col not in mapped_columns:
+                df_clean[col] = 0.0 if col != "servings" else 1.0
+
+        # Analyze each recipe
+        recipe_analyses = []
+        total_recipes = 0
+        profitable_count = 0
+        needs_review_count = 0
+        
+        for _, row in df_clean.iterrows():
+            total_recipes += 1
+            recipe_name = row.get("recipe_name", f"Recipe {total_recipes}")
+            ingredient_cost = float(row.get("ingredient_cost", 0))
+            portion_cost = float(row.get("portion_cost", 0))
+            recipe_price = float(row.get("recipe_price", 0))
+            servings = float(row.get("servings", 1)) or 1
+            labor_cost = float(row.get("labor_cost", 0))
+            
+            # Calculate metrics
+            total_cost = ingredient_cost + labor_cost
+            cost_per_serving = total_cost / servings if servings > 0 else total_cost
+            
+            if recipe_price > 0:
+                food_cost_percent = (cost_per_serving / recipe_price) * 100
+                profit_margin = ((recipe_price - cost_per_serving) / recipe_price) * 100
+                profit_per_serving = recipe_price - cost_per_serving
+            else:
+                food_cost_percent = 0
+                profit_margin = 0
+                profit_per_serving = 0
+            
+            # Determine status
+            if profit_margin >= 65:
+                status = "Excellent"
+                profitable_count += 1
+            elif profit_margin >= 55:
+                status = "Good"
+                profitable_count += 1
+            elif profit_margin >= 45:
+                status = "Acceptable"
+            else:
+                status = "Needs Review"
+                needs_review_count += 1
+            
+            recipe_analyses.append({
+                "recipe_name": recipe_name,
+                "ingredient_cost": round(ingredient_cost, 2),
+                "labor_cost": round(labor_cost, 2),
+                "total_cost": round(total_cost, 2),
+                "recipe_price": round(recipe_price, 2),
+                "servings": int(servings),
+                "cost_per_serving": round(cost_per_serving, 2),
+                "food_cost_percent": round(food_cost_percent, 1),
+                "profit_margin": round(profit_margin, 1),
+                "profit_per_serving": round(profit_per_serving, 2),
+                "status": status
+            })
+
+        if not recipe_analyses:
+            return {
+                "status": "error",
+                "message": "No valid recipe data found in CSV",
+                "help": "Please ensure your CSV has valid recipe data",
+            }
+
+        # Calculate summary metrics
+        avg_food_cost = sum(r["food_cost_percent"] for r in recipe_analyses) / len(recipe_analyses)
+        avg_profit_margin = sum(r["profit_margin"] for r in recipe_analyses) / len(recipe_analyses)
+        total_potential_profit = sum(r["profit_per_serving"] for r in recipe_analyses)
+        
+        # Sort by profit margin for insights
+        sorted_by_margin = sorted(recipe_analyses, key=lambda x: x["profit_margin"], reverse=True)
+        top_performers = sorted_by_margin[:3] if len(sorted_by_margin) >= 3 else sorted_by_margin
+        needs_attention = [r for r in sorted_by_margin if r["status"] == "Needs Review"][:3]
+
+        # Generate recommendations
+        recommendations = []
+        
+        if avg_food_cost > 35:
+            recommendations.append("📊 Average food cost is high ({}%). Target: below 30-35%".format(round(avg_food_cost, 1)))
+        
+        if needs_review_count > 0:
+            recommendations.append(f"⚠️ {needs_review_count} recipe(s) have low profit margins and need pricing review")
+        
+        if avg_profit_margin < 60:
+            recommendations.append("💡 Consider menu price adjustments to improve overall profit margins")
+        
+        for recipe in needs_attention:
+            recommendations.append(f"🔍 Review '{recipe['recipe_name']}' - only {recipe['profit_margin']}% margin")
+        
+        if not recommendations:
+            recommendations.append("✅ All recipes are performing well within target margins")
+            recommendations.append("📈 Continue monitoring costs and adjust prices as ingredient costs change")
+
+        # Generate AI-powered analysis
+        ai_analysis = None
+        try:
+            api_key = os.getenv("OPENAI_API_KEY")
+            if api_key:
+                client = OpenAI(api_key=api_key)
+                
+                # Prepare recipe data for AI
+                recipe_summary = "\n".join([
+                    f"- {r['recipe_name']}: Cost ${r['cost_per_serving']:.2f}/serving, Price ${r['recipe_price']:.2f}, Margin {r['profit_margin']:.1f}%, Status: {r['status']}"
+                    for r in recipe_analyses[:15]  # Limit to 15 for token efficiency
+                ])
+                
+                ai_prompt = f"""Analyze this restaurant recipe portfolio and provide strategic recommendations:
+
+## Recipe Portfolio Summary:
+- Total Recipes: {total_recipes}
+- Average Food Cost: {avg_food_cost:.1f}%
+- Average Profit Margin: {avg_profit_margin:.1f}%
+- Profitable Recipes: {profitable_count} ({profitable_count/total_recipes*100:.0f}%)
+- Recipes Needing Review: {needs_review_count}
+
+## Individual Recipe Analysis:
+{recipe_summary}
+
+Provide:
+1. **Portfolio Assessment** - Overall health of the recipe portfolio
+2. **Top Performers** - Which recipes are most profitable and why
+3. **Improvement Opportunities** - Specific recipes that need attention
+4. **Cost Optimization Strategies** - How to reduce food costs while maintaining quality
+5. **Pricing Recommendations** - Specific price adjustments with rationale
+6. **Action Plan** - Prioritized next steps for the kitchen team
+
+Be specific with numbers, percentages, and dollar amounts."""
+
+                response = client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": """You are an expert restaurant consultant specializing in recipe costing, menu engineering, and kitchen profitability. Analyze recipe data and provide comprehensive, actionable insights.
+
+## Your Response Style:
+- Use clear headings and bullet points
+- Include specific calculations and dollar amounts
+- Compare to industry benchmarks (Food Cost: 28-32%, Profit Margin: 65-70%)
+- Provide prioritized, actionable recommendations
+- Be thorough but concise"""
+                        },
+                        {"role": "user", "content": ai_prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=2000,
+                )
+                ai_analysis = response.choices[0].message.content
+        except Exception as e:
+            ai_analysis = f"AI analysis unavailable: {str(e)}"
+
+        return {
+            "status": "success",
+            "file_info": csv_file.name if hasattr(csv_file, 'name') else "Uploaded CSV",
+            "summary": {
+                "total_recipes": total_recipes,
+                "avg_food_cost_percent": f"{avg_food_cost:.1f}%",
+                "avg_profit_margin": f"{avg_profit_margin:.1f}%",
+                "profitable_recipes": profitable_count,
+                "needs_review": needs_review_count,
+                "total_potential_profit": f"${total_potential_profit:.2f}"
+            },
+            "recipes": recipe_analyses,
+            "top_performers": top_performers,
+            "needs_attention": needs_attention,
+            "recommendations": recommendations,
+            "ai_analysis": ai_analysis,
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"CSV processing error: {str(e)}",
+            "help": "Please ensure your CSV has columns: recipe_name, ingredient_cost, portion_cost, recipe_price, servings, labor_cost",
+        }
