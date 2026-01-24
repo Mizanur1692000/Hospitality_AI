@@ -168,56 +168,9 @@ def run(params: dict, file_bytes: bytes | None = None) -> tuple[dict, int]:
             "management_focus": "Critical" if overall_score < 70 else "Important" if overall_score < 80 else "Maintain"
         }
 
-        # Generate business report HTML
-        business_report_html = f"""
-<section class="report">
-  <header class="report__header">
-    <h2>Performance Management Analysis</h2>
-    <div class="report__meta">Generated: {__import__('datetime').datetime.now().strftime('%B %d, %Y')}</div>
-    <div class="badge badge--{performance.lower().replace(' ', '-')}">{performance}</div>
-  </header>
-
-  <article class="report__body">
-    <p class="lead">This performance management analysis reveals <strong>{performance.lower()}</strong> overall performance with a score of <strong>{overall_score:.1f}%</strong>.</p>
-
-    <h3>Key Performance Metrics</h3>
-    <ul>
-      <li>• Overall Score: {overall_score:.1f}%</li>
-      <li>• Customer Satisfaction: {customer_satisfaction:.1f}% (Target: {customer_satisfaction_target:.1f}%)</li>
-      <li>• Sales Performance: {sales_performance:.1f}% (Target: {sales_performance_target:.1f}%)</li>
-      <li>• Efficiency Score: {efficiency_score:.1f}% (Target: {efficiency_target:.1f}%)</li>
-      <li>• Attendance Rate: {attendance_rate:.1f}% (Target: {attendance_target:.1f}%)</li>
-    </ul>
-
-    <h3>Performance Benchmarks</h3>
-    <ul>
-      <li>• Excellent Threshold: {benchmarks['excellent_threshold']:.1f}%</li>
-      <li>• Good Threshold: {benchmarks['good_threshold']:.1f}%</li>
-      <li>• Acceptable Threshold: {benchmarks['acceptable_threshold']:.1f}%</li>
-    </ul>
-
-    <h3>Metric Assessments</h3>
-    <ul>
-      <li>• Customer Satisfaction: {metric_assessments['customer_satisfaction']}</li>
-      <li>• Sales Performance: {metric_assessments['sales_performance']}</li>
-      <li>• Efficiency Score: {metric_assessments['efficiency_score']}</li>
-      <li>• Attendance Rate: {metric_assessments['attendance_rate']}</li>
-    </ul>
-
-    <h3>Additional Insights</h3>
-    <ul>
-      <li>• Performance Trend: {additional_insights['performance_trend']}</li>
-      <li>• Training Priority: {additional_insights['training_priority']}</li>
-      <li>• Management Focus: {additional_insights['management_focus']}</li>
-    </ul>
-
-    <h3>Strategic Recommendations</h3>
-    <ol>
-      {''.join([f'<li>{rec}</li>' for rec in recommendations])}
-    </ol>
-  </article>
-</section>
-        """.strip()
+        # Generate business report HTML (compacted to avoid \n in JSON)
+        recs_html = ''.join([f'<li>{rec}</li>' for rec in recommendations])
+        business_report_html = f'<section class="report"><header class="report__header"><h2>Performance Management Analysis</h2><div class="report__meta">Generated: {__import__("datetime").datetime.now().strftime("%B %d, %Y")}</div><div class="badge badge--{performance.lower().replace(" ", "-")}">{performance}</div></header><article class="report__body"><p class="lead">This performance management analysis reveals <strong>{performance.lower()}</strong> overall performance with a score of <strong>{overall_score:.1f}%</strong>.</p><h3>Key Performance Metrics</h3><ul><li>Overall Score: {overall_score:.1f}%</li><li>Customer Satisfaction: {customer_satisfaction:.1f}% (Target: {customer_satisfaction_target:.1f}%)</li><li>Sales Performance: {sales_performance:.1f}% (Target: {sales_performance_target:.1f}%)</li><li>Efficiency Score: {efficiency_score:.1f}% (Target: {efficiency_target:.1f}%)</li><li>Attendance Rate: {attendance_rate:.1f}% (Target: {attendance_target:.1f}%)</li></ul><h3>Performance Benchmarks</h3><ul><li>Excellent Threshold: {benchmarks["excellent_threshold"]:.1f}%</li><li>Good Threshold: {benchmarks["good_threshold"]:.1f}%</li><li>Acceptable Threshold: {benchmarks["acceptable_threshold"]:.1f}%</li></ul><h3>Metric Assessments</h3><ul><li>Customer Satisfaction: {metric_assessments["customer_satisfaction"]}</li><li>Sales Performance: {metric_assessments["sales_performance"]}</li><li>Efficiency Score: {metric_assessments["efficiency_score"]}</li><li>Attendance Rate: {metric_assessments["attendance_rate"]}</li></ul><h3>Additional Insights</h3><ul><li>Performance Trend: {additional_insights["performance_trend"]}</li><li>Training Priority: {additional_insights["training_priority"]}</li><li>Management Focus: {additional_insights["management_focus"]}</li></ul><h3>Strategic Recommendations</h3><ol>{recs_html}</ol></article></section>'
 
         # Generate text business report
         business_report = f"""

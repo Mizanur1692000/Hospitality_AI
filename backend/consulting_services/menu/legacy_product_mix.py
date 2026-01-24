@@ -74,13 +74,15 @@ def process_csv_data(csv_file) -> Dict[str, Any]:
         else:
             for col in actual_columns:
                 col_lower = col.lower()
-                if "name" in col_lower and "item" not in [v for v in column_mapping.values()]:
+                if "name" in col_lower and "item_name" not in [v for v in column_mapping.values()]:
                     column_mapping[col] = "item_name"
                 elif "quantity" in col_lower or "units" in col_lower:
                     column_mapping[col] = "quantity_sold"
-                elif "price" in col_lower:
+                elif col_lower == "price":
                     column_mapping[col] = "price"
-                elif "cost" in col_lower:
+                elif col_lower == "food_cost" and "cost" not in [v for v in column_mapping.values()]:
+                    column_mapping[col] = "cost"
+                elif "cost" in col_lower and "labor" not in col_lower and "cost" not in [v for v in column_mapping.values()]:
                     column_mapping[col] = "cost"
         
         # Apply column mapping
@@ -101,22 +103,35 @@ def process_csv_data(csv_file) -> Dict[str, Any]:
         
         # Clean numeric values (remove $, %, commas)
         def clean_numeric(value):
-            if pd.isna(value):
+            # Handle None, NaN, and empty values
+            if value is None:
                 return 0
+            try:
+                # Check for NaN using different method to avoid Series ambiguity
+                if isinstance(value, float) and pd.isna(value):
+                    return 0
+            except (TypeError, ValueError):
+                pass
             if isinstance(value, str):
+                value = value.strip()
+                if value == '' or value.lower() == 'nan':
+                    return 0
                 # Remove currency symbols, percentage signs, commas
                 cleaned = value.replace("$", "").replace("%", "").replace(",", "").strip()
                 try:
                     return float(cleaned)
                 except (ValueError, AttributeError):
                     return 0
-            return float(value) if pd.notna(value) else 0
+            try:
+                return float(value) if value is not None else 0
+            except (ValueError, TypeError):
+                return 0
         
         # Clean price column
         df["price"] = df["price"].apply(clean_numeric)
         
-        # Clean quantity column
-        df["quantity_sold"] = df["quantity_sold"].apply(lambda x: int(clean_numeric(x)) if pd.notna(x) else 0)
+        # Clean quantity column - already handled by clean_numeric
+        df["quantity_sold"] = df["quantity_sold"].apply(lambda x: int(clean_numeric(x)))
         
         # Handle cost column - prioritize most accurate sources first
         has_cost_column = "cost" in df.columns

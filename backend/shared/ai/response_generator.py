@@ -229,12 +229,12 @@ def _generate_quadrant_response(intent: str, quadrant_data: Dict, full_data: Dic
         }
 
     # Format answer
-    answer = f"{emoji} You have **{count} {quadrant_name}** ({percentage:.1f}% of menu):\n\n"
+    answer = f"You have {count} {quadrant_name} ({percentage:.1f}% of menu):\n\n"
     for i, item in enumerate(items[:5], 1):  # Show max 5
         name = item.get("menu_name", "Unknown")
         revenue = item.get("total_revenue", 0)
         profit = item.get("total_profit", 0)
-        answer += f"{i}. **{name}** - ${revenue:,.0f} revenue, ${profit:,.0f} profit\n"
+        answer += f"{i}. {name} - ${revenue:,.0f} revenue, ${profit:,.0f} profit\n"
 
     if len(items) > 5:
         answer += f"\n...and {len(items) - 5} more"
@@ -246,13 +246,13 @@ def _generate_quadrant_response(intent: str, quadrant_data: Dict, full_data: Dic
         insights.append("Feature these prominently in your menu's Golden Triangle")
         insights.append("Never remove these items")
         if percentage < 25:
-            insights.append(f"⚠️ Only {percentage:.1f}% of menu are Stars - aim for 25-35%")
+            insights.append(f"Only {percentage:.1f}% of menu are Stars - aim for 25-35%")
     else:  # dogs
         insights.append(f"These items have low profit AND low popularity")
         insights.append("Consider removing or replacing these items")
         insights.append("If keeping them, move to bottom of menu")
         if percentage > 15:
-            insights.append(f"⚠️ {percentage:.1f}% of menu are Dogs - aim for <15%")
+            insights.append(f"{percentage:.1f}% of menu are Dogs - aim for less than 15%")
 
     # Suggestions
     if intent == "stars":
@@ -290,12 +290,12 @@ def _generate_menu_analysis_response(data: Dict) -> Dict:
     total_revenue = overall_metrics.get("total_revenue", 0)
 
     # Format answer
-    answer = f"**Menu Engineering Analysis**\n\n"
+    answer = f"Menu Engineering Analysis\n\n"
     answer += f"Analyzing {total_items} items (${total_revenue:,.2f} total revenue):\n\n"
-    answer += f"⭐ **Stars:** {stars.get('count', 0)} items ({stars.get('percentage_of_menu', 0):.1f}%) - Keep & promote!\n"
-    answer += f"🐴 **Plowhorses:** {plowhorses.get('count', 0)} items ({plowhorses.get('percentage_of_menu', 0):.1f}%) - Popular but low profit\n"
-    answer += f"🧩 **Puzzles:** {puzzles.get('count', 0)} items ({puzzles.get('percentage_of_menu', 0):.1f}%) - Profitable but unpopular\n"
-    answer += f"🐕 **Dogs:** {dogs.get('count', 0)} items ({dogs.get('percentage_of_menu', 0):.1f}%) - Remove or improve\n"
+    answer += f"Stars: {stars.get('count', 0)} items ({stars.get('percentage_of_menu', 0):.1f}%) - Keep and promote these!\n"
+    answer += f"Plowhorses: {plowhorses.get('count', 0)} items ({plowhorses.get('percentage_of_menu', 0):.1f}%) - Popular but low profit\n"
+    answer += f"Puzzles: {puzzles.get('count', 0)} items ({puzzles.get('percentage_of_menu', 0):.1f}%) - Profitable but unpopular\n"
+    answer += f"Dogs: {dogs.get('count', 0)} items ({dogs.get('percentage_of_menu', 0):.1f}%) - Remove or improve\n"
 
     # Generate insights
     insights = []
@@ -303,14 +303,14 @@ def _generate_menu_analysis_response(data: Dict) -> Dict:
     dog_pct = dogs.get('percentage_of_menu', 0)
 
     if star_pct < 25:
-        insights.append(f"⚠️ Only {star_pct:.1f}% Stars - aim for 25-35%")
+        insights.append(f"Only {star_pct:.1f}% Stars - aim for 25-35%")
     elif star_pct >= 30:
-        insights.append(f"✅ Great! {star_pct:.1f}% Stars (target: 25-35%)")
+        insights.append(f"Great! {star_pct:.1f}% Stars (target: 25-35%)")
 
     if dog_pct > 15:
-        insights.append(f"⚠️ Too many Dogs ({dog_pct:.1f}%) - aim for <15%")
+        insights.append(f"Too many Dogs ({dog_pct:.1f}%) - aim for less than 15%")
     elif dog_pct < 10:
-        insights.append(f"✅ Excellent! Only {dog_pct:.1f}% Dogs")
+        insights.append(f"Excellent! Only {dog_pct:.1f}% Dogs")
 
     # Suggestions
     suggestions = [
@@ -349,20 +349,20 @@ def _generate_pricing_opportunity_response(intent: str, items: List[Dict], full_
 
     # Format answer
     if intent == "underpriced_items":
-        answer = f"💰 Found **{len(items)} underpriced items** (${total_opportunity:,.2f} revenue opportunity):\n\n"
+        answer = f"Found {len(items)} underpriced items (${total_opportunity:,.2f} revenue opportunity):\n\n"
         for i, item in enumerate(top_items, 1):
             name = item.get("name", "Unknown")
             current = item.get("current_price", 0)
             suggested = item.get("suggested_price", 0)
             opportunity = item.get("revenue_opportunity", 0)
-            answer += f"{i}. **{name}** - ${current:.2f} → ${suggested:.2f} (+${opportunity:,.0f}/month)\n"
+            answer += f"{i}. {name} - ${current:.2f} to ${suggested:.2f} (+${opportunity:,.0f}/month)\n"
     else:  # overpriced_items
-        answer = f"Found **{len(items)} potentially overpriced items**:\n\n"
+        answer = f"Found {len(items)} potentially overpriced items:\n\n"
         for i, item in enumerate(top_items, 1):
             name = item.get("name", "Unknown")
             current = item.get("current_price", 0)
             suggested = item.get("suggested_price", 0)
-            answer += f"{i}. **{name}** - ${current:.2f} → ${suggested:.2f}\n"
+            answer += f"{i}. {name} - ${current:.2f} to ${suggested:.2f}\n"
 
     if len(items) > 5:
         answer += f"\n...and {len(items) - 5} more"
@@ -402,13 +402,13 @@ def _generate_pricing_strategy_response(data: Dict) -> Dict:
     overpriced_count = len(pricing_opps.get("overpriced_items", []))
     total_opportunity = pricing_opps.get("total_revenue_opportunity", 0)
 
-    answer = f"**Pricing Strategy Analysis**\n\n"
-    answer += f"💰 Underpriced: {underpriced_count} items (+${total_opportunity:,.0f} opportunity)\n"
-    answer += f"📉 Overpriced: {overpriced_count} items\n\n"
+    answer = f"Pricing Strategy Analysis\n\n"
+    answer += f"Underpriced: {underpriced_count} items (+${total_opportunity:,.0f} opportunity)\n"
+    answer += f"Overpriced: {overpriced_count} items\n\n"
     answer += "Use psychological pricing rules:\n"
-    answer += "• Under $10: .99 endings\n"
-    answer += "• $10-20: .95 endings\n"
-    answer += "• Over $20: Round dollars\n"
+    answer += "- Under $10: use .99 endings\n"
+    answer += "- $10-20: use .95 endings\n"
+    answer += "- Over $20: use round dollars\n"
 
     insights = [
         f"Total revenue opportunity: ${total_opportunity:,.0f}/month",
@@ -438,12 +438,12 @@ def _generate_golden_triangle_response(triangle_data: Dict, full_data: Dict) -> 
     # triangle_data is the full data dict, extract golden_triangle (which is a list)
     positions = triangle_data.get("golden_triangle", [])
 
-    answer = "**Golden Triangle Placement** (Where customers look first):\n\n"
+    answer = "Golden Triangle Placement (Where customers look first):\n\n"
     for pos in positions[:3]:  # Top 3 positions
         position = pos.get("position", "")
         item_name = pos.get("menu_item", "Unknown")  # Field is "menu_item" not "item_name"
         reason = pos.get("reason", "")
-        answer += f"📍 **{position}**: {item_name}\n   _{reason}_\n\n"
+        answer += f"{position}: {item_name}\n   {reason}\n\n"
 
     insights = [
         "Top-right corner gets most attention (70% of diners look here first)",
@@ -471,17 +471,17 @@ def _generate_menu_design_response(data: Dict) -> Dict:
     visual_hierarchy = data.get("visual_hierarchy", {})
     implementation_guide = data.get("implementation_guide", {})
 
-    answer = "**Menu Design Recommendations**\n\n"
-    answer += "**Phase 1: Golden Triangle**\n"
+    answer = "Menu Design Recommendations\n\n"
+    answer += "Phase 1: Golden Triangle\n"
     positions = golden_triangle  # Already a list
     for pos in positions[:3]:
-        answer += f"• {pos.get('position')}: {pos.get('menu_item')}\n"  # Field is "menu_item"
+        answer += f"- {pos.get('position')}: {pos.get('menu_item')}\n"  # Field is "menu_item"
 
-    answer += "\n**Visual Hierarchy:**\n"
+    answer += "\nVisual Hierarchy:\n"
     for quadrant in ["stars", "plowhorses", "puzzles", "dogs"]:
         quad_data = visual_hierarchy.get(quadrant, {})
         if quad_data:
-            answer += f"• {quadrant.title()}: {quad_data.get('font_size')} - {quad_data.get('emphasis')}\n"
+            answer += f"- {quadrant.title()}: {quad_data.get('font_size')} - {quad_data.get('emphasis')}\n"
 
     insights = [
         "Implement Golden Triangle first - easiest & biggest impact",
@@ -506,18 +506,18 @@ def _generate_menu_design_response(data: Dict) -> Dict:
 def _generate_system_response(intent: str) -> Dict:
     """Generate system responses (help, etc.)."""
     if intent == "help":
-        answer = "**What I Can Help You With:**\n\n"
-        answer += "📊 **Menu Analysis:**\n"
-        answer += "• 'What are my highest selling items?'\n"
-        answer += "• 'Show me my most profitable items'\n"
-        answer += "• 'What are my star items?'\n"
-        answer += "• 'Which items should I remove?'\n\n"
-        answer += "💰 **Pricing:**\n"
-        answer += "• 'Are any items underpriced?'\n"
-        answer += "• 'Show me pricing opportunities'\n\n"
-        answer += "🎨 **Menu Design:**\n"
-        answer += "• 'Where should I place items?'\n"
-        answer += "• 'Show me menu design recommendations'\n"
+        answer = "What I Can Help You With:\n\n"
+        answer += "Menu Analysis:\n"
+        answer += "- What are my highest selling items?\n"
+        answer += "- Show me my most profitable items\n"
+        answer += "- What are my star items?\n"
+        answer += "- Which items should I remove?\n\n"
+        answer += "Pricing:\n"
+        answer += "- Are any items underpriced?\n"
+        answer += "- Show me pricing opportunities\n\n"
+        answer += "Menu Design:\n"
+        answer += "- Where should I place items?\n"
+        answer += "- Show me menu design recommendations\n"
 
         return {
             "answer": answer,
@@ -564,12 +564,12 @@ def format_insights(intent: str, full_data: Dict, items: List[Dict]) -> List[str
         classification = top_item.get("classification", "")
 
         if classification == "star":
-            insights.append("💡 These are Star items - high popularity AND profitability!")
+            insights.append("These are Star items - high popularity AND profitability!")
         elif classification == "plowhorse":
-            insights.append("💡 These are Plowhorses - popular but could be more profitable")
+            insights.append("These are Plowhorses - popular but could be more profitable")
         elif classification == "puzzle":
-            insights.append("💡 These are Puzzles - profitable but need better marketing")
+            insights.append("These are Puzzles - profitable but need better marketing")
         elif classification == "dog":
-            insights.append("⚠️ These are Dogs - consider removing or improving")
+            insights.append("These are Dogs - consider removing or improving")
 
     return insights

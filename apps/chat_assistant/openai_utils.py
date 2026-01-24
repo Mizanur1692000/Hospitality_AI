@@ -8,6 +8,48 @@ from openai import OpenAI
 load_dotenv()
 
 
+def sanitize_response(text: str) -> str:
+    """
+    Clean response text by removing markdown, LaTeX, and other formatting artifacts.
+    Ensures the output is natural, human-readable text.
+    """
+    if not text:
+        return text
+    
+    # Remove LaTeX-style commands: \text{...}, \frac{...}, \left, \right, etc.
+    text = re.sub(r'\\text\{([^}]*)\}', r'\1', text)
+    text = re.sub(r'\\frac\{([^}]*)\}\{([^}]*)\}', r'\1 divided by \2', text)
+    text = re.sub(r'\\left[(\[\{]', '', text)
+    text = re.sub(r'\\right[)\]\}]', '', text)
+    text = re.sub(r'\\times', 'times', text)
+    text = re.sub(r'\\[a-zA-Z]+', '', text)  # Remove any remaining backslash commands
+    
+    # Remove markdown bold: **text** -> text
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
+    
+    # Remove markdown italic: *text* or _text_ -> text
+    text = re.sub(r'(?<!\*)\*([^*]+)\*(?!\*)', r'\1', text)
+    text = re.sub(r'(?<!_)_([^_]+)_(?!_)', r'\1', text)
+    
+    # Remove markdown headers: ## Header -> Header
+    text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
+    
+    # Remove markdown code blocks and inline code
+    text = re.sub(r'```[^`]*```', '', text, flags=re.DOTALL)
+    text = re.sub(r'`([^`]+)`', r'\1', text)
+    
+    # Replace bullet point symbols with dashes
+    text = re.sub(r'^[•◦▪]\s*', '- ', text, flags=re.MULTILINE)
+    
+    # Clean up multiple newlines
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    # Clean up extra spaces
+    text = re.sub(r' +', ' ', text)
+    
+    return text.strip()
+
+
 def extract_kpi_data(prompt: str) -> dict:
     """Extract KPI data from user prompt using regex patterns."""
     import urllib.parse
@@ -673,7 +715,7 @@ def handle_conversational_ai(prompt: str) -> str:
 
             # Check if this was a "help" response (means query wasn't recognized)
             # If so, return None to fall through to GPT-4
-            if answer.startswith("**What I Can Help You With:**") or answer.startswith("I'm not sure I understood that"):
+            if answer.startswith("What I Can Help You With:") or answer.startswith("I'm not sure I understood that"):
                 return None  # Fall through to GPT-4 for general questions
 
             # Format the conversational response
@@ -684,14 +726,14 @@ def handle_conversational_ai(prompt: str) -> str:
             response_parts = [answer]
 
             if insights:
-                response_parts.append("\n**💡 Insights:**")
+                response_parts.append("\nInsights:")
                 for insight in insights:
-                    response_parts.append(f"• {insight}")
+                    response_parts.append(f"- {insight}")
 
             if suggestions:
-                response_parts.append("\n**💬 You can also ask:**")
+                response_parts.append("\nYou can also ask:")
                 for suggestion in suggestions[:3]:  # Limit to 3 suggestions
-                    response_parts.append(f"• {suggestion}")
+                    response_parts.append(f"- {suggestion}")
 
             return "\n".join(response_parts)
 
@@ -710,12 +752,12 @@ def chat_with_gpt(prompt: str) -> str:
     # STEP 1: Try Conversational AI first (natural language queries about menu/business)
     conversational_response = handle_conversational_ai(prompt)
     if conversational_response:
-        return conversational_response
+        return sanitize_response(conversational_response)
 
     # STEP 2: Try specific KPI analysis handlers (legacy keyword-based routing)
     kpi_response = handle_kpi_analysis(prompt)
     if kpi_response:
-        return kpi_response
+        return sanitize_response(kpi_response)
 
     # STEP 3: Fall back to GPT-4 for general hospitality advice
     api_key = os.getenv("OPENAI_API_KEY")
@@ -725,47 +767,45 @@ def chat_with_gpt(prompt: str) -> str:
 
     base_system_message = """You are an expert restaurant business consultant with 20+ years of experience in the hospitality industry. Your role is to provide comprehensive, actionable, and data-driven advice to restaurant owners and managers.
 
-## Your Communication Style:
-- Write in a warm, professional, and approachable tone - like a trusted advisor having a conversation
-- Break down complex concepts into easy-to-understand explanations
-- Use clear headings, bullet points, and numbered lists for readability
-- Include specific calculations with step-by-step breakdowns when relevant
-- Provide industry benchmarks and context for all metrics
-- Always explain the "why" behind recommendations
+CRITICAL FORMATTING RULES - YOU MUST FOLLOW THESE:
+1. NEVER use markdown formatting like asterisks, bold, or headers (no **, no ##, no ###)
+2. NEVER use LaTeX or mathematical notation (no \\text{}, no \\frac{}, no \\left, no \\right, no backslash commands)
+3. NEVER use code blocks or backticks
+4. Write in plain, natural English like a human conversation
+5. For formulas, write them in simple words: "Food Cost Percentage equals Cost of Goods Sold divided by Total Sales, multiplied by 100"
+6. Use natural paragraph structure, not rigid formatting
 
-## Response Structure (use when appropriate):
-1. **Understanding the Situation** - Acknowledge what the user is asking and restate key data points
-2. **Analysis** - Provide detailed calculations with formulas shown clearly
-3. **Key Findings** - Highlight the most important insights from the analysis
-4. **Recommendations** - Provide 3-5 specific, prioritized action items
-5. **Impact Assessment** - Quantify potential savings/improvements when possible
-6. **Next Steps** - Suggest immediate actions they can take
+Your Communication Style:
+- Write like you're having a friendly conversation with a restaurant owner
+- Use natural paragraphs and sentences
+- When listing items, use simple numbered lists (1. 2. 3.) or dashes (-)
+- Explain calculations in plain English with the actual numbers
+- Be warm, professional, and approachable
 
-## Industry Expertise Areas:
-- **KPI Analysis**: Labor cost %, food cost %, prime cost %, sales per labor hour
-- **Menu Engineering**: Stars, Plowhorses, Puzzles, Dogs matrix analysis
-- **Recipe Costing**: Ingredient costs, portion control, margin optimization
-- **Beverage Management**: Liquor cost control, inventory variance, pricing
-- **HR Solutions**: Staff retention, scheduling optimization, performance management
-- **Strategic Planning**: Sales forecasting, market analysis, growth strategies
+When Analyzing Data:
+- Acknowledge what the user is asking
+- Explain calculations in conversational language with actual numbers
+- Compare results to industry standards (mention the benchmark ranges naturally)
+- Provide 3-5 specific action items the owner can take
+- Quantify potential savings when possible
+- Suggest what they could do next
 
-## Formatting Guidelines:
-- Use **bold** for important terms and metrics
-- Use mathematical notation for formulas: (Value A / Value B) × 100
-- Include specific dollar amounts and percentages
-- Reference industry standards: "Industry benchmark: 25-30%"
-- Use emojis sparingly for visual hierarchy (📊, 💡, ⚠️, ✅, 📈)
+Your Expertise Areas:
+- KPI Analysis: labor costs, food costs, prime costs, sales per labor hour
+- Menu Engineering: identifying best sellers, profit drivers, and underperformers  
+- Recipe Costing: ingredient costs, portion control, margin optimization
+- Beverage Management: liquor cost control, inventory management, pricing
+- HR Solutions: staff retention, scheduling, performance management
+- Strategic Planning: sales forecasting, market analysis, growth strategies
 
-## Example Response Pattern:
-When analyzing data, always:
-1. Show the calculation formula
-2. Plug in the actual numbers
-3. Show the result
-4. Compare to industry benchmarks
-5. Explain what this means for their business
-6. Provide specific recommendations to improve
+Industry Benchmarks to Reference (mention these naturally in conversation):
+- Food Cost: 28-32% of sales
+- Labor Cost: 25-30% of sales
+- Prime Cost: 55-65% of sales
+- Beverage Cost: 18-24% of sales
+- Sales Per Labor Hour: $35-50 or higher
 
-Remember: You're not just providing data - you're helping restaurant operators make better business decisions. Be thorough, be specific, and be helpful."""
+Remember: Write naturally like a trusted advisor having a conversation. No special formatting, no technical markup, just clear and helpful guidance."""
 
     try:
         client = OpenAI(api_key=api_key)
@@ -778,7 +818,7 @@ Remember: You're not just providing data - you're helping restaurant operators m
             temperature=0.7,
             max_tokens=2000,
         )
-        return response.choices[0].message.content
+        return sanitize_response(response.choices[0].message.content)
 
     except Exception as exc:  # pragma: no cover - network/SDK errors
         return f"Error: Unable to process request. {exc}"

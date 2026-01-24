@@ -131,55 +131,9 @@ def run(params: dict, file_bytes: bytes | None = None) -> tuple[dict, int]:
             "overtime_risk": "High" if peak_hours > labor_hours * 0.5 else "Medium" if peak_hours > labor_hours * 0.3 else "Low"
         }
 
-        # Generate business report HTML
-        business_report_html = f"""
-<section class="report">
-  <header class="report__header">
-    <h2>Labor Scheduling Analysis</h2>
-    <div class="report__meta">Generated: {__import__('datetime').datetime.now().strftime('%B %d, %Y')}</div>
-    <div class="badge badge--{performance.lower().replace(' ', '-')}">{performance}</div>
-  </header>
-
-  <article class="report__body">
-    <p class="lead">This labor scheduling analysis reveals <strong>{performance.lower()}</strong> scheduling efficiency with <strong>{scheduling_efficiency.lower()}</strong> peak hour optimization.</p>
-
-    <h3>Key Performance Metrics</h3>
-    <ul>
-      <li>• Total Sales: ${total_sales:,.2f}</li>
-      <li>• Labor Hours: {labor_hours:.1f}</li>
-      <li>• Hourly Rate: ${hourly_rate:.2f}</li>
-      <li>• Total Labor Cost: ${total_labor_cost:,.2f}</li>
-      <li>• Sales per Hour: ${sales_per_hour:.2f}</li>
-      <li>• Labor Percent: {labor_percent:.1f}%</li>
-      <li>• Peak Hours: {peak_hours:.1f}</li>
-      <li>• Off-Peak Hours: {off_peak_hours:.1f}</li>
-    </ul>
-
-    <h3>Industry Benchmarks</h3>
-    <ul>
-      <li>• Excellent Labor %: {benchmarks['excellent_labor_percent']:.1f}%</li>
-      <li>• Good Labor %: {benchmarks['good_labor_percent']:.1f}%</li>
-      <li>• Acceptable Labor %: {benchmarks['acceptable_labor_percent']:.1f}%</li>
-      <li>• Target Labor %: {benchmarks['target_labor_percent']:.1f}%</li>
-      <li>• Optimal Peak %: {benchmarks['optimal_peak_percent']:.1f}%</li>
-    </ul>
-
-    <h3>Additional Insights</h3>
-    <ul>
-      <li>• Peak Efficiency: {additional_insights['peak_efficiency_percent']:.1f}%</li>
-      <li>• Scheduling Efficiency: {scheduling_efficiency}</li>
-      <li>• Potential Savings: ${additional_insights['potential_savings']:,.2f}</li>
-      <li>• Optimization Priority: {additional_insights['scheduling_optimization_priority']}</li>
-      <li>• Overtime Risk: {additional_insights['overtime_risk']}</li>
-    </ul>
-
-    <h3>Strategic Recommendations</h3>
-    <ol>
-      {''.join([f'<li>{rec}</li>' for rec in recommendations])}
-    </ol>
-  </article>
-</section>
-        """.strip()
+        # Generate business report HTML (compacted to avoid \n in JSON)
+        recs_html = ''.join([f'<li>{rec}</li>' for rec in recommendations])
+        business_report_html = f'<section class="report"><header class="report__header"><h2>Labor Scheduling Analysis</h2><div class="report__meta">Generated: {__import__("datetime").datetime.now().strftime("%B %d, %Y")}</div><div class="badge badge--{performance.lower().replace(" ", "-")}">{performance}</div></header><article class="report__body"><p class="lead">This labor scheduling analysis reveals <strong>{performance.lower()}</strong> scheduling efficiency with <strong>{scheduling_efficiency.lower()}</strong> peak hour optimization.</p><h3>Key Performance Metrics</h3><ul><li>Total Sales: ${total_sales:,.2f}</li><li>Labor Hours: {labor_hours:.1f}</li><li>Hourly Rate: ${hourly_rate:.2f}</li><li>Total Labor Cost: ${total_labor_cost:,.2f}</li><li>Sales per Hour: ${sales_per_hour:.2f}</li><li>Labor Percent: {labor_percent:.1f}%</li><li>Peak Hours: {peak_hours:.1f}</li><li>Off-Peak Hours: {off_peak_hours:.1f}</li></ul><h3>Industry Benchmarks</h3><ul><li>Excellent Labor %: {benchmarks["excellent_labor_percent"]:.1f}%</li><li>Good Labor %: {benchmarks["good_labor_percent"]:.1f}%</li><li>Acceptable Labor %: {benchmarks["acceptable_labor_percent"]:.1f}%</li><li>Target Labor %: {benchmarks["target_labor_percent"]:.1f}%</li><li>Optimal Peak %: {benchmarks["optimal_peak_percent"]:.1f}%</li></ul><h3>Additional Insights</h3><ul><li>Peak Efficiency: {additional_insights["peak_efficiency_percent"]:.1f}%</li><li>Scheduling Efficiency: {scheduling_efficiency}</li><li>Potential Savings: ${additional_insights["potential_savings"]:,.2f}</li><li>Optimization Priority: {additional_insights["scheduling_optimization_priority"]}</li><li>Overtime Risk: {additional_insights["overtime_risk"]}</li></ul><h3>Strategic Recommendations</h3><ol>{recs_html}</ol></article></section>'
 
         # Generate text business report
         business_report = f"""

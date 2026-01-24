@@ -267,6 +267,82 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.6; transform: scale(1.2); }
     }
+    
+    /* Report Styles for business_report_html */
+    .report {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    .report__header {
+      background: var(--primary-gradient);
+      color: white;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem;
+    }
+    .report__header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      flex: 1;
+    }
+    .report__meta {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+    .badge {
+      padding: 0.35rem 0.8rem;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge--excellent { background: rgba(16, 185, 129, 0.2); color: #065f46; }
+    .badge--good { background: rgba(59, 130, 246, 0.2); color: #1e40af; }
+    .badge--acceptable { background: rgba(251, 191, 36, 0.2); color: #92400e; }
+    .badge--needs-improvement { background: rgba(239, 68, 68, 0.2); color: #991b1b; }
+    .report__body {
+      padding: 1.5rem;
+    }
+    .report__body .lead {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    .report__body h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 1.25rem 0 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .report__body h3::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: var(--primary-gradient);
+      border-radius: 2px;
+    }
+    .report__body ul, .report__body ol {
+      margin: 0.5rem 0;
+      padding-left: 1.25rem;
+    }
+    .report__body li {
+      margin: 0.4rem 0;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
   </style>
 </head>
 <body>
@@ -486,6 +562,11 @@
       }
 
       function formatAnalysisResponse(data) {
+        // First check if we have business_report_html - use it directly
+        if (data.business_report_html) {
+          return data.business_report_html;
+        }
+        
         if (data.items && Array.isArray(data.items)) {
           let html = '<strong>📊 Product Mix Analysis</strong><br><br>';
           html += '<table class="analysis-table"><thead><tr>';
@@ -508,6 +589,47 @@
           html += '</tbody></table>';
           return html;
         }
+        
+        // Build a formatted report from available data
+        if (data.pmix_report || data.status === 'success') {
+          let html = '<div class="report"><div class="report__header">';
+          html += '<h2>Menu Engineering Analysis</h2>';
+          html += `<div class="report__meta">Generated: ${new Date().toLocaleString()}</div>`;
+          if (data.performance_rating) {
+            const badgeClass = data.performance_rating.toLowerCase().replace(' ', '-');
+            html += `<div class="badge badge--${badgeClass}">${data.performance_rating}</div>`;
+          }
+          html += '</div><div class="report__body">';
+          
+          // Metrics
+          if (data.metrics) {
+            html += '<h3>Key Metrics</h3><ul>';
+            for (const [key, value] of Object.entries(data.metrics)) {
+              if (typeof value === 'number') {
+                const formatted = key.toLowerCase().includes('percent') ? `${value.toFixed(1)}%` : 
+                                  key.toLowerCase().includes('revenue') || key.toLowerCase().includes('profit') || key.toLowerCase().includes('cost') ? `$${value.toLocaleString()}` : 
+                                  value.toLocaleString();
+                html += `<li>${key}: ${formatted}</li>`;
+              } else {
+                html += `<li>${key}: ${value}</li>`;
+              }
+            }
+            html += '</ul>';
+          }
+          
+          // Recommendations
+          if (data.recommendations && data.recommendations.length > 0) {
+            html += '<h3>Strategic Recommendations</h3><ol>';
+            data.recommendations.forEach(rec => {
+              html += `<li>${rec}</li>`;
+            });
+            html += '</ol>';
+          }
+          
+          html += '</div></div>';
+          return html;
+        }
+        
         return JSON.stringify(data, null, 2);
       }
     });

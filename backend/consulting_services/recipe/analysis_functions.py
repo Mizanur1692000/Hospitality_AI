@@ -495,20 +495,20 @@ def process_recipe_csv_data(csv_file) -> dict:
         recommendations = []
         
         if avg_food_cost > 35:
-            recommendations.append("📊 Average food cost is high ({}%). Target: below 30-35%".format(round(avg_food_cost, 1)))
+            recommendations.append("Average food cost is high ({}%). Target: below 30-35%".format(round(avg_food_cost, 1)))
         
         if needs_review_count > 0:
-            recommendations.append(f"⚠️ {needs_review_count} recipe(s) have low profit margins and need pricing review")
+            recommendations.append(f"{needs_review_count} recipe(s) have low profit margins and need pricing review")
         
         if avg_profit_margin < 60:
-            recommendations.append("💡 Consider menu price adjustments to improve overall profit margins")
+            recommendations.append("Consider menu price adjustments to improve overall profit margins")
         
         for recipe in needs_attention:
-            recommendations.append(f"🔍 Review '{recipe['recipe_name']}' - only {recipe['profit_margin']}% margin")
+            recommendations.append(f"Review '{recipe['recipe_name']}' - only {recipe['profit_margin']}% margin")
         
         if not recommendations:
-            recommendations.append("✅ All recipes are performing well within target margins")
-            recommendations.append("📈 Continue monitoring costs and adjust prices as ingredient costs change")
+            recommendations.append("All recipes are performing well within target margins")
+            recommendations.append("Continue monitoring costs and adjust prices as ingredient costs change")
 
         # Generate AI-powered analysis
         ai_analysis = None
@@ -525,25 +525,33 @@ def process_recipe_csv_data(csv_file) -> dict:
                 
                 ai_prompt = f"""Analyze this restaurant recipe portfolio and provide strategic recommendations:
 
-## Recipe Portfolio Summary:
+Recipe Portfolio Summary:
 - Total Recipes: {total_recipes}
 - Average Food Cost: {avg_food_cost:.1f}%
 - Average Profit Margin: {avg_profit_margin:.1f}%
 - Profitable Recipes: {profitable_count} ({profitable_count/total_recipes*100:.0f}%)
 - Recipes Needing Review: {needs_review_count}
 
-## Individual Recipe Analysis:
+Individual Recipe Analysis:
 {recipe_summary}
 
-Provide:
-1. **Portfolio Assessment** - Overall health of the recipe portfolio
-2. **Top Performers** - Which recipes are most profitable and why
-3. **Improvement Opportunities** - Specific recipes that need attention
-4. **Cost Optimization Strategies** - How to reduce food costs while maintaining quality
-5. **Pricing Recommendations** - Specific price adjustments with rationale
-6. **Action Plan** - Prioritized next steps for the kitchen team
+IMPORTANT FORMATTING RULES:
+- Write in plain, natural English without any markdown or special formatting
+- Do NOT use asterisks or bold markers (no ** symbols)
+- Do NOT use hash symbols for headers (no ## symbols)
+- Do NOT use LaTeX or mathematical notation
+- Use simple numbered lists (1. 2. 3.) or dashes (-) for items
+- Write like you're having a conversation with a restaurant owner
 
-Be specific with numbers, percentages, and dollar amounts."""
+Please provide:
+1. Portfolio Assessment - overall health of the recipe portfolio
+2. Top Performers - which recipes are most profitable and why
+3. Improvement Opportunities - specific recipes that need attention
+4. Cost Optimization Strategies - how to reduce food costs while maintaining quality
+5. Pricing Recommendations - specific price adjustments with rationale
+6. Action Plan - prioritized next steps for the kitchen team
+
+Be specific with numbers, percentages, and dollar amounts, but write naturally."""
 
                 response = client.chat.completions.create(
                     model="gpt-4o",
@@ -552,12 +560,15 @@ Be specific with numbers, percentages, and dollar amounts."""
                             "role": "system",
                             "content": """You are an expert restaurant consultant specializing in recipe costing, menu engineering, and kitchen profitability. Analyze recipe data and provide comprehensive, actionable insights.
 
-## Your Response Style:
-- Use clear headings and bullet points
-- Include specific calculations and dollar amounts
+CRITICAL FORMATTING RULES:
+- NEVER use markdown formatting (no asterisks, no bold markers like **, no hash symbols like ##)
+- NEVER use LaTeX or mathematical notation (no backslash commands)
+- Write in plain, natural English like a friendly conversation
+- Use simple numbered lists (1. 2. 3.) or dashes (-) for lists
+- Include specific calculations and dollar amounts written conversationally
 - Compare to industry benchmarks (Food Cost: 28-32%, Profit Margin: 65-70%)
 - Provide prioritized, actionable recommendations
-- Be thorough but concise"""
+- Be thorough but conversational"""
                         },
                         {"role": "user", "content": ai_prompt}
                     ],

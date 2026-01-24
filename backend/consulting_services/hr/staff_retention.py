@@ -113,49 +113,7 @@ def run(params: dict, file_bytes: bytes | None = None) -> tuple[dict, int]:
         }
 
         # Generate business report HTML
-        business_report_html = f"""
-<section class="report">
-  <header class="report__header">
-    <h2>Staff Retention Analysis</h2>
-    <div class="report__meta">Generated: {__import__('datetime').datetime.now().strftime('%B %d, %Y')}</div>
-    <div class="badge badge--{performance.lower().replace(' ', '-')}">{performance}</div>
-  </header>
-
-  <article class="report__body">
-    <p class="lead">This staff retention analysis reveals <strong>{performance.lower()}</strong> turnover metrics with <strong>{risk_level.lower()}</strong> risk level compared to industry standards.</p>
-
-    <h3>Key Performance Metrics</h3>
-    <ul>
-      <li>• Turnover Rate: {turnover_rate:.1f}%</li>
-      <li>• Retention Rate: {retention_rate:.1f}%</li>
-      <li>• Industry Average: {industry_average:.1f}%</li>
-      <li>• vs Industry: {vs_industry:+.1f}%</li>
-      <li>• Estimated Annual Cost: ${estimated_annual_turnover_cost:,.0f}</li>
-    </ul>
-
-    <h3>Industry Benchmarks</h3>
-    <ul>
-      <li>• Excellent Threshold: {benchmarks['excellent_threshold']:.1f}%</li>
-      <li>• Good Threshold: {benchmarks['good_threshold']:.1f}%</li>
-      <li>• Acceptable Threshold: {benchmarks['acceptable_threshold']:.1f}%</li>
-      <li>• Industry Average: {benchmarks['industry_average']:.1f}%</li>
-    </ul>
-
-    <h3>Additional Insights</h3>
-    <ul>
-      <li>• Risk Level: {risk_level}</li>
-      <li>• Replacement Cost per Employee: ${replacement_cost_per_employee:,.0f}</li>
-      <li>• Cost Savings Potential: ${additional_insights['cost_savings_potential']:,.0f}</li>
-      <li>• Strategy Priority: {additional_insights['retention_strategy_priority']}</li>
-    </ul>
-
-    <h3>Strategic Recommendations</h3>
-    <ol>
-      {''.join([f'<li>{rec}</li>' for rec in recommendations])}
-    </ol>
-  </article>
-</section>
-        """.strip()
+        business_report_html = f"""<section class="report"><header class="report__header"><h2>Staff Retention Analysis</h2><div class="report__meta">Generated: {__import__('datetime').datetime.now().strftime('%B %d, %Y')}</div><div class="badge badge--{performance.lower().replace(' ', '-')}">{performance}</div></header><article class="report__body"><p class="lead">This staff retention analysis reveals <strong>{performance.lower()}</strong> turnover metrics with <strong>{risk_level.lower()}</strong> risk level compared to industry standards.</p><h3>Key Performance Metrics</h3><ul><li>Turnover Rate: {turnover_rate:.1f}%</li><li>Retention Rate: {retention_rate:.1f}%</li><li>Industry Average: {industry_average:.1f}%</li><li>vs Industry: {vs_industry:+.1f}%</li><li>Estimated Annual Cost: ${estimated_annual_turnover_cost:,.0f}</li></ul><h3>Industry Benchmarks</h3><ul><li>Excellent Threshold: {benchmarks['excellent_threshold']:.1f}%</li><li>Good Threshold: {benchmarks['good_threshold']:.1f}%</li><li>Acceptable Threshold: {benchmarks['acceptable_threshold']:.1f}%</li><li>Industry Average: {benchmarks['industry_average']:.1f}%</li></ul><h3>Additional Insights</h3><ul><li>Risk Level: {risk_level}</li><li>Replacement Cost per Employee: ${replacement_cost_per_employee:,.0f}</li><li>Cost Savings Potential: ${additional_insights['cost_savings_potential']:,.0f}</li><li>Strategy Priority: {additional_insights['retention_strategy_priority']}</li></ul><h3>Strategic Recommendations</h3><ol>{''.join([f'<li>{rec}</li>' for rec in recommendations])}</ol></article></section>"""
 
         # Generate text business report
         business_report = f"""

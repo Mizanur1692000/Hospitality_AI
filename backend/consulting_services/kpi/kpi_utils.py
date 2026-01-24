@@ -57,23 +57,31 @@ def generate_ai_kpi_analysis(
         
         prompt = f"""As a restaurant business consultant, analyze these KPIs and provide strategic insights:
 
-**Period Analyzed:** {num_days} days
-**Total Sales:** ${total_sales:,.2f}
-**Average Labor Cost:** {avg_labor_percent:.1f}% (Industry benchmark: 25-30%)
-**Average Food Cost:** {avg_food_percent:.1f}% (Industry benchmark: 28-32%)
-**Average Prime Cost:** {avg_prime_percent:.1f}% (Industry benchmark: 55-60%)
-**Sales per Labor Hour:** ${avg_sales_per_hour:.2f} (Industry benchmark: $50+)
-**Performance Trend:** {trend}
+Period Analyzed: {num_days} days
+Total Sales: ${total_sales:,.2f}
+Average Labor Cost: {avg_labor_percent:.1f}% (industry benchmark is 25-30%)
+Average Food Cost: {avg_food_percent:.1f}% (industry benchmark is 28-32%)
+Average Prime Cost: {avg_prime_percent:.1f}% (industry benchmark is 55-60%)
+Sales per Labor Hour: ${avg_sales_per_hour:.2f} (industry benchmark is $50+)
+Performance Trend: {trend}
 {daily_summary}
 
-Provide a concise but comprehensive analysis including:
-1. **Executive Summary** - Overall performance rating and key findings
-2. **Critical Issues** - Any metrics significantly outside industry benchmarks
-3. **Quick Wins** - Immediate actions that could improve performance
-4. **Strategic Recommendations** - Long-term improvements to consider
-5. **Projected Impact** - Estimated savings/revenue improvements if recommendations are implemented
+IMPORTANT FORMATTING RULES:
+- Write in plain, natural English without any markdown or special formatting
+- Do NOT use asterisks, bold markers, or hash symbols
+- Do NOT use LaTeX or mathematical notation like backslash commands
+- Write formulas in plain words: "Labor Cost Percentage equals Labor Cost divided by Total Sales, times 100"
+- Use simple numbered lists (1. 2. 3.) or dashes (-) for lists
+- Write like you're having a friendly conversation with a restaurant owner
 
-Keep the response practical and actionable for restaurant operators."""
+Provide a helpful analysis including:
+1. Executive Summary - overall performance and key findings
+2. Critical Issues - metrics outside industry benchmarks
+3. Quick Wins - immediate actions to improve performance
+4. Strategic Recommendations - longer term improvements
+5. Projected Impact - estimated savings if recommendations are implemented
+
+Keep the response practical and conversational for restaurant operators."""
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -82,30 +90,36 @@ Keep the response practical and actionable for restaurant operators."""
                     "role": "system",
                     "content": """You are an expert restaurant consultant with 20+ years of experience in hospitality operations. You specialize in KPI analysis, cost control, operational efficiency, and strategic business optimization.
 
-## Your Response Style:
-- Use a warm, professional, and conversational tone - like a trusted advisor
+CRITICAL FORMATTING RULES - YOU MUST FOLLOW THESE:
+1. NEVER use markdown formatting (no asterisks, no bold markers like **, no hash symbols like ##)
+2. NEVER use LaTeX or mathematical notation (no \\text{}, no \\frac{}, no \\left, no \\right, no backslash commands)
+3. Write in plain, natural English like a friendly conversation
+4. For formulas, write them as plain words: "Labor Cost Percentage equals Labor Cost divided by Sales, times 100"
+5. Use simple numbered lists (1. 2. 3.) or dashes (-) for lists
+
+Your Response Style:
+- Write like you're having a conversation with a restaurant owner
 - Break down complex metrics into easy-to-understand explanations
-- Always show your calculations step-by-step
-- Compare every metric to industry benchmarks
+- Show your calculations in plain English with actual numbers
+- Compare results to industry benchmarks naturally in the text
 - Provide specific dollar amounts and percentages
-- Use clear headings, bullet points, and numbered lists
 
-## When Analyzing Data, Always:
-1. Acknowledge the specific numbers provided
-2. Show calculation formulas with actual values
-3. State what industry benchmarks are
-4. Explain if performance is above/below standard and by how much
-5. Provide 3-5 specific, prioritized action items
-6. Quantify the potential impact of each recommendation
+When Analyzing Data:
+- Acknowledge the specific numbers provided
+- Explain calculations conversationally with actual values
+- Mention industry benchmarks in a natural way
+- Explain if performance is above or below standard
+- Provide 3-5 specific action items
+- Quantify potential impact when possible
 
-## Use These Industry Benchmarks:
-- Food Cost: 28-32% (ideal: 30%)
-- Labor Cost: 25-30% (ideal: 28%)
-- Prime Cost: 55-65% (ideal: 60%)
-- Beverage Cost: 18-24% (ideal: 20%)
-- Sales Per Labor Hour: $35-50+
+Industry Benchmarks to Reference:
+- Food Cost: 28-32% (ideal around 30%)
+- Labor Cost: 25-30% (ideal around 28%)
+- Prime Cost: 55-65% (ideal around 60%)
+- Beverage Cost: 18-24% (ideal around 20%)
+- Sales Per Labor Hour: $35-50 or higher
 
-Be thorough, specific, and actionable. Your goal is to help restaurant operators make better business decisions."""
+Write naturally and conversationally. No special formatting or markup."""
                 },
                 {"role": "user", "content": prompt}
             ],
@@ -205,29 +219,7 @@ def format_business_report(analysis_type, metrics, performance, recommendations,
 
 
     
-    business_report_html = f"""
-<section class="report">
-  <header class="report__header">
-    <h2>{analysis_type}</h2>
-    <div class="report__meta">Generated: {current_date}</div>
-    <div class="badge badge--{badge_class}">{rating}</div>
-  </header>
-
-  <article class="report__body">
-    <p class="lead">This {analysis_type.lower()} reveals <strong>{tone}</strong> performance metrics that <strong>{comp}</strong> industry standards.</p>
-
-    <h3>Key Performance Metrics</h3>
-    <ul>{li_items(key_metrics_lines)}</ul>
-
-    {f"<h3>Industry Benchmarks</h3><ul>{li_items(bench_lines)}</ul>" if bench_lines else ""}
-
-    {f"<h3>Additional Insights</h3><ul>{li_items(add_lines)}</ul>" if add_lines else ""}
-
-    <h3>Strategic Recommendations</h3>
-    <ol>{''.join(f'<li>{r}</li>' for r in recommendations)}</ol>
-  </article>
-</section>
-""".strip()
+    business_report_html = f"""<section class="report"><header class="report__header"><h2>{analysis_type}</h2><div class="report__meta">Generated: {current_date}</div><div class="badge badge--{badge_class}">{rating}</div></header><article class="report__body"><p class="lead">This {analysis_type.lower()} reveals <strong>{tone}</strong> performance metrics that <strong>{comp}</strong> industry standards.</p><h3>Key Performance Metrics</h3><ul>{li_items(key_metrics_lines)}</ul>{f"<h3>Industry Benchmarks</h3><ul>{li_items(bench_lines)}</ul>" if bench_lines else ""}{f"<h3>Additional Insights</h3><ul>{li_items(add_lines)}</ul>" if add_lines else ""}<h3>Strategic Recommendations</h3><ol>{''.join(f'<li>{r}</li>' for r in recommendations)}</ol></article></section>"""
 
     return {
         "status": "success",

@@ -28,11 +28,11 @@ CONFIRMATIONS = [
 
 # Insight prefixes (for variety)
 INSIGHT_PREFIXES = [
-    "💡 Key insight:",
-    "💡 Important:",
-    "💡 Note:",
-    "💡 Fun fact:",
-    "⚡ Quick tip:",
+    "Key insight:",
+    "Important:",
+    "Note:",
+    "Fun fact:",
+    "Quick tip:",
 ]
 
 # Action recommendations
@@ -47,16 +47,16 @@ ACTION_TEMPLATES = {
 
 # Performance ratings and colors
 PERFORMANCE_RATINGS = {
-    "excellent": {"emoji": "🌟", "color": "#10b981", "message": "Excellent performance!"},
-    "good": {"emoji": "✅", "color": "#3b82f6", "message": "Good performance"},
-    "acceptable": {"emoji": "⚠️", "color": "#f59e0b", "message": "Acceptable, room for improvement"},
-    "needs_improvement": {"emoji": "🔴", "color": "#ef4444", "message": "Needs improvement"},
+    "excellent": {"emoji": "", "color": "#10b981", "message": "Excellent performance!"},
+    "good": {"emoji": "", "color": "#3b82f6", "message": "Good performance"},
+    "acceptable": {"emoji": "", "color": "#f59e0b", "message": "Acceptable, room for improvement"},
+    "needs_improvement": {"emoji": "", "color": "#ef4444", "message": "Needs improvement"},
 }
 
 # Quadrant descriptions
 QUADRANT_INFO = {
     "stars": {
-        "emoji": "⭐",
+        "emoji": "",
         "name": "Stars",
         "description": "High profit + High popularity",
         "action": "Keep and promote these items!",
@@ -64,7 +64,7 @@ QUADRANT_INFO = {
         "font_size": "18-20pt, bold",
     },
     "plowhorses": {
-        "emoji": "🐴",
+        "emoji": "",
         "name": "Plowhorses",
         "description": "Low profit + High popularity",
         "action": "Raise prices or reduce costs",
@@ -72,7 +72,7 @@ QUADRANT_INFO = {
         "font_size": "14pt, standard",
     },
     "puzzles": {
-        "emoji": "🧩",
+        "emoji": "",
         "name": "Puzzles",
         "description": "High profit + Low popularity",
         "action": "Improve marketing and descriptions",
@@ -80,7 +80,7 @@ QUADRANT_INFO = {
         "font_size": "16pt, appetizing descriptions",
     },
     "dogs": {
-        "emoji": "🐕",
+        "emoji": "",
         "name": "Dogs",
         "description": "Low profit + Low popularity",
         "action": "Remove or replace ASAP",
@@ -124,7 +124,7 @@ Your top {count} {type} are:
     """,
 
     "quadrant_summary": """
-{emoji} You have **{count} {quadrant_name}** ({percentage:.1f}% of menu):
+You have {count} {quadrant_name} ({percentage:.1f}% of menu):
 
 {items_list}
 
@@ -134,7 +134,7 @@ Your top {count} {type} are:
     """,
 
     "pricing_opportunity": """
-💰 Found **{count} {opportunity_type}** (${total_opportunity:,.0f} revenue opportunity):
+Found {count} {opportunity_type} (${total_opportunity:,.0f} revenue opportunity):
 
 {items_list}
 
@@ -144,14 +144,14 @@ Your top {count} {type} are:
     """,
 
     "menu_analysis": """
-**Menu Engineering Analysis**
+Menu Engineering Analysis
 
 Analyzing {total_items} items (${total_revenue:,.2f} total revenue):
 
-⭐ **Stars:** {stars_count} items ({stars_pct:.1f}%)
-🐴 **Plowhorses:** {plowhorses_count} items ({plowhorses_pct:.1f}%)
-🧩 **Puzzles:** {puzzles_count} items ({puzzles_pct:.1f}%)
-🐕 **Dogs:** {dogs_count} items ({dogs_pct:.1f}%)
+Stars: {stars_count} items ({stars_pct:.1f}%)
+Plowhorses: {plowhorses_count} items ({plowhorses_pct:.1f}%)
+Puzzles: {puzzles_count} items ({puzzles_pct:.1f}%)
+Dogs: {dogs_count} items ({dogs_pct:.1f}%)
 
 {performance_assessment}
 
@@ -180,35 +180,35 @@ SUGGESTION_TEMPLATES = {
 
 # Help text
 HELP_TEXT = """
-**What I Can Help You With:**
+What I Can Help You With:
 
-📊 **Menu Analysis:**
-• 'What are my highest selling items?'
-• 'Show me my most profitable items'
-• 'What are my star items?'
-• 'Which items should I remove?'
-• 'Show me my menu analysis'
+Menu Analysis:
+- What are my highest selling items?
+- Show me my most profitable items
+- What are my star items?
+- Which items should I remove?
+- Show me my menu analysis
 
-💰 **Pricing Strategy:**
-• 'Are any items underpriced?'
-• 'Show me overpriced items'
-• 'What's my pricing strategy?'
-• 'Show me pricing opportunities'
+Pricing Strategy:
+- Are any items underpriced?
+- Show me overpriced items
+- What's my pricing strategy?
+- Show me pricing opportunities
 
-🎨 **Menu Design:**
-• 'Where should I place items on my menu?'
-• 'Show me menu design recommendations'
-• 'What is the golden triangle?'
+Menu Design:
+- Where should I place items on my menu?
+- Show me menu design recommendations
+- What is the golden triangle?
 
-**Pro Tips:**
-• You can filter by category: "Show me underpriced appetizers"
-• Ask follow-up questions for deeper insights
-• Type 'help' anytime to see this message
+Pro Tips:
+- You can filter by category: "Show me underpriced appetizers"
+- Ask follow-up questions for deeper insights
+- Type 'help' anytime to see this message
 
-**Example Questions:**
-• "What were my highest selling items?"
-• "Are any of my star items underpriced?"
-• "Where should I place my most profitable items?"
+Example Questions:
+- "What were my highest selling items?"
+- "Are any of my star items underpriced?"
+- "Where should I place my most profitable items?"
 """
 
 # Formatting helpers
@@ -240,9 +240,9 @@ def format_item_list(items: list, include_metrics: bool = True) -> str:
         if include_metrics:
             revenue = item.get("revenue", 0)
             profit = item.get("total_profit", 0)
-            output.append(f"{i}. **{name}** - {format_currency(revenue)} revenue, {format_currency(profit)} profit")
+            output.append(f"{i}. {name} - {format_currency(revenue)} revenue, {format_currency(profit)} profit")
         else:
-            output.append(f"{i}. **{name}**")
+            output.append(f"{i}. {name}")
 
     if len(items) > 5:
         output.append(f"\n...and {len(items) - 5} more")
@@ -251,16 +251,10 @@ def format_item_list(items: list, include_metrics: bool = True) -> str:
 
 
 def get_performance_emoji(rating: str) -> str:
-    """Get emoji for performance rating."""
-    rating_lower = rating.lower()
-    if rating_lower in PERFORMANCE_RATINGS:
-        return PERFORMANCE_RATINGS[rating_lower]["emoji"]
-    return "ℹ️"
+    """Get emoji for performance rating (returning empty string for clean text)."""
+    return ""
 
 
 def get_quadrant_emoji(quadrant: str) -> str:
-    """Get emoji for menu engineering quadrant."""
-    quadrant_lower = quadrant.lower()
-    if quadrant_lower in QUADRANT_INFO:
-        return QUADRANT_INFO[quadrant_lower]["emoji"]
-    return "📊"
+    """Get emoji for menu engineering quadrant (returning empty string for clean text)."""
+    return ""
