@@ -118,6 +118,7 @@ task_registry = TaskRegistry()
 
 # Register the new KPI tasks
 task_registry.register_task("kpi", "labor_cost", "backend.consulting_services.kpi.labor_cost")
+task_registry.register_task("kpi", "food_cost", "backend.consulting_services.kpi.food_cost")
 task_registry.register_task("kpi", "prime_cost", "backend.consulting_services.kpi.prime_cost")
 task_registry.register_task("kpi", "sales_performance", "backend.consulting_services.kpi.sales_performance")
 

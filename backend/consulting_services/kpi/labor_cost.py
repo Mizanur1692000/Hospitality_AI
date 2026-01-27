@@ -32,13 +32,19 @@ def run(params: dict, file_bytes: bytes | None = None) -> tuple[dict, int]:
         labor_cost = float(params["labor_cost"])
         hours_worked = float(params["hours_worked"])
         target_labor_percent = float(params.get("target_labor_percent", 30.0))
+        
+        # Extract optional parameters
+        overtime_hours = float(params["overtime_hours"]) if params.get("overtime_hours") is not None else None
+        covers = int(params["covers"]) if params.get("covers") is not None else None
 
         # Use comprehensive analysis function
         analysis_result = calculate_labor_cost_analysis(
             total_sales=total_sales,
             labor_cost=labor_cost,
             hours_worked=hours_worked,
-            target_labor_percent=target_labor_percent
+            target_labor_percent=target_labor_percent,
+            overtime_hours=overtime_hours,
+            covers=covers
         )
 
         # Check if analysis was successful

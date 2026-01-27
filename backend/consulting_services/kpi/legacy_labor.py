@@ -20,7 +20,7 @@ def calculate_labor_cost(total_sales, labor_hours, hourly_rate):
         hourly_rate (float): Hourly wage rate
 
     Returns:
-        dict: Labor cost calculations or error response
+        dict: Labor cost calculations or error response with both text and HTML reports
     """
     # Input validation
     inputs = {"total_sales": total_sales, "labor_hours": labor_hours, "hourly_rate": hourly_rate}
@@ -51,8 +51,8 @@ def calculate_labor_cost(total_sales, labor_hours, hourly_rate):
     # Calculate productivity
     productivity = total_sales / labor_hours if labor_hours > 0 else 0
 
-    # Generate formatted business report
-    report = format_comprehensive_analysis('labor', {
+    # Generate formatted business report (now returns dict with text and html)
+    report_result = format_comprehensive_analysis('labor', {
         'labor_costs': total_labor_cost,
         'total_sales': total_sales,
         'labor_hours': labor_hours
@@ -66,5 +66,6 @@ def calculate_labor_cost(total_sales, labor_hours, hourly_rate):
         "total_labor_cost": round(total_labor_cost, 2),
         "labor_percent": round(labor_percent, 2),
         "productivity": round(productivity, 2),
-        "business_report": report
+        "business_report": report_result.get("text", "") if isinstance(report_result, dict) else report_result,
+        "business_report_html": report_result.get("html", "") if isinstance(report_result, dict) else ""
     }

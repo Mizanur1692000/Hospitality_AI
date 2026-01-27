@@ -47,8 +47,8 @@ def calculate_inventory_variance(expected_usage, actual_usage):
     variance = actual_usage - expected_usage
     variance_percent = (variance / expected_usage) * 100
 
-    # Generate business report
-    report = format_business_insight(
+    # Generate business report (now returns dict with text and html)
+    report_result = format_business_insight(
         title="Inventory Variance Analysis",
         calculation="Variance = Actual Usage - Expected Usage\nVariance % = (Variance / Expected Usage) × 100",
         example=f"Variance = {actual_usage:.2f} - {expected_usage:.2f} = {variance:.2f}\nVariance % = ({variance:.2f} / {expected_usage:.2f}) × 100 = {variance_percent:.2f}%",
@@ -62,7 +62,8 @@ def calculate_inventory_variance(expected_usage, actual_usage):
         "actual_usage": actual_usage,
         "variance": round(variance, 2),
         "variance_percent": round(variance_percent, 2),
-        "business_report": report
+        "business_report": report_result.get("text", "") if isinstance(report_result, dict) else report_result,
+        "business_report_html": report_result.get("html", "") if isinstance(report_result, dict) else ""
     }
 
 

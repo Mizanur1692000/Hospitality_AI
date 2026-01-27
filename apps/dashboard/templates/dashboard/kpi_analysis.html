@@ -376,7 +376,10 @@
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you analyze your restaurant's KPIs. Enter your data below or ask me about labor costs, food costs, prime costs, or sales performance.</div>
+            <div class="message-bubble">Hello! I'm here to help you analyze your restaurant's KPIs. <strong>To get accurate analysis, please provide your data</strong> in one of these ways:<br><br>
+              1. <strong>Upload a CSV file</strong> with columns: date, sales, labor_cost, food_cost, labor_hours<br>
+              2. <strong>Type your numbers</strong> in the chat, for example: "My total sales are $50,000, labor cost is $15,000, food cost is $14,000, and we worked 800 hours"<br><br>
+              Click the quick action buttons below to see example prompts with sample data.</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
@@ -685,16 +688,45 @@
       window.clearChat = function() {
         messagesArea.innerHTML = `
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you analyze your restaurant's KPIs. Enter your data below or ask me about labor costs, food costs, prime costs, or sales performance.</div>
+            <div class="message-bubble">Hello! I'm here to help you analyze your restaurant's KPIs. <strong>To get accurate analysis, please provide your data</strong> in one of these ways:<br><br>
+              1. <strong>Upload a CSV file</strong> with columns: date, sales, labor_cost, food_cost, labor_hours<br>
+              2. <strong>Type your numbers</strong> in the chat, for example: "My total sales are $50,000, labor cost is $15,000, food cost is $14,000, and we worked 800 hours"<br><br>
+              Click the quick action buttons below to see example prompts with sample data.</div>
             <div class="message-time">Just now</div>
           </div>
         `;
       };
 
-      window.analyzeLaborCost = () => { chatInput.value = 'Analyze my labor cost percentage and suggest improvements'; chatInput.focus(); };
-      window.analyzeFoodCost = () => { chatInput.value = 'Help me analyze food costs and identify areas for reduction'; chatInput.focus(); };
-      window.analyzePrimeCost = () => { chatInput.value = 'Calculate my prime cost and compare to industry benchmarks'; chatInput.focus(); };
-      window.analyzeSalesPerformance = () => { chatInput.value = 'Analyze sales performance and provide growth recommendations'; chatInput.focus(); };
+      // Auto-submit helper function
+      const autoSubmitMessage = (message) => {
+        chatInput.value = message;
+        // Trigger the form submission
+        const form = document.getElementById('chat-form');
+        if (form) {
+          form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }
+      };
+
+      // Labor Cost Analysis
+      // Required: total_sales, labor_cost, hours_worked
+      // Optional: overtime_hours, covers (for overtime tracking & productivity metrics)
+      window.analyzeLaborCost = () => { autoSubmitMessage('Analyze my labor cost. Total sales: $50,000. Labor cost: $15,000. Hours worked: 800. Overtime hours: 40. Covers served: 2,000.'); };
+      
+      // Food Cost Analysis
+      // Required: total_sales, food_cost
+      // Optional: waste_cost, covers, beginning_inventory, ending_inventory (for waste tracking & inventory analysis)
+      window.analyzeFoodCost = () => { autoSubmitMessage('Analyze my food cost. Total sales: $50,000. Food cost: $14,000. Waste cost: $800. Covers served: 2,000. Beginning inventory: $5,000. Ending inventory: $4,500.'); };
+      
+      // Prime Cost Analysis
+      // Required: total_sales, labor_cost, food_cost
+      // Optional: covers (for per-cover metrics)
+      window.analyzePrimeCost = () => { autoSubmitMessage('Analyze my prime cost. Total sales: $50,000. Labor cost: $15,000. Food cost: $14,000. Covers served: 2,000.'); };
+      
+      // Sales Performance Analysis
+      // Required: total_sales, labor_cost, food_cost, hours_worked
+      // Optional: previous_sales, covers, avg_check (for growth analysis & benchmarking)
+      window.analyzeSalesPerformance = () => { autoSubmitMessage('Analyze my sales performance. Total sales: $50,000. Labor cost: $15,000. Food cost: $14,000. Hours worked: 800. Previous sales: $48,000. Covers served: 2,000. Average check: $25.'); };
+      
       window.changeLanguage = (lang) => console.log('Language:', lang);
     });
   </script>

@@ -33,6 +33,10 @@ def run(params: dict, file_bytes: bytes | None = None) -> tuple[dict, int]:
         food_cost = float(params["food_cost"])
         hours_worked = float(params["hours_worked"])
         previous_sales = float(params["previous_sales"]) if params.get("previous_sales") else None
+        
+        # Extract optional parameters
+        covers = int(params["covers"]) if params.get("covers") is not None else None
+        avg_check = float(params["avg_check"]) if params.get("avg_check") is not None else None
 
         # Validate hours_worked > 0
         if hours_worked <= 0:
@@ -44,7 +48,9 @@ def run(params: dict, file_bytes: bytes | None = None) -> tuple[dict, int]:
             labor_cost=labor_cost,
             food_cost=food_cost,
             hours_worked=hours_worked,
-            previous_sales=previous_sales
+            previous_sales=previous_sales,
+            covers=covers,
+            avg_check=avg_check
         )
 
         # Check if analysis was successful
