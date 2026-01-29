@@ -461,7 +461,19 @@
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Welcome to Menu Engineering! Upload your sales data or describe your menu items, and I'll help you optimize your menu for maximum profitability.</div>
+            <div class="message-bubble">Welcome to Menu Engineering! <strong>To analyze your menu, upload a CSV file</strong> or provide data:<br><br>
+              <strong>📄 CSV File Format (Product Mix):</strong><br>
+              • Required: product_name, quantity_sold, unit_price, cost<br>
+              • Optional: category, revenue, profit, contribution_margin<br><br>
+              <strong>💰 Menu Pricing Analysis:</strong><br>
+              • Required: item_price, item_cost, competitor_price<br>
+              • Optional: target_food_cost_percent<br><br>
+              <strong>🎨 Menu Design Analysis:</strong><br>
+              • Requires product mix data first<br><br>
+              <strong>Example CSV:</strong><br>
+              product_name,quantity_sold,unit_price,cost<br>
+              Margherita Pizza,94,21,6<br>
+              Pepperoni Pizza,125,22,5</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
@@ -688,15 +700,19 @@
       window.clearChat = function() {
         messagesArea.innerHTML = `
           <div class="message assistant">
-            <div class="message-bubble">Welcome to Menu Engineering! Upload your sales data or describe your menu items, and I'll help you optimize your menu for maximum profitability.</div>
+            <div class="message-bubble">Welcome to Menu Engineering! <strong>To get accurate analysis, please provide your data</strong>:<br><br>
+              <strong>📊 Menu Engineering Analysis:</strong><br>
+              • Required: item_name, price, cost, quantity_sold<br>
+              • Optional: category, food_cost_percent, popularity_rank<br><br>
+              Upload a CSV file or describe your menu items. Click the quick action buttons below for examples.</div>
             <div class="message-time">Just now</div>
           </div>
         `;
       };
 
-      window.analyzeMenu = () => { chatInput.value = 'Analyze my current menu performance and identify optimization opportunities'; chatInput.focus(); };
-      window.pricingStrategy = () => { chatInput.value = 'Help me develop a pricing strategy to maximize profits while maintaining value perception'; chatInput.focus(); };
-      window.itemOptimization = () => { chatInput.value = 'How can I improve my underperforming menu items?'; chatInput.focus(); };
+      window.analyzeMenu = () => { chatInput.value = 'Analyze my product mix. Total sales: $50,000. Item sales: $5,000. Item cost: $1,500. Item profit: $3,500.'; chatInput.focus(); };
+      window.pricingStrategy = () => { chatInput.value = 'Analyze menu pricing. Item price: $18. Item cost: $5.50. Competitor price: $16. Target food cost: 32%.'; chatInput.focus(); };
+      window.itemOptimization = () => { chatInput.value = 'Analyze menu design. Menu items: 25. High profit items: 8. Sales distribution: appetizers 40%, entrees 60%. Visual hierarchy: top-right placement.'; chatInput.focus(); };
     });
   </script>
 </body>

@@ -4,15 +4,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title data-translate="hr_title">HR Solutions - Restaurant Consulting</title>
+  <title>HR Solutions - Restaurant Consulting</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
   <style>
-    /* Enhanced HR Solutions Styles */
-    .hr-interface {
-      max-width: 1200px;
+    /* Core Task Card Styles */
+    .core-tasks-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-lg);
+      margin: var(--spacing-xl) 0;
     }
-
+    @media (max-width: 992px) { .core-tasks-grid { grid-template-columns: 1fr; } }
+    
     .core-task-card {
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 100%);
       border: 1px solid rgba(102, 126, 234, 0.12);
@@ -25,7 +29,6 @@
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
-
     .core-task-card::before {
       content: '';
       position: absolute;
@@ -38,31 +41,12 @@
       transform-origin: left;
       transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
-    .core-task-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at center, rgba(102, 126, 234, 0.08) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.4s;
-    }
-
-    .core-task-card:hover::before {
-      transform: scaleX(1);
-    }
-
-    .core-task-card:hover::after {
-      opacity: 1;
-    }
-
+    .core-task-card:hover::before { transform: scaleX(1); }
     .core-task-card:hover {
       transform: translateY(-10px) scale(1.02);
-      box-shadow: 
-        0 25px 50px rgba(102, 126, 234, 0.2),
-        0 0 0 1px rgba(102, 126, 234, 0.15);
+      box-shadow: 0 25px 50px rgba(102, 126, 234, 0.2);
     }
-
+    
     .task-icon {
       width: 70px;
       height: 70px;
@@ -72,137 +56,26 @@
       align-items: center;
       justify-content: center;
       margin: 0 auto var(--spacing-md);
-      box-shadow: 
-        0 10px 30px rgba(102, 126, 234, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      z-index: 1;
     }
-
-    .core-task-card:hover .task-icon {
-      transform: scale(1.15) rotate(5deg);
-      box-shadow: 
-        0 15px 40px rgba(102, 126, 234, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-
-    .task-title {
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 0.5rem;
-      font-size: 1.15rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    .task-desc {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: var(--spacing-md);
-      position: relative;
-      z-index: 1;
-    }
-
-    .task-features {
-      list-style: none;
-      text-align: left;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      position: relative;
-      z-index: 1;
-    }
-
+    .core-task-card:hover .task-icon { transform: scale(1.15) rotate(5deg); }
+    
+    .task-title { font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; font-size: 1.15rem; }
+    .task-desc { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; }
+    .task-features { list-style: none; padding: 0; margin: 0; text-align: left; }
     .task-features li {
-      margin-bottom: 0.5rem;
-      padding-left: 1.75rem;
-      position: relative;
-    }
-
-    .task-features li::before {
-      content: '✓';
-      position: absolute;
-      left: 0;
-      color: #10b981;
-      font-weight: bold;
-    }
-
-    /* Chat Section Enhancement */
-    .chat-section {
-      background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.98) 100%);
-      border-top: 1px solid rgba(102, 126, 234, 0.1);
-      padding: var(--spacing-xl) var(--spacing-2xl);
-    }
-
-    .chat-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      background: var(--primary-gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .input-container {
-      display: flex;
-      gap: var(--spacing-sm);
-      background: white;
-      border: 2px solid rgba(102, 126, 234, 0.15);
-      border-radius: var(--radius-xl);
-      padding: var(--spacing-sm);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-      transition: all var(--transition-normal);
-    }
-
-    .input-container:focus-within {
-      border-color: #667eea;
-      box-shadow: 
-        0 8px 30px rgba(102, 126, 234, 0.15),
-        0 0 0 4px rgba(102, 126, 234, 0.1);
-    }
-
-    .chat-input {
-      flex: 1;
-      border: none;
-      outline: none;
-      padding: 0.875rem 1rem;
-      font-size: 1rem;
-      background: transparent;
-      color: var(--text-primary);
-      resize: none;
-    }
-
-    .send-button {
-      background: var(--primary-gradient);
-      border: none;
-      color: white;
-      padding: 0.875rem 1.5rem;
-      border-radius: var(--radius-lg);
-      font-weight: 600;
-      cursor: pointer;
+      padding: 0.4rem 0;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      transition: all var(--transition-normal);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
-
-    .send-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    }
-
-    .message.user .message-bubble {
-      background: var(--primary-gradient);
-      color: white;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    }
-
-    .message.assistant .message-bubble {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
-      border: 1px solid rgba(102, 126, 234, 0.15);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    .task-features li::before {
+      content: '✓';
+      color: #10b981;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -221,44 +94,34 @@
       <div class="logo">
         <div class="logo-circle" aria-hidden="true">C</div>
         <div class="brand-text">
-          <div class="company-name" data-translate="company_name">Curated Restaurant Consulting</div>
-          <div class="company-tagline" data-translate="company_tagline">Driven by Data. Crafted for Excellence.</div>
+          <div class="company-name">Curated Restaurant Consulting</div>
+          <div class="company-tagline">Driven by Data. Crafted for Excellence.</div>
         </div>
       </div>
       <div class="header-actions">
-        <div class="language-selector">
-          <select id="language-select" onchange="changeLanguage(this.value)">
-            <option value="en">🇺🇸 English</option>
-            <option value="es">🇪🇸 Español</option>
-          </select>
-        </div>
         <a href="/dashboard/" class="back-button">← Back to Dashboard</a>
       </div>
     </div>
   </header>
 
   <main class="main-container">
-    <div class="glass-interface hr-interface">
+    <div class="glass-interface">
       <!-- Page Header -->
       <section class="page-header">
-        <h1 class="page-title" data-translate="hr_page_title">HR Solutions</h1>
-        <p class="page-subtitle" data-translate="hr_page_subtitle">Optimize your workforce with staff retention analysis, scheduling insights, and HR best practices</p>
+        <h1 class="page-title">HR Solutions</h1>
+        <p class="page-subtitle">Comprehensive workforce analytics: Staff retention, labor scheduling, and training program optimization</p>
 
         <!-- Core Tasks Grid -->
         <div class="core-tasks-grid">
           <!-- Staff Retention -->
-          <div class="core-task-card" onclick="analyzeRetention()">
+          <div class="core-task-card" onclick="staffRetention()">
             <div class="task-icon">
-              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <circle cx="14" cy="12" r="4" stroke="white" stroke-width="2"/>
-                <circle cx="26" cy="12" r="4" stroke="white" stroke-width="2"/>
-                <path d="M8 32V30C8 26.6863 10.6863 24 14 24C17.3137 24 20 26.6863 20 30V32" stroke="white" stroke-width="2"/>
-                <path d="M20 32V30C20 26.6863 22.6863 24 26 24C29.3137 24 32 26.6863 32 30V32" stroke="white" stroke-width="2"/>
-                <circle cx="20" cy="8" r="2" fill="white"/>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="retention_title">Staff Retention</div>
-            <div class="task-desc" data-translate="retention_desc">Analyze turnover and improve retention</div>
+            <div class="task-title">Staff Retention</div>
+            <div class="task-desc">Analyze turnover and improve retention</div>
             <ul class="task-features">
               <li>Turnover analysis</li>
               <li>Retention strategies</li>
@@ -267,22 +130,14 @@
           </div>
 
           <!-- Labor Scheduling -->
-          <div class="core-task-card" onclick="optimizeScheduling()">
+          <div class="core-task-card" onclick="laborScheduling()">
             <div class="task-icon">
-              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <rect x="6" y="8" width="28" height="24" rx="3" stroke="white" stroke-width="2"/>
-                <path d="M6 14H34" stroke="white" stroke-width="2"/>
-                <path d="M12 8V4" stroke="white" stroke-width="2"/>
-                <path d="M28 8V4" stroke="white" stroke-width="2"/>
-                <rect x="10" y="18" width="4" height="4" rx="1" fill="white"/>
-                <rect x="18" y="18" width="4" height="4" rx="1" fill="white"/>
-                <rect x="26" y="18" width="4" height="4" rx="1" fill="white"/>
-                <rect x="10" y="24" width="4" height="4" rx="1" fill="white"/>
-                <rect x="18" y="24" width="4" height="4" rx="1" fill="white"/>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2z"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="scheduling_title">Labor Scheduling</div>
-            <div class="task-desc" data-translate="scheduling_desc">Optimize staff schedules for efficiency</div>
+            <div class="task-title">Labor Scheduling</div>
+            <div class="task-desc">Optimize staff schedules for efficiency</div>
             <ul class="task-features">
               <li>Shift optimization</li>
               <li>Peak hour coverage</li>
@@ -291,16 +146,14 @@
           </div>
 
           <!-- Training Programs -->
-          <div class="core-task-card" onclick="reviewTraining()">
+          <div class="core-task-card" onclick="trainingPrograms()">
             <div class="task-icon">
-              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
-                <path d="M20 4L4 12L20 20L36 12L20 4Z" stroke="white" stroke-width="2" fill="none"/>
-                <path d="M8 14V26L20 32L32 26V14" stroke="white" stroke-width="2" fill="none"/>
-                <circle cx="20" cy="20" r="3" fill="white"/>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
               </svg>
             </div>
-            <div class="task-title" data-translate="training_title">Training Programs</div>
-            <div class="task-desc" data-translate="training_desc">Develop effective training strategies</div>
+            <div class="task-title">Training Programs</div>
+            <div class="task-desc">Develop effective training strategies</div>
             <ul class="task-features">
               <li>Onboarding optimization</li>
               <li>Skill development</li>
@@ -313,28 +166,38 @@
       <!-- Chat Section -->
       <section class="chat-section">
         <div class="chat-header">
-          <h3 class="chat-title" data-translate="ai_assistant">AI Assistant</h3>
-          <button class="clear-chat" onclick="clearChat()" data-translate="clear_chat">Clear Chat</button>
+          <h3 class="chat-title">HR Solutions AI</h3>
+          <button class="clear-chat" onclick="clearChat()">Clear Chat</button>
         </div>
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you with HR solutions. Ask me about staff retention, scheduling optimization, training programs, or any HR-related challenges.</div>
+            <div class="message-bubble">Welcome to HR Solutions! <strong>To get accurate analysis, please provide your data</strong>:<br><br>
+              <strong>👥 Staff Retention:</strong><br>
+              • Required: turnover_rate<br>
+              • Optional: industry_average, employee_count, avg_salary<br><br>
+              <strong>📅 Labor Scheduling:</strong><br>
+              • Required: total_sales, labor_hours, hourly_rate<br>
+              • Optional: peak_hours, target_labor_pct, overtime_hours<br><br>
+              <strong>🎓 Training Programs:</strong><br>
+              • Required: At least one of: customer_satisfaction, sales_performance, efficiency_score, attendance_rate<br>
+              • Optional: employee_name, department<br><br>
+              Click the quick action cards above to see example prompts with sample data, or upload a CSV file for batch analysis.</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
 
         <div class="input-section">
           <div class="input-container">
-            <textarea id="chat-input" class="chat-input" placeholder="Ask me about HR solutions..." rows="1"></textarea>
-            <input type="file" id="file-input" accept=".csv" class="file-input"/>
-            <button id="upload-button" class="upload-button" title="Upload CSV for analysis">
+            <textarea id="chat-input" class="chat-input" placeholder="Describe your HR analysis needs..." rows="1"></textarea>
+            <input type="file" id="file-input" accept=".csv,.xlsx,.pdf" class="file-input"/>
+            <button id="upload-button" class="upload-button" title="Upload HR data file">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,12L16,16H13.5V19H10.5V16H8L12,12Z"/>
               </svg>
             </button>
             <button id="send-button" class="send-button" onclick="sendMessage()">
-              <span data-translate="send">Send</span>
+              <span>Analyze</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
@@ -377,10 +240,10 @@
       fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
-        addMessage(`Uploading file: ${file.name}`, true);
+        addMessage(`📁 Uploading: ${file.name}`, true);
         
         const formData = new FormData();
-        formData.append('task', 'hr_retention');
+        formData.append('task', 'hr_analysis');
         formData.append('file', file);
 
         try {
@@ -390,9 +253,15 @@
             body: formData
           });
           const data = await response.json();
-          addMessage(data.error ? `Error: ${data.error}` : formatResponse(data), false);
+          if (data.error) {
+            addMessage(`❌ Error: ${data.error}`, false);
+          } else if (data.status === 'error') {
+            addMessage(`❌ ${data.message}\n\n${data.help || ''}`, false);
+          } else {
+            formatHRResponse(data);
+          }
         } catch (error) {
-          addMessage(`Error uploading file: ${error.message}`, false);
+          addMessage(`❌ Error: ${error.message}`, false);
         }
         fileInput.value = '';
       });
@@ -415,10 +284,26 @@
             body: `message=${encodeURIComponent(message)}&context=hr`
           });
           const data = await response.json();
-          addMessage(data.error ? `Error: ${data.error}` : (data.response || 'No response'), false);
+          addMessage(data.error ? `❌ Error: ${data.error}` : (data.response || 'No response'), false);
         } catch (error) {
-          addMessage(`Error: ${error.message}`, false);
+          addMessage(`❌ Error: ${error.message}`, false);
         }
+      };
+
+      window.formatHRResponse = function(data) {
+        let html = '';
+        if (data.summary) {
+          html += '<strong>📊 Analysis Summary:</strong><br>';
+          for (const [key, value] of Object.entries(data.summary)) {
+            const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            html += `• ${label}: ${typeof value === 'number' ? value.toLocaleString() : value}<br>`;
+          }
+          html += '<br>';
+        }
+        if (data.business_report) {
+          html += `<strong>📋 Business Report:</strong><br>${data.business_report.replace(/\n/g, '<br>')}`;
+        }
+        addMessage(html || JSON.stringify(data, null, 2), false);
       };
 
       function addMessage(content, isUser) {
@@ -426,7 +311,7 @@
         messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        bubble.innerHTML = content.replace(/\n/g, '<br>');
+        bubble.innerHTML = content;
         const time = document.createElement('div');
         time.className = 'message-time';
         time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -436,36 +321,27 @@
         messagesArea.scrollTop = messagesArea.scrollHeight;
       }
 
-      function formatResponse(data) {
-        return typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-      }
-
       window.clearChat = function() {
         messagesArea.innerHTML = `
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you with HR solutions. Ask me about staff retention, scheduling optimization, training programs, or any HR-related challenges.</div>
+            <div class="message-bubble">Welcome to HR Solutions! I can help you analyze staff retention, optimize labor scheduling, and develop training programs. What would you like to work on today?</div>
             <div class="message-time">Just now</div>
           </div>
         `;
       };
 
-      window.analyzeRetention = function() {
-        chatInput.value = 'Analyze staff retention and suggest strategies to reduce turnover';
-        chatInput.focus();
+      // Quick action functions - populate chat with sample data
+      window.staffRetention = () => { 
+        chatInput.value = 'Analyze staff retention. Turnover rate: 45%. Industry average: 70%. Employee count: 25. Average salary: $30,000.'; 
+        chatInput.focus(); 
       };
-
-      window.optimizeScheduling = function() {
-        chatInput.value = 'Help me optimize labor scheduling for better efficiency';
-        chatInput.focus();
+      window.laborScheduling = () => { 
+        chatInput.value = 'Optimize labor scheduling. Total sales: $50,000. Labor hours: 800. Hourly rate: $15. Peak hours: 200. Target labor %: 30%.'; 
+        chatInput.focus(); 
       };
-
-      window.reviewTraining = function() {
-        chatInput.value = 'Suggest effective training programs for my restaurant staff';
-        chatInput.focus();
-      };
-
-      window.changeLanguage = function(lang) {
-        console.log('Language changed to:', lang);
+      window.trainingPrograms = () => { 
+        chatInput.value = 'Analyze training program effectiveness. Customer satisfaction: 85%. Sales performance: 95%. Efficiency score: 80%. Attendance rate: 92%.'; 
+        chatInput.focus(); 
       };
     });
   </script>

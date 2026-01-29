@@ -91,6 +91,144 @@ def extract_kpi_data(prompt: str) -> dict:
     all_values = dollar_values + number_values
     
     logger.debug(f"All values found: {all_values}")
+    # Try to detect and parse CSV/TSV/whitespace-separated blocks in the prompt (headers + values)
+    csv_parsed = False
+    try:
+        # known header variants we care about
+        csv_headers_of_interest = {
+            'revenue_target', 'revenue_target_total', 'budget_total', 'budget_total_sum',
+            'marketing_spend', 'marketing_spend_sum', 'target_roi', 'timeline_months',
+            'acquisition_cost', 'conversion_rate',
+            'market_size', 'market_share', 'competition_level', 'investment_budget',
+            'growth_potential', 'market_penetration'
+        }
+
+        def normalize_header(h: str) -> str:
+            h0 = re.sub(r"[^a-z0-9_ ]", '', h.lower()).strip().replace(' ', '_')
+            # common truncated/typo mappings and loose prefix matches
+            if h0.startswith('market_si') or h0.startswith('market_s'):
+                return 'market_size'
+            if h0.startswith('market_sh') or h0.startswith('market_share'):
+                return 'market_share'
+            if h0.startswith('competition') or h0.startswith('competiti'):
+                return 'competition_level'
+            if 'invest' in h0 or h0.startswith('investment'):
+                return 'investment_budget'
+            if 'growth' in h0 and 'potential' in h0:
+                return 'growth_potential'
+            if h0.startswith('market_pe') or 'penetr' in h0:
+                return 'market_penetration'
+            if h0.startswith('target_roi') or (('roi' in h0) and ('target' in h0 or h0.startswith('target'))):
+                return 'target_roi'
+            if h0.startswith('revenue') or h0.startswith('revenue_t'):
+                return 'revenue_target'
+            if h0.startswith('budget') or h0.startswith('budget_t'):
+                return 'budget_total'
+            if 'marketing' in h0:
+                return 'marketing_spend'
+            if h0.startswith('acquisit') or 'acquisit' in h0:
+                return 'acquisition_cost'
+            if 'conversion' in h0:
+                return 'conversion_rate'
+            if 'timeline' in h0 or 'months' in h0 or h0.startswith('timeline_r'):
+                return 'timeline_months'
+            return h0
+
+        lines = decoded_prompt.strip().splitlines()
+        def _safe_split(text, sep_pattern):
+            """Safely split `text` by regex `sep_pattern`. Fall back to simple split on common separators when regex fails."""
+            import re as _re
+            try:
+                return [p for p in _re.split(sep_pattern, text) if p is not None]
+            except _re.error:
+                # fallback heuristics
+                if ',' in sep_pattern:
+                    return [p.strip() for p in text.split(',')]
+                if '\\t' in sep_pattern or '\t' in sep_pattern:
+                    return [p.strip() for p in text.split('\t')]
+                try:
+                    return [p for p in _re.split(r'\s+', text) if p is not None]
+                except Exception:
+                    return [p.strip() for p in text.split()]
+        for i in range(len(lines)):
+            header_line = lines[i]
+            # detect separator: comma, tab, or multiple whitespace
+            sep = None
+            if ',' in header_line:
+                sep = r',\s*'
+            elif '\t' in header_line:
+                sep = '\\t'
+            else:
+                # if header has multiple spaces between tokens, treat as whitespace-separated
+                if len(re.findall(r'\s{2,}', header_line)) >= 1:
+                    sep = r'\s{2,}'
+
+            # Fallback: if no explicit separator found, check for single-space separated headers
+            # (some CSV exports or screenshots use single spaces between truncated tokens)
+            if not sep:
+                tokens = re.split(r'\s+', header_line.strip())
+                if len(tokens) >= 3:
+                    # normalize tokens and count interest headers
+                    normalized = [normalize_header(t) for t in tokens if t.strip()]
+                    matches = sum(1 for t in normalized if t in csv_headers_of_interest)
+                    # require at least two matches to consider this a header row
+                    if matches >= 2:
+                        sep = r'\s+'
+                    else:
+                        # not a header-like line
+                        sep = None
+
+            if not sep:
+                continue
+
+            headers_raw = [h.strip() for h in _safe_split(header_line, sep)]
+            headers = [normalize_header(h) for h in headers_raw if h.strip()]
+            if not headers:
+                continue
+
+            if any(h in csv_headers_of_interest for h in headers):
+                if i + 1 < len(lines):
+                    values_line = lines[i+1]
+                    values = [v.strip() for v in _safe_split(values_line, sep)]
+                else:
+                    values = []
+                # Zip headers to values, but allow missing value row (assign empty string)
+                for idx, h in enumerate(headers):
+                    v = values[idx] if idx < len(values) else ''
+                    v_clean = re.sub(r'[^0-9\.\-]', '', v)
+                    if v_clean:
+                        try:
+                            num = float(v_clean)
+                            data[h] = num
+                        except Exception:
+                            data[h] = v
+                    else:
+                        # preserve header presence even if value missing
+                        data[h] = v
+                csv_parsed = True
+                # determine detected analysis type by required columns
+                business_required = {'revenue_target', 'budget_total'}
+                growth_required = {'market_size', 'market_share', 'investment_budget'}
+                business_count = sum(1 for k in business_required if k in data)
+                growth_count = sum(1 for k in growth_required if k in data)
+                # Prioritize business if its required fields are present
+                if business_count >= len(business_required) and growth_count < len(growth_required):
+                    data['detected_analysis_type'] = 'business'
+                elif growth_count >= len(growth_required) and business_count < len(business_required):
+                    data['detected_analysis_type'] = 'growth'
+                else:
+                    # if both present, pick the one with more matching keys
+                    if business_count > growth_count:
+                        data['detected_analysis_type'] = 'business'
+                    elif growth_count > business_count:
+                        data['detected_analysis_type'] = 'growth'
+                    else:
+                        # ambiguous: leave unset (frontend forced marker can decide)
+                        pass
+                logger.debug(f"Parsed CSV block headers: {headers}, values: {values}, detected: {data.get('detected_analysis_type')}")
+                break
+    except Exception:
+        pass
 
     # Simple keyword-based extraction
     prompt_lower = decoded_prompt.lower()
@@ -99,10 +237,13 @@ def extract_kpi_data(prompt: str) -> dict:
     # Pattern handles: "total sales are $50,000" or "sales: 50000" or "my sales are $50,000"
     sales_match = re.search(r'(?:total\s+)?sales\s+(?:are|is|of|:)?\s*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
     if sales_match:
-        data['total_sales'] = float(sales_match.group(1).replace(',', ''))
-        logger.debug(f"Sales extracted via regex: {data['total_sales']}")
-    elif any(word in prompt_lower for word in ['sales', 'revenue', 'total']) and all_values:
-        # Fall back to first dollar value if "sales" mentioned
+        try:
+            data['total_sales'] = float(sales_match.group(1).replace(',', ''))
+            logger.debug(f"Sales extracted via regex: {data['total_sales']}")
+        except Exception:
+            pass
+    elif not csv_parsed and any(word in prompt_lower for word in ['sales', 'revenue', 'total']) and all_values:
+        # Fall back to first dollar value if "sales" mentioned and not a parsed CSV
         data['total_sales'] = all_values[0]
         logger.debug(f"Sales extracted via fallback: {data['total_sales']}")
 
@@ -440,39 +581,90 @@ def extract_kpi_data(prompt: str) -> dict:
         data['consistency_score'] = float(consistency_score_match.group(1).replace(',', ''))
 
     # Extract Strategic Planning metrics
-    # Sales forecasting metrics
-    historical_sales_match = re.search(r'historical\s+sales[:\s]*([0-9,]+)', prompt_lower)
+    # Sales forecasting metrics (allow $, commas, decimals and % for growth)
+    historical_sales_match = re.search(r'historical\s+sales[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
     if historical_sales_match:
         data['historical_sales'] = float(historical_sales_match.group(1).replace(',', ''))
 
-    current_sales_match = re.search(r'current\s+sales[:\s]*([0-9,]+)', prompt_lower)
+    current_sales_match = re.search(r'current\s+sales[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
     if current_sales_match:
         data['current_sales'] = float(current_sales_match.group(1).replace(',', ''))
 
-    growth_rate_match = re.search(r'growth\s+rate[:\s]*([0-9,]+)', prompt_lower)
+    growth_rate_match = re.search(r'growth\s+rate[:\s]*([0-9]+(?:\.[0-9]+)?)%?', prompt_lower)
     if growth_rate_match:
-        data['growth_rate'] = float(growth_rate_match.group(1).replace(',', ''))
+        data['growth_rate'] = float(growth_rate_match.group(1))
 
-    seasonal_factor_match = re.search(r'seasonal\s+factor[:\s]*([0-9,]+)', prompt_lower)
+    seasonal_factor_match = re.search(r'seasonal\s+factor[:\s]*([0-9]+(?:\.[0-9]+)?)', prompt_lower)
     if seasonal_factor_match:
-        data['seasonal_factor'] = float(seasonal_factor_match.group(1).replace(',', ''))
+        data['seasonal_factor'] = float(seasonal_factor_match.group(1))
 
-    # Growth strategy metrics
-    market_size_match = re.search(r'market\s+size[:\s]*([0-9,]+)', prompt_lower)
+    # Growth strategy metrics (allow $, commas, decimals and %)
+    market_size_match = re.search(r'market\s+size[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
     if market_size_match:
         data['market_size'] = float(market_size_match.group(1).replace(',', ''))
 
-    market_share_match = re.search(r'market\s+share[:\s]*([0-9,]+)', prompt_lower)
+    market_share_match = re.search(r'market\s+share[:\s]*([0-9]+(?:\.[0-9]+)?)%?', prompt_lower)
     if market_share_match:
-        data['market_share'] = float(market_share_match.group(1).replace(',', ''))
+        data['market_share'] = float(market_share_match.group(1))
 
-    competition_level_match = re.search(r'competition\s+level[:\s]*([0-9,]+)', prompt_lower)
+    competition_level_match = re.search(r'competition\s+level[:\s]*([0-9]+(?:\.[0-9]+)?)%?', prompt_lower)
     if competition_level_match:
-        data['competition_level'] = float(competition_level_match.group(1).replace(',', ''))
+        data['competition_level'] = float(competition_level_match.group(1))
 
-    investment_budget_match = re.search(r'investment\s+budget[:\s]*([0-9,]+)', prompt_lower)
+    investment_budget_match = re.search(r'investment\s+budget[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
     if investment_budget_match:
         data['investment_budget'] = float(investment_budget_match.group(1).replace(',', ''))
+
+    # Business Goals / Strategic Targets extraction (CSV-friendly headers)
+    revenue_target_match = re.search(r'revenue[_ ]?target(?:[_\w]*)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+    if 'revenue_target' not in data and revenue_target_match:
+        try:
+            data['revenue_target'] = float(revenue_target_match.group(1).replace(',', ''))
+        except Exception:
+            pass
+
+    budget_total_match = re.search(r'budget(?:[_\w]*)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+    if 'budget_total' not in data and budget_total_match:
+        try:
+            data['budget_total'] = float(budget_total_match.group(1).replace(',', ''))
+        except Exception:
+            pass
+
+    marketing_spend_match = re.search(r'marketing[_ ]?spend(?:[_\w]*)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+    if 'marketing_spend' not in data and marketing_spend_match:
+        try:
+            data['marketing_spend'] = float(marketing_spend_match.group(1).replace(',', ''))
+        except Exception:
+            pass
+
+    target_roi_match = re.search(r'(?:target[_ ]?roi|average[_ ]?target[_ ]?roi|target roi|average_target_roi_percent)[:\s]*([0-9]+(?:\.[0-9]+)?)%?', prompt_lower)
+    if 'target_roi' not in data and target_roi_match:
+        try:
+            data['target_roi'] = float(target_roi_match.group(1))
+        except Exception:
+            pass
+
+    timeline_months_match = re.search(r'(?:timeline[_ ]?months|timeline|timeline_months)[:\s]*([0-9,]+)', prompt_lower)
+    if 'timeline_months' not in data and timeline_months_match:
+        try:
+            data['timeline_months'] = int(float(timeline_months_match.group(1)))
+        except Exception:
+            pass
+
+    # Customer acquisition metrics
+    acquisition_cost_match = re.search(r'acquisition[_ ]?cost[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+    if 'acquisition_cost' not in data and acquisition_cost_match:
+        try:
+            data['acquisition_cost'] = float(acquisition_cost_match.group(1).replace(',', ''))
+        except Exception:
+            pass
+
+    conversion_rate_match = re.search(r'conversion[_ ]?rate[:\s]*([0-9]+(?:\.[0-9]+)?)%?', prompt_lower)
+    if 'conversion_rate' not in data and conversion_rate_match:
+        try:
+            data['conversion_rate'] = float(conversion_rate_match.group(1))
+        except Exception:
+            pass
 
     # Operational excellence metrics
     efficiency_score_match = re.search(r'efficiency\s+score[:\s]*([0-9,]+)', prompt_lower)
@@ -492,10 +684,13 @@ def extract_kpi_data(prompt: str) -> dict:
         data['customer_satisfaction'] = float(customer_satisfaction_match.group(1).replace(',', ''))
 
     # Extract KPI Dashboard metrics
-    # Comprehensive analysis metrics
-    prime_cost_match = re.search(r'prime\s+cost[:\s]*([0-9,]+)', prompt_lower)
+    # Comprehensive analysis metrics (support $ and common phrasing)
+    prime_cost_match = re.search(r'prime\s+cost\s+(?:is|are|of|:)?\s*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
     if prime_cost_match:
         data['prime_cost'] = float(prime_cost_match.group(1).replace(',', ''))
+    # Fallback: if prime not provided but labor and food are present, compute prime = labor + food
+    if 'prime_cost' not in data and 'labor_cost' in data and 'food_cost' in data:
+        data['prime_cost'] = float(data['labor_cost']) + float(data['food_cost'])
 
     # Performance optimization metrics
     current_performance_match = re.search(r'current\s+performance[:\s]*([0-9,]+)', prompt_lower)
@@ -528,17 +723,394 @@ def handle_kpi_analysis(prompt: str) -> str:
             calculate_prime_cost_analysis,
             calculate_sales_performance_analysis,
             calculate_kpi_summary,
-            calculate_food_cost_analysis
+            calculate_food_cost_analysis,
+            format_business_report
         )
         from backend.consulting_services.inventory.tracking import calculate_inventory_variance
 
         data = extract_kpi_data(prompt)
-        
+        # Import task registry early so forced routing can use it
+        from apps.agent_core.task_registry import task_registry
+
         logger.info(f"KPI Analysis - Extracted data: {data}")
         logger.info(f"KPI Analysis - Original prompt: {prompt}")
 
+        # Allow frontend explicit forced analysis type to override CSV-detected routing for special cases
+        prompt_lower = prompt.lower()
+        forced_match_early = re.search(r'analysis[_ ]?type[:\s]*([a-z0-9 _-]+)', prompt_lower)
+        forced_early = forced_match_early.group(1).strip() if forced_match_early else None
+
+        # If CSV parsing detected a preferred analysis type, honor it — except when a forced marker
+        # explicitly requests an alternate analysis like 'Best Way'. In that case, respect the forced marker.
+        detected = data.get('detected_analysis_type')
+        if detected == 'business' and forced_early and 'best' in forced_early:
+            # fall through to forced handling below (do not perform business routing)
+            logger.info("Detected business CSV but overridden by forced analysis type: Best Way")
+        elif detected == 'business':
+            try:
+                rev = float(data.get('revenue_target') or data.get('revenue_target_total') or 0)
+            except Exception:
+                rev = 0
+            try:
+                bud = float(data.get('budget_total') or data.get('budget_total_sum') or 0)
+            except Exception:
+                bud = 0
+            try:
+                mkt = float(data.get('marketing_spend') or data.get('marketing_spend_sum') or 0)
+            except Exception:
+                mkt = 0
+            try:
+                roi_v = float(data.get('target_roi') or data.get('average_target_roi_percent') or 0)
+            except Exception:
+                roi_v = 0
+            try:
+                tl = int(float(data.get('timeline_months') or 12))
+            except Exception:
+                tl = 12
+
+            metrics = {
+                'revenue_target': rev,
+                'budget_total': bud,
+                'marketing_spend': mkt,
+                'target_roi': roi_v,
+                'timeline_months': tl
+            }
+            total_spend = (bud or 0) + (mkt or 0)
+            projected_net = (rev or 0) - total_spend
+            roi_achieved = (projected_net / total_spend * 100) if total_spend > 0 else 0
+            performance = {'rating': 'Good' if roi_achieved >= (roi_v or 0) else 'Needs Improvement', 'roi_achieved': roi_achieved}
+            recommendations = []
+            if roi_achieved < (roi_v or 0):
+                recommendations.append('Reduce budget or increase revenue initiatives to meet target ROI')
+            if mkt > 0 and (mkt / max(total_spend, 1)) > 0.5:
+                recommendations.append('Rebalance marketing spend to ensure efficient ROI')
+            if rev < total_spend:
+                recommendations.append('Reassess revenue assumptions; consider phased rollout to reduce upfront spend')
+            if not recommendations:
+                recommendations.append('Execute the plan and monitor monthly progress against KPIs')
+
+            additional_data = {'financials': {'Total Spend': total_spend, 'Projected Net': projected_net, 'ROI Achieved': f"{roi_achieved:.1f}%"}}
+            logger.info("Routing: Business Goals (CSV-detected)")
+            report = format_business_report('Business Goals Analysis', metrics, performance, recommendations, benchmarks=None, additional_data=additional_data)
+            return report.get('business_report_html', report.get('business_report', 'Analysis completed but no report generated.'))
+
+        if detected == 'growth':
+            logger.info("Routing: Growth Strategy (CSV-detected)")
+            result, status = task_registry.execute_task(service="strategic", subtask="growth_strategy", params=data)
+            if result.get('status') == 'success':
+                return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
+            else:
+                return f"Error: {result.get('error', 'Analysis failed')}"
+
+        # normalize prompt lowercase for routing and pattern matching
+        prompt_lower = prompt.lower()
+
+        # If frontend provided an explicit analysis type marker, honor it first
+        forced_match = re.search(r'analysis[_ ]?type[:\s]*([a-z0-9 _-]+)', prompt_lower)
+        if forced_match:
+            forced = forced_match.group(1).strip()
+            logger.info(f"Forced analysis type detected: {forced}")
+
+            # Support explicit SWOT requests (parse lists and return HTML)
+            if 'swot' in forced or 'strength' in forced or 'weakness' in forced:
+                logger.info("Routing: SWOT Analysis (forced)")
+                # Simple parser: look for 'Strengths:', 'Weaknesses:', 'Opportunities:', 'Threats:'
+                def _parse_swot(text: str):
+                    sections = {'strengths': [], 'weaknesses': [], 'opportunities': [], 'threats': []}
+                    # split by semicolon or newline then match prefixes
+                    parts = re.split(r'[;\n]+', text)
+                    for p in parts:
+                        p = p.strip()
+                        if not p:
+                            continue
+                        m = re.match(r'^(strengths?)[:\s]*(.*)$', p, re.IGNORECASE)
+                        if m:
+                            items = re.split(r',\s*', m.group(2)) if m.group(2) else []
+                            sections['strengths'].extend([it.strip() for it in items if it.strip()])
+                            continue
+                        m = re.match(r'^(weaknesses?)[:\s]*(.*)$', p, re.IGNORECASE)
+                        if m:
+                            items = re.split(r',\s*', m.group(2)) if m.group(2) else []
+                            sections['weaknesses'].extend([it.strip() for it in items if it.strip()])
+                            continue
+                        m = re.match(r'^(opportunities?)[:\s]*(.*)$', p, re.IGNORECASE)
+                        if m:
+                            items = re.split(r',\s*', m.group(2)) if m.group(2) else []
+                            sections['opportunities'].extend([it.strip() for it in items if it.strip()])
+                            continue
+                        m = re.match(r'^(threats?)[:\s]*(.*)$', p, re.IGNORECASE)
+                        if m:
+                            items = re.split(r',\s*', m.group(2)) if m.group(2) else []
+                            sections['threats'].extend([it.strip() for it in items if it.strip()])
+                            continue
+                    return sections
+
+                sw = _parse_swot(prompt)
+                # Build recommendations from SWOT points (simple heuristic)
+                recs = []
+                if sw.get('strengths'):
+                    for s in sw['strengths']:
+                        recs.append(f"Leverage strength: {s} — consider programs or promotions that amplify this advantage.")
+                if sw.get('weaknesses'):
+                    for w in sw['weaknesses']:
+                        recs.append(f"Address weakness: {w} — prioritize quick wins (process changes, staffing optimization).")
+                if sw.get('opportunities'):
+                    for o in sw['opportunities']:
+                        recs.append(f"Pursue opportunity: {o} — run a pilot in 30-90 days to validate demand.")
+                if sw.get('threats'):
+                    for t in sw['threats']:
+                        recs.append(f"Mitigate threat: {t} — implement monitoring and contingency plans.")
+
+                metrics = {}
+                performance = {'rating': 'Acceptable'}
+                additional = {'Strengths': {str(i+1): v for i, v in enumerate(sw.get('strengths', []))},
+                              'Weaknesses': {str(i+1): v for i, v in enumerate(sw.get('weaknesses', []))},
+                              'Opportunities': {str(i+1): v for i, v in enumerate(sw.get('opportunities', []))},
+                              'Threats': {str(i+1): v for i, v in enumerate(sw.get('threats', []))}}
+
+                report = format_business_report('SWOT Analysis', metrics, performance, recs or ['No recommendations generated.'], benchmarks=None, additional_data=additional)
+                return report.get('business_report_html', report.get('business_report', 'SWOT analysis generated.'))
+            # Support explicit 'Best Way' strategic planning sequence
+            if 'best' in forced and ('way' in forced or 'best way' in forced or 'best_way' in forced):
+                logger.info("Routing: Best Way (forced)")
+                # Build a concise strategic planning sequence using any uploaded CSV headers/values
+                steps = [
+                    '1. Define Objectives: Clarify top-level business goals and success metrics.',
+                    '2. Audit & SWOT: Assess strengths, weaknesses, opportunities, and threats using uploaded data.',
+                    '3. Set KPIs: Choose measurable KPIs (revenue target, conversion rate, market share).',
+                    '4. Budget & Resources: Allocate budgets by channel and priority (use budget_total & marketing_spend).',
+                    '5. Timeline & Milestones: Define a 3-12 month timeline with checkpoints.',
+                    '6. Execute & Track: Implement tactics and monitor KPI cadence (weekly/monthly).',
+                    '7. Review & Improve: Run monthly reviews and reallocate budget to top-performing initiatives.'
+                ]
+
+                # Include CSV-derived summary if available
+                csv_summary = {}
+                if data:
+                    # pick some common fields if present
+                    for k in ('revenue_target', 'budget_total', 'marketing_spend', 'target_roi', 'timeline_months'):
+                        if k in data and data.get(k) not in (None, ''):
+                            csv_summary[k] = data.get(k)
+
+                metrics = csv_summary if csv_summary else {'note': 'No numeric CSV metrics provided.'}
+                performance = {'rating': 'N/A', 'notes': 'This is a strategic planning sequence rather than a performance score.'}
+                recommendations = steps
+                additional_data = {'plan_steps': steps, 'csv_summary': csv_summary, 'requested_by': forced}
+
+                report = format_business_report('Best Way Strategic Planning', metrics, performance, recommendations, benchmarks=None, additional_data=additional_data)
+                # Return HTML if available, otherwise plain text
+                return report.get('business_report_html', report.get('business_report', '\n'.join(steps)))
+
+            def _positive(key):
+                try:
+                    val = data.get(key, None)
+                    if val is None:
+                        return False
+                    return float(val) > 0
+                except Exception:
+                    return False
+
+            if 'growth' in forced:
+                # If CSV contains business-goal fields with positive values, prefer Business Goals
+                if any(_positive(k) for k in ('revenue_target', 'revenue_target_total', 'budget_total', 'budget_total_sum', 'marketing_spend', 'marketing_spend_sum')):
+                    # Build Business Goals report
+                    rev = float(data.get('revenue_target') or data.get('revenue_target_total') or 0)
+                    bud = float(data.get('budget_total') or data.get('budget_total_sum') or 0)
+                    mkt = float(data.get('marketing_spend') or data.get('marketing_spend_sum') or 0)
+                    try:
+                        roi_v = float(data.get('target_roi') or 0)
+                    except Exception:
+                        roi_v = 0
+                    try:
+                        tl = int(float(data.get('timeline_months') or 12))
+                    except Exception:
+                        tl = 12
+
+                    metrics = {
+                        'revenue_target': rev,
+                        'budget_total': bud,
+                        'marketing_spend': mkt,
+                        'target_roi': roi_v,
+                        'timeline_months': tl
+                    }
+                    total_spend = (bud or 0) + (mkt or 0)
+                    projected_net = (rev or 0) - total_spend
+                    roi_achieved = (projected_net / total_spend * 100) if total_spend > 0 else 0
+                    performance = {'rating': 'Good' if roi_achieved >= (roi_v or 0) else 'Needs Improvement', 'roi_achieved': roi_achieved}
+                    recommendations = []
+                    if roi_achieved < (roi_v or 0):
+                        recommendations.append('Reduce budget or increase revenue initiatives to meet target ROI')
+                    if mkt > 0 and (mkt / max(total_spend, 1)) > 0.5:
+                        recommendations.append('Rebalance marketing spend to ensure efficient ROI')
+                    if rev < total_spend:
+                        recommendations.append('Reassess revenue assumptions; consider phased rollout to reduce upfront spend')
+                    if not recommendations:
+                        recommendations.append('Execute the plan and monitor monthly progress against KPIs')
+
+                    additional_data = {'financials': {'Total Spend': total_spend, 'Projected Net': projected_net, 'ROI Achieved': f"{roi_achieved:.1f}%"}}
+                    logger.info("Routing: Business Goals (forced 'growth' detected but business fields present)")
+                    report = format_business_report('Business Goals Analysis', metrics, performance, recommendations, benchmarks=None, additional_data=additional_data)
+                    return report.get('business_report_html', report.get('business_report', 'Analysis completed but no report generated.'))
+
+                # Otherwise attempt growth only if growth fields are positive
+                if any(_positive(k) for k in ('market_size', 'market_share', 'investment_budget', 'competition_level')):
+                    logger.info("Routing: Growth Strategy (forced by analysis type and positive market_* fields)")
+                    result, status = task_registry.execute_task(service="strategic", subtask="growth_strategy", params=data)
+                    if result.get('status') == 'success':
+                        return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
+                    else:
+                        return f"Error: {result.get('error', 'Analysis failed')}"
+                else:
+                    return "To analyze growth strategy, please provide Market Size, Market Share, Competition Level, and Investment Budget."
+
+            if 'business' in forced or 'goals' in forced:
+                # explicit Business Goals request: build and return the report deterministically
+                rev = float(data.get('revenue_target') or data.get('revenue_target_total') or 0)
+                bud = float(data.get('budget_total') or data.get('budget_total_sum') or 0)
+                mkt = float(data.get('marketing_spend') or data.get('marketing_spend_sum') or 0)
+                try:
+                    roi_v = float(data.get('target_roi') or 0)
+                except Exception:
+                    roi_v = 0
+                try:
+                    tl = int(float(data.get('timeline_months') or 12))
+                except Exception:
+                    tl = 12
+
+                metrics = {'revenue_target': rev, 'budget_total': bud, 'marketing_spend': mkt, 'target_roi': roi_v, 'timeline_months': tl}
+                total_spend = (bud or 0) + (mkt or 0)
+                projected_net = (rev or 0) - total_spend
+                roi_achieved = (projected_net / total_spend * 100) if total_spend > 0 else 0
+                performance = {'rating': 'Good' if roi_achieved >= (roi_v or 0) else 'Needs Improvement', 'roi_achieved': roi_achieved}
+                recommendations = []
+                if roi_achieved < (roi_v or 0):
+                    recommendations.append('Reduce budget or increase revenue initiatives to meet target ROI')
+                if mkt > 0 and (mkt / max(total_spend, 1)) > 0.5:
+                    recommendations.append('Rebalance marketing spend to ensure efficient ROI')
+                if rev < total_spend:
+                    recommendations.append('Reassess revenue assumptions; consider phased rollout to reduce upfront spend')
+                if not recommendations:
+                    recommendations.append('Execute the plan and monitor monthly progress against KPIs')
+
+                additional_data = {'financials': {'Total Spend': total_spend, 'Projected Net': projected_net, 'ROI Achieved': f"{roi_achieved:.1f}%"}}
+                report = format_business_report('Business Goals Analysis', metrics, performance, recommendations, benchmarks=None, additional_data=additional_data)
+                return report.get('business_report_html', report.get('business_report', 'Analysis completed but no report generated.'))
+            if 'sales' in forced or 'forecast' in forced:
+                if any(k in data for k in ['historical_sales', 'current_sales', 'growth_rate', 'seasonal_factor']):
+                    result, status = task_registry.execute_task(
+                        service="strategic",
+                        subtask="sales_forecasting",
+                        params=data
+                    )
+                    if result.get('status') == 'success':
+                        return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
+                    else:
+                        return f"Error: {result.get('error', 'Analysis failed')}"
+                else:
+                    return "To forecast sales, provide Historical Sales, Current Sales, Growth Rate, and Seasonal Factor."
+            if 'operational' in forced or 'excellence' in forced:
+                if any(k in data for k in ['efficiency_score', 'process_time', 'quality_rating', 'customer_satisfaction']):
+                    result, status = task_registry.execute_task(
+                        service="strategic",
+                        subtask="operational_excellence",
+                        params=data
+                    )
+                    if result.get('status') == 'success':
+                        return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
+                    else:
+                        return f"Error: {result.get('error', 'Analysis failed')}"
+                else:
+                    return "To analyze operational excellence, provide Efficiency Score, Process Time, Quality Rating, and Customer Satisfaction."
+
         # Determine which analysis to run based on keywords
         prompt_lower = prompt.lower()
+
+        # Prefer Business Goals when CSV-extracted business fields are present and positive,
+        # and only treat growth as present when market_* fields are positive.
+        business_keys = {'revenue_target', 'revenue_target_total', 'budget_total', 'budget_total_sum', 'marketing_spend', 'marketing_spend_sum', 'target_roi', 'timeline_months'}
+        growth_keys = {'market_size', 'market_share', 'competition_level', 'investment_budget'}
+
+        def _positive(key):
+            try:
+                val = data.get(key, None)
+                if val is None:
+                    return False
+                return float(val) > 0
+            except Exception:
+                return False
+
+        if any(_positive(k) for k in business_keys):
+            rev = None
+            bud = None
+            mkt = 0
+            roi_v = 0
+            tl = 12
+
+            if 'revenue_target' in data:
+                rev = float(data.get('revenue_target') or 0)
+            elif 'revenue_target_total' in data:
+                rev = float(data.get('revenue_target_total') or 0)
+
+            if 'budget_total' in data:
+                bud = float(data.get('budget_total') or 0)
+            elif 'budget_total_sum' in data:
+                bud = float(data.get('budget_total_sum') or 0)
+
+            if 'marketing_spend' in data:
+                mkt = float(data.get('marketing_spend') or 0)
+            elif 'marketing_spend_sum' in data:
+                mkt = float(data.get('marketing_spend_sum') or 0)
+
+            if 'target_roi' in data:
+                try:
+                    roi_v = float(data.get('target_roi') or 0)
+                except Exception:
+                    roi_v = 0
+
+            if 'timeline_months' in data:
+                try:
+                    tl = int(float(data.get('timeline_months')))
+                except Exception:
+                    tl = 12
+
+            metrics = {
+                'revenue_target': rev or 0,
+                'budget_total': bud or 0,
+                'marketing_spend': mkt or 0,
+                'target_roi': roi_v or 0,
+                'timeline_months': tl
+            }
+
+            total_spend = (metrics.get('budget_total') or 0) + (metrics.get('marketing_spend') or 0)
+            projected_net = (metrics.get('revenue_target') or 0) - total_spend
+            roi_achieved = (projected_net / total_spend * 100) if total_spend > 0 else 0
+
+            performance = {
+                'rating': 'Good' if roi_achieved >= metrics.get('target_roi', 0) else 'Needs Improvement',
+                'roi_achieved': roi_achieved
+            }
+
+            recommendations = []
+            if roi_achieved < metrics.get('target_roi', 0):
+                recommendations.append('Reduce budget or increase revenue initiatives to meet target ROI')
+            if metrics.get('marketing_spend', 0) > 0 and (metrics.get('marketing_spend', 0) / max(total_spend, 1)) > 0.5:
+                recommendations.append('Rebalance marketing spend to ensure efficient ROI')
+            if metrics.get('revenue_target', 0) < total_spend:
+                recommendations.append('Reassess revenue assumptions; consider phased rollout to reduce upfront spend')
+            if not recommendations:
+                recommendations.append('Execute the plan and monitor monthly progress against KPIs')
+
+            additional_data = {
+                'financials': {
+                    'Total Spend': total_spend,
+                    'Projected Net': projected_net,
+                    'ROI Achieved': f"{roi_achieved:.1f}%"
+                }
+            }
+
+            logger.info("Routing: Business Goals (data-driven detection)")
+            report = format_business_report('Business Goals Analysis', metrics, performance, recommendations, benchmarks=None, additional_data=additional_data)
+            return report.get('business_report_html', report.get('business_report', 'Analysis completed but no report generated.'))
 
         # Import here to avoid circular imports
         from apps.agent_core.task_registry import task_registry
@@ -576,6 +1148,24 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To run comprehensive analysis, I need your actual data. Please provide:
+
+**Required:**
+1. Total Sales (e.g., $50,000)
+2. Labor Cost (e.g., $15,000)
+3. Food Cost (e.g., $14,000)
+4. Prime Cost (e.g., $29,000)
+
+**Optional:**
+- Hours Worked (e.g., 800)
+- Hourly Rate (e.g., $15)
+- Previous Sales (e.g., $48,000)
+- Target Margin (e.g., 70%)
+
+Example: "Run comprehensive analysis. Total sales: $50,000. Labor cost: $15,000. Food cost: $14,000. Prime cost: $29,000."
+
+Or upload a CSV file with columns: total_sales, labor_cost, food_cost, prime_cost"""
 
         elif any(keyword in prompt_lower for keyword in ['performance optimization', 'optimization strategies', 'goal setting']):
             if 'current_performance' in data and 'target_performance' in data and 'optimization_potential' in data and 'efficiency_score' in data:
@@ -588,10 +1178,33 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To optimize performance, I need your actual data. Please provide:
+
+**Required:**
+1. Current Performance (e.g., 75%)
+2. Target Performance (e.g., 90%)
+3. Optimization Potential (e.g., 20%)
+4. Efficiency Score (e.g., 80%)
+
+**Optional:**
+- Baseline Metrics (e.g., 70%)
+- Improvement Rate (e.g., 10%)
+- Goal Timeframe (e.g., 90 days)
+- Progress Tracking (e.g., 8)
+
+Example: "Optimize performance. Current performance: 75%. Target performance: 90%. Optimization potential: 20%. Efficiency score: 80%."
+
+Or upload a CSV file with columns: current_performance, target_performance, optimization_potential, efficiency_score"""
 
         # Check for Strategic Planning analysis requests
-        elif any(keyword in prompt_lower for keyword in ['sales forecasting', 'historical trends', 'growth projections']):
-            if 'historical_sales' in data and 'current_sales' in data and 'growth_rate' in data and 'seasonal_factor' in data:
+        elif any(keyword in prompt_lower for keyword in ['sales forecasting', 'historical trends', 'growth projections', 'forecast', 'forecast my sales']):
+            # Accept more prompt variants ('forecast', 'forecast my sales') and also accept CSV field-name variants
+            has_historical = 'historical_sales' in data or 'historicalsales' in data
+            has_current = 'current_sales' in data or 'currentsales' in data
+            has_growth = 'growth_rate' in data or 'growthrate' in data
+            has_seasonal = 'seasonal_factor' in data or 'seasonalfactor' in data
+            if has_historical and has_current and has_growth and has_seasonal:
                 result, status = task_registry.execute_task(
                     service="strategic",
                     subtask="sales_forecasting",
@@ -601,9 +1214,139 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To forecast sales, I need your actual data. Please provide:
+
+**Required:**
+1. Historical Sales (e.g., $45,000)
+2. Current Sales (e.g., $50,000)
+3. Growth Rate (e.g., 5%)
+4. Seasonal Factor (e.g., 1.2)
+
+**Optional:**
+- Forecast Period (e.g., 12 months)
+- Trend Strength (e.g., 0.5)
+- Market Growth (e.g., 5%)
+- Confidence Level (e.g., 85%)
+
+Example: "Forecast my sales. Historical sales: $45,000. Current sales: $50,000. Growth rate: 5%. Seasonal factor: 1.2."
+
+Or upload a CSV file with columns: historical_sales, current_sales, growth_rate, seasonal_factor"""
+
+        # Business Goals (CSV-friendly) - this will generate an HTML report directly
+        elif any(keyword in prompt_lower for keyword in ['business goals', 'business goal', 'revenue target', 'business_goals']):
+            # Try to extract business goals style fields from the prompt
+            # Allow for suffixes like _total or _sum that frontend produces (e.g. revenue_target_total)
+            rev_match = re.search(r'revenue[_ ]?target(?:[_\w]*)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+            budget_match = re.search(r'budget(?:[_\w]*)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+            marketing_match = re.search(r'marketing[_ ]?spend(?:[_\w]*)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+            roi_match = re.search(r'(?:target[_ ]?roi|average[_ ]?target[_ ]?roi|target roi|average_target_roi_percent)[:\s]*([0-9]+(?:\.[0-9]+)?)%?', prompt_lower)
+            timeline_match = re.search(r'(?:timeline[_ ]?months|timeline|timeline_months)[:\s]*([0-9,]+)', prompt_lower)
+
+            revenue = float(rev_match.group(1).replace(',', '')) if rev_match else (
+                float(data.get('revenue_target', 0)) if 'revenue_target' in data else (
+                    float(data.get('revenue_target_total', 0)) if 'revenue_target_total' in data else None
+                )
+            )
+            budget = float(budget_match.group(1).replace(',', '')) if budget_match else (
+                float(data.get('budget_total', 0)) if 'budget_total' in data else (
+                    float(data.get('budget_total_sum', 0)) if 'budget_total_sum' in data else None
+                )
+            )
+            marketing = float(marketing_match.group(1).replace(',', '')) if marketing_match else (
+                float(data.get('marketing_spend', 0)) if 'marketing_spend' in data else (
+                    float(data.get('marketing_spend_sum', 0)) if 'marketing_spend_sum' in data else 0
+                )
+            )
+            roi = float(roi_match.group(1)) if roi_match else (
+                float(data.get('target_roi', 0)) if 'target_roi' in data else (
+                    float(data.get('average_target_roi_percent', 0)) if 'average_target_roi_percent' in data else 0
+                )
+            )
+            timeline = int(timeline_match.group(1)) if timeline_match else (
+                int(float(data.get('timeline_months'))) if 'timeline_months' in data else 12
+            )
+
+            if revenue is not None and budget is not None:
+                total_spend = (budget or 0) + (marketing or 0)
+                projected_net = (revenue or 0) - total_spend
+                roi_achieved = (projected_net / total_spend * 100) if total_spend > 0 else 0
+
+                metrics = {
+                    'revenue_target': revenue,
+                    'budget_total': budget,
+                    'marketing_spend': marketing,
+                    'target_roi': roi,
+                    'timeline_months': timeline,
+                    'projected_net': projected_net,
+                    'total_spend': total_spend
+                }
+
+                performance = {
+                    'rating': 'Good' if roi_achieved >= roi else 'Needs Improvement',
+                    'roi_achieved': roi_achieved
+                }
+
+                recommendations = []
+                if roi_achieved < roi:
+                    recommendations.append('Reduce budget or increase revenue initiatives to meet target ROI')
+                if marketing > 0 and (marketing / total_spend) > 0.5:
+                    recommendations.append('Rebalance marketing spend to ensure efficient ROI')
+                if revenue < total_spend:
+                    recommendations.append('Reassess revenue assumptions; consider phased rollout to reduce upfront spend')
+                if not recommendations:
+                    recommendations.append('Execute the plan and monitor monthly progress against KPIs')
+
+                additional_data = {
+                    'financials': {
+                        'Total Spend': total_spend,
+                        'Projected Net': projected_net,
+                        'ROI Achieved': f"{roi_achieved:.1f}%"
+                    }
+                }
+
+                report = format_business_report('Business Goals Analysis', metrics, performance, recommendations, benchmarks=None, additional_data=additional_data)
+                return report.get('business_report_html', report.get('business_report', 'Analysis completed but no report generated.'))
+            else:
+                return """To analyze business goals, please provide: Revenue Target, Budget Total, Marketing Spend, Target ROI (optional)."""
 
         elif any(keyword in prompt_lower for keyword in ['growth strategy', 'market analysis', 'competitive positioning']):
-            if 'market_size' in data and 'market_share' in data and 'competition_level' in data and 'investment_budget' in data:
+            # If the CSV contains business-goals fields, prefer Business Goals analysis
+            business_keys = {'revenue_target', 'revenue_target_total', 'budget_total', 'budget_total_sum', 'marketing_spend', 'marketing_spend_sum', 'target_roi', 'timeline_months'}
+            if any(_positive(k) for k in business_keys):
+                rev = float(data.get('revenue_target') or data.get('revenue_target_total') or 0)
+                bud = float(data.get('budget_total') or data.get('budget_total_sum') or 0)
+                mkt = float(data.get('marketing_spend') or data.get('marketing_spend_sum') or 0)
+                try:
+                    roi_v = float(data.get('target_roi') or 0)
+                except Exception:
+                    roi_v = 0
+                try:
+                    tl = int(float(data.get('timeline_months') or 12))
+                except Exception:
+                    tl = 12
+
+                metrics = {'revenue_target': rev, 'budget_total': bud, 'marketing_spend': mkt, 'target_roi': roi_v, 'timeline_months': tl}
+                total_spend = (bud or 0) + (mkt or 0)
+                projected_net = (rev or 0) - total_spend
+                roi_achieved = (projected_net / total_spend * 100) if total_spend > 0 else 0
+                performance = {'rating': 'Good' if roi_achieved >= (roi_v or 0) else 'Needs Improvement', 'roi_achieved': roi_achieved}
+                recommendations = []
+                if roi_achieved < (roi_v or 0):
+                    recommendations.append('Reduce budget or increase revenue initiatives to meet target ROI')
+                if mkt > 0 and (mkt / max(total_spend, 1)) > 0.5:
+                    recommendations.append('Rebalance marketing spend to ensure efficient ROI')
+                if rev < total_spend:
+                    recommendations.append('Reassess revenue assumptions; consider phased rollout to reduce upfront spend')
+                if not recommendations:
+                    recommendations.append('Execute the plan and monitor monthly progress against KPIs')
+
+                additional_data = {'financials': {'Total Spend': total_spend, 'Projected Net': projected_net, 'ROI Achieved': f"{roi_achieved:.1f}%"}}
+                report = format_business_report('Business Goals Analysis', metrics, performance, recommendations, benchmarks=None, additional_data=additional_data)
+                return report.get('business_report_html', report.get('business_report', 'Analysis completed but no report generated.'))
+
+            # Otherwise require positive growth fields
+            if all(_positive(k) for k in ('market_size', 'market_share', 'competition_level', 'investment_budget')):
                 result, status = task_registry.execute_task(
                     service="strategic",
                     subtask="growth_strategy",
@@ -613,6 +1356,24 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze growth strategy, I need your actual data. Please provide:
+
+**Required:**
+1. Market Size (e.g., $5,000,000)
+2. Market Share (e.g., 8%)
+3. Competition Level (e.g., 65%)
+4. Investment Budget (e.g., $100,000)
+
+**Optional:**
+- Growth Potential (e.g., 15%)
+- Competitive Advantage (e.g., 7)
+- Market Penetration (e.g., 5%)
+- Target ROI (e.g., 20%)
+
+Example: "Analyze growth strategy. Market size: $5,000,000. Market share: 8%. Competition level: 65%. Investment budget: $100,000."
+
+Or upload a CSV file with columns: market_size, market_share, competition_level, investment_budget"""
 
         elif any(keyword in prompt_lower for keyword in ['operational excellence', 'process optimization', 'efficiency metrics']):
             if 'efficiency_score' in data and 'process_time' in data and 'quality_rating' in data and 'customer_satisfaction' in data:
@@ -625,6 +1386,24 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze operational excellence, I need your actual data. Please provide:
+
+**Required:**
+1. Efficiency Score (e.g., 80%)
+2. Process Time (e.g., 25 minutes)
+3. Quality Rating (e.g., 4.5)
+4. Customer Satisfaction (e.g., 85%)
+
+**Optional:**
+- Cost Per Unit (e.g., $12)
+- Waste Percentage (e.g., 5%)
+- Productivity Score (e.g., 8)
+- Industry Benchmark (e.g., 85%)
+
+Example: "Analyze operational excellence. Efficiency score: 80%. Process time: 25 minutes. Quality rating: 4.5. Customer satisfaction: 85%."
+
+Or upload a CSV file with columns: efficiency_score, process_time, quality_rating, customer_satisfaction"""
 
         # Check for Recipe Management analysis requests
         elif any(keyword in prompt_lower for keyword in ['recipe costing', 'ingredient cost', 'portion cost']):
@@ -638,6 +1417,22 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze recipe costing, I need your actual data. Please provide:
+
+**Required:**
+1. Ingredient Cost (e.g., $5.50)
+2. Portion Cost (e.g., $2.25)
+3. Recipe Price (e.g., $15)
+
+**Optional:**
+- Servings (e.g., 4)
+- Labor Cost (e.g., $3)
+- Overhead Cost (e.g., $1.50)
+
+Example: "Analyze recipe costing. Ingredient cost: $5.50. Portion cost: $2.25. Recipe price: $15."
+
+Or upload a CSV file with columns: ingredient_cost, portion_cost, recipe_price"""
 
         elif any(keyword in prompt_lower for keyword in ['ingredient optimization', 'supplier cost', 'waste reduction']):
             if 'current_cost' in data and 'supplier_cost' in data and 'waste_percentage' in data and 'quality_score' in data:
@@ -650,6 +1445,23 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To optimize ingredients, I need your actual data. Please provide:
+
+**Required:**
+1. Current Cost (e.g., $5.50)
+2. Supplier Cost (e.g., $4.50)
+3. Waste Percentage (e.g., 8%)
+4. Quality Score (e.g., 85%)
+
+**Optional:**
+- Volume Discount (e.g., 10%)
+- Storage Cost (e.g., $0.50)
+- Shelf Life Days (e.g., 7)
+
+Example: "Optimize ingredients. Current cost: $5.50. Supplier cost: $4.50. Waste percentage: 8%. Quality score: 85%."
+
+Or upload a CSV file with columns: current_cost, supplier_cost, waste_percentage, quality_score"""
 
         elif any(keyword in prompt_lower for keyword in ['recipe scaling', 'batch size', 'yield calculation']):
             if 'current_batch' in data and 'target_batch' in data and 'yield_percentage' in data and 'consistency_score' in data:
@@ -662,9 +1474,26 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To scale recipes, I need your actual data. Please provide:
+
+**Required:**
+1. Current Batch (e.g., 10 servings)
+2. Target Batch (e.g., 50 servings)
+3. Yield Percentage (e.g., 95%)
+4. Consistency Score (e.g., 90%)
+
+**Optional:**
+- Scale Factor (e.g., 5)
+- Ingredient Adjustment (e.g., 1.1)
+- Equipment Capacity (e.g., 100)
+
+Example: "Scale my recipe. Current batch: 10. Target batch: 50. Yield percentage: 95%. Consistency score: 90%."
+
+Or upload a CSV file with columns: current_batch, target_batch, yield_percentage, consistency_score"""
 
         # Check for Menu Engineering analysis requests
-        elif any(keyword in prompt_lower for keyword in ['product mix', 'menu analysis', 'item performance']):
+        elif any(keyword in prompt_lower for keyword in ['product mix', 'menu analysis', 'item performance', 'menu engineering']):
             if 'total_sales' in data and 'item_sales' in data and 'item_cost' in data and 'item_profit' in data:
                 result, status = task_registry.execute_task(
                     service="menu",
@@ -675,8 +1504,27 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze product mix, I need your actual data. Please provide:
 
-        elif any(keyword in prompt_lower for keyword in ['menu pricing', 'pricing analysis', 'price optimization']):
+**Required:**
+1. Total Sales (e.g., $50,000)
+2. Item Sales (e.g., $5,000)
+3. Item Cost (e.g., $1,500)
+4. Item Profit (e.g., $3,500)
+
+**Or upload a CSV file with columns:**
+- product_name (Menu item name)
+- quantity_sold (Units sold)
+- unit_price (Selling price)
+- cost (Cost per unit)
+
+Example CSV format:
+product_name,quantity_sold,unit_price,cost
+Margherita Pizza,94,21,6
+Pepperoni Pizza,125,22,5"""
+
+        elif any(keyword in prompt_lower for keyword in ['menu pricing', 'menu price optimization']):
             if 'item_price' in data and 'item_cost' in data and 'competitor_price' in data:
                 result, status = task_registry.execute_task(
                     service="menu",
@@ -687,6 +1535,20 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze menu pricing, I need your actual data. Please provide:
+
+**Required:**
+1. Item Price (e.g., $18)
+2. Item Cost (e.g., $5.50)
+3. Competitor Price (e.g., $16)
+
+**Optional:**
+- Target Food Cost % (e.g., 32%)
+
+Example: "Analyze menu pricing. Item price: $18. Item cost: $5.50. Competitor price: $16."
+
+Or upload a CSV file with columns: item_price, item_cost, competitor_price"""
 
         elif any(keyword in prompt_lower for keyword in ['menu design', 'design analysis', 'visual hierarchy']):
             if 'menu_items' in data and 'high_profit_items' in data and 'sales_distribution' in data and 'visual_hierarchy' in data:
@@ -699,6 +1561,21 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze menu design, I need your actual data. Please provide:
+
+**Required:**
+1. Menu Items (e.g., 25)
+2. High Profit Items (e.g., 8)
+3. Sales Distribution (e.g., "40% appetizers, 60% entrees")
+4. Visual Hierarchy (e.g., "top-right placement")
+
+**Or upload a CSV file** with your menu items for product mix analysis first.
+
+The system will analyze your menu and provide:
+- Golden Triangle placement recommendations
+- Visual hierarchy optimization
+- Category sequencing suggestions"""
 
         # Check for Beverage Management analysis requests
         elif any(keyword in prompt_lower for keyword in ['liquor cost', 'liquor analysis', 'liquor variance']):
@@ -712,6 +1589,23 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze your liquor cost, I need your actual data. Please provide:
+
+**Required:**
+1. Expected Ounces (e.g., 500 oz)
+2. Actual Ounces (e.g., 480 oz)
+3. Liquor Cost (e.g., $3,500)
+4. Total Sales (e.g., $15,000)
+
+**Optional:**
+- Bottle Cost (e.g., $25)
+- Bottle Size (e.g., 25 oz)
+- Target Cost Percentage (e.g., 20%)
+
+Example: "Analyze my liquor cost. Expected oz: 500. Actual oz: 480. Liquor cost: $3,500. Total sales: $15,000. Bottle cost: $25."
+
+Or upload a CSV file with columns: expected_oz, actual_oz, liquor_cost, total_sales"""
 
         elif any(keyword in prompt_lower for keyword in ['bar inventory', 'inventory management', 'stock level']):
             if 'current_stock' in data and 'reorder_point' in data and 'monthly_usage' in data and 'inventory_value' in data:
@@ -724,6 +1618,24 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze your bar inventory, I need your actual data. Please provide:
+
+**Required:**
+1. Current Stock (e.g., 150 units)
+2. Reorder Point (e.g., 30 units)
+3. Monthly Usage (e.g., 100 units)
+4. Inventory Value (e.g., $5,000)
+
+**Optional:**
+- Lead Time Days (e.g., 7 days)
+- Safety Stock (e.g., 10 units)
+- Item Cost (e.g., $25)
+- Target Turnover (e.g., 12)
+
+Example: "Analyze bar inventory. Current stock: 150. Reorder point: 30. Monthly usage: 100. Inventory value: $5,000. Lead time: 7 days."
+
+Or upload a CSV file with columns: current_stock, reorder_point, monthly_usage, inventory_value"""
 
         elif any(keyword in prompt_lower for keyword in ['beverage pricing', 'drink pricing', 'pricing analysis']):
             if 'drink_price' in data and 'cost_per_drink' in data and 'sales_volume' in data and 'competitor_price' in data:
@@ -736,9 +1648,26 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze your beverage pricing, I need your actual data. Please provide:
+
+**Required:**
+1. Drink Price (e.g., $12)
+2. Cost Per Drink (e.g., $3)
+3. Sales Volume (e.g., 500 units)
+4. Competitor Price (e.g., $11)
+
+**Optional:**
+- Target Margin (e.g., 75%)
+- Market Position (e.g., premium, standard, value)
+- Elasticity Factor (e.g., 1.5)
+
+Example: "Analyze beverage pricing. Drink price: $12. Cost per drink: $3. Sales volume: 500. Competitor price: $11. Target margin: 75%."
+
+Or upload a CSV file with columns: drink_price, cost_per_drink, sales_volume, competitor_price"""
 
         # Check for HR analysis requests
-        elif any(keyword in prompt_lower for keyword in ['staff retention', 'retention analysis', 'turnover rate']):
+        elif any(keyword in prompt_lower for keyword in ['staff retention', 'retention analysis', 'turnover rate', 'turnover analysis']):
             if 'turnover_rate' in data:
                 result, status = task_registry.execute_task(
                     service="hr",
@@ -749,8 +1678,20 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze staff retention, I need your actual data. Please provide:
 
-        elif any(keyword in prompt_lower for keyword in ['labor scheduling', 'scheduling optimization', 'staff scheduling']):
+**Required:**
+1. Turnover Rate (e.g., 45%)
+
+**Optional:**
+- Industry Average (e.g., 70%)
+
+Example: "Analyze staff retention. Turnover rate: 45%. Industry average: 70%."
+
+Or upload a CSV file with columns: turnover_rate, industry_average"""
+
+        elif any(keyword in prompt_lower for keyword in ['labor scheduling', 'scheduling optimization', 'staff scheduling', 'shift optimization']):
             if 'total_sales' in data and ('labor_hours' in data or 'hours_worked' in data) and 'hourly_rate' in data:
                 result, status = task_registry.execute_task(
                     service="hr",
@@ -761,8 +1702,22 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To optimize labor scheduling, I need your actual data. Please provide:
 
-        elif any(keyword in prompt_lower for keyword in ['performance management', 'staff performance', 'performance analysis']):
+**Required:**
+1. Total Sales (e.g., $50,000)
+2. Labor Hours (e.g., 800 hours)
+3. Hourly Rate (e.g., $15)
+
+**Optional:**
+- Peak Hours (e.g., 200 hours)
+
+Example: "Optimize labor scheduling. Total sales: $50,000. Labor hours: 800. Hourly rate: $15. Peak hours: 200."
+
+Or upload a CSV file with columns: total_sales, labor_hours, hourly_rate, peak_hours"""
+
+        elif any(keyword in prompt_lower for keyword in ['performance management', 'staff performance', 'performance analysis', 'employee performance']):
             # For performance management, we need at least one performance metric
             if any(key in data for key in ['customer_satisfaction', 'sales_performance', 'efficiency_score', 'attendance_rate']):
                 result, status = task_registry.execute_task(
@@ -774,6 +1729,24 @@ def handle_kpi_analysis(prompt: str) -> str:
                     return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return """To analyze staff performance, I need your actual data. Please provide at least one metric:
+
+**Required (at least one):**
+1. Customer Satisfaction (e.g., 85%)
+2. Sales Performance (e.g., 95%)
+3. Efficiency Score (e.g., 80%)
+4. Attendance Rate (e.g., 92%)
+
+**Optional:**
+- Target Satisfaction (e.g., 90%)
+- Target Sales (e.g., 100%)
+- Target Efficiency (e.g., 85%)
+- Target Attendance (e.g., 98%)
+
+Example: "Analyze staff performance. Customer satisfaction: 85%. Sales performance: 95%. Efficiency score: 80%. Attendance rate: 92%."
+
+Or upload a CSV file with columns: customer_satisfaction, sales_performance, efficiency_score, attendance_rate"""
 
         # =====================================================
         # CORE KPI ANALYSIS - Use is_requesting_analysis() to detect intent
@@ -1023,8 +1996,98 @@ def handle_conversational_ai(prompt: str) -> str:
         return None
 
 
-def chat_with_gpt(prompt: str) -> str:
-    """Chat with GPT-4 using the OpenAI API, with KPI analysis integration."""
+def handle_beverage_analysis(prompt: str) -> str:
+    """Handle Beverage Management analysis requests via task registry."""
+    import re
+    try:
+        from apps.agent_core.task_registry import task_registry
+
+        prompt_lower = prompt.lower()
+        data = {}
+
+        # Extract liquor cost metrics
+        expected_oz_match = re.search(r'expected\s+(?:oz|ounces?)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+        if expected_oz_match:
+            data['expected_oz'] = float(expected_oz_match.group(1).replace(',', ''))
+
+        actual_oz_match = re.search(r'actual\s+(?:oz|ounces?)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+        if actual_oz_match:
+            data['actual_oz'] = float(actual_oz_match.group(1).replace(',', ''))
+
+        liquor_cost_match = re.search(r'liquor\s+cost[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+        if liquor_cost_match:
+            data['liquor_cost'] = float(liquor_cost_match.group(1).replace(',', ''))
+
+        total_sales_match = re.search(r'total\s+sales[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+        if total_sales_match:
+            data['total_sales'] = float(total_sales_match.group(1).replace(',', ''))
+
+        waste_cost_match = re.search(r'waste\s+cost[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+        if waste_cost_match:
+            data['waste_cost'] = float(waste_cost_match.group(1).replace(',', ''))
+
+        covers_match = re.search(r'covers(?:\s+served)?[:\s]*([0-9,]+)', prompt_lower)
+        if covers_match:
+            data['covers'] = int(covers_match.group(1).replace(',', ''))
+
+        bottle_cost_match = re.search(r'bottle\s+cost[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+        if bottle_cost_match:
+            data['bottle_cost'] = float(bottle_cost_match.group(1).replace(',', ''))
+
+        bottle_size_match = re.search(r'bottle\s+size[:\s]*([0-9,]+(?:\.[0-9]+)?)\s*(?:oz|ounces?)', prompt_lower)
+        if bottle_size_match:
+            data['bottle_size_oz'] = float(bottle_size_match.group(1).replace(',', ''))
+
+        target_pct_match = re.search(r'target\s+cost\s+percentage[:\s]*([0-9,]+(?:\.[0-9]+)?)', prompt_lower)
+        if target_pct_match:
+            data['target_cost_percentage'] = float(target_pct_match.group(1).replace(',', ''))
+
+        # Decide which beverage subtask to run
+        def run_task(subtask: str, required_keys: list, help_text: str):
+            if all(k in data for k in required_keys):
+                result, status = task_registry.execute_task(
+                    service="beverage",
+                    subtask=subtask,
+                    params=data
+                )
+                if result.get('status') == 'success':
+                    return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
+                else:
+                    return f"Error: {result.get('error', 'Analysis failed')}"
+            else:
+                return help_text
+
+        # Liquor Cost Analysis
+        if any(keyword in prompt_lower for keyword in ['liquor cost', 'beverage cost', 'pour cost', 'variance']):
+            return run_task(
+                'liquor_cost',
+                ['liquor_cost', 'total_sales'],
+                "To analyze liquor cost, please provide: Total Sales and Liquor Cost. Optional: Waste Cost, Covers, Expected Oz, Actual Oz, Bottle Cost, Bottle Size, Target Cost Percentage."
+            )
+
+        # Bar Inventory Analysis
+        if any(keyword in prompt_lower for keyword in ['inventory', 'stock level', 'reorder', 'turnover']):
+            return run_task(
+                'inventory',
+                ['current_stock', 'reorder_point', 'monthly_usage', 'inventory_value'],
+                "To analyze bar inventory, provide: Current Stock, Reorder Point, Monthly Usage, Inventory Value. Optional: Lead Time Days, Safety Stock, Item Cost, Target Turnover."
+            )
+
+        # Beverage Pricing Analysis
+        if any(keyword in prompt_lower for keyword in ['pricing', 'price', 'margin', 'profit']):
+            return run_task(
+                'pricing',
+                ['drink_price', 'cost_per_drink', 'sales_volume', 'competitor_price'],
+                "To analyze beverage pricing, provide: Drink Price, Cost per Drink, Sales Volume, Competitor Price. Optional: Target Margin, Market Position, Elasticity Factor."
+            )
+
+        return None
+    except Exception:
+        return None
+
+
+def chat_with_gpt(prompt: str, context: str | None = None) -> str:
+    """Chat with GPT-4 using the OpenAI API, with KPI and Beverage analysis integration."""
     if not prompt or not prompt.strip():
         return "Error: Please provide a message."
 
@@ -1032,6 +2095,12 @@ def chat_with_gpt(prompt: str) -> str:
     conversational_response = handle_conversational_ai(prompt)
     if conversational_response:
         return sanitize_response(conversational_response)
+
+    # STEP 1.5: If context is beverage or prompt contains beverage keywords, route to beverage analysis
+    if context == 'beverage' or any(k in prompt.lower() for k in ['liquor', 'beverage', 'bar inventory', 'drink pricing']):
+        beverage_response = handle_beverage_analysis(prompt)
+        if beverage_response:
+            return sanitize_response(beverage_response)
 
     # STEP 2: Try specific KPI analysis handlers (legacy keyword-based routing)
     kpi_response = handle_kpi_analysis(prompt)

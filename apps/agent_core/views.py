@@ -198,11 +198,40 @@ def agent_view(request: HttpRequest) -> JsonResponse:
                 result = process_recipe_csv_data(uploaded_file)
                 status_code = 400 if result.get("status") == "error" else 200
                 return JsonResponse(result, status=status_code)
+            elif task in ["hr_retention", "hr_scheduling", "hr_performance", "hr_analysis"]:
+                from backend.consulting_services.hr.hr_csv_processor import process_hr_csv_data
+                # Map task to analysis type
+                analysis_type_map = {
+                    "hr_retention": "retention",
+                    "hr_scheduling": "scheduling",
+                    "hr_performance": "performance",
+                    "hr_analysis": "auto"  # Auto-detect from columns
+                }
+                analysis_type = analysis_type_map.get(task, "auto")
+                result = process_hr_csv_data(uploaded_file, analysis_type)
+                status_code = 400 if result.get("status") == "error" else 200
+                return JsonResponse(result, status=status_code)
+            elif task in ["labor_cost", "food_cost", "prime_cost", "liquor_cost", "beverage_cost", "liquor_variance", "cost_analysis"]:
+                from backend.consulting_services.cost.cost_csv_processor import process_cost_csv_data
+                # Map task to analysis type
+                analysis_type_map = {
+                    "labor_cost": "labor",
+                    "food_cost": "food",
+                    "prime_cost": "prime",
+                    "liquor_cost": "liquor",
+                    "beverage_cost": "liquor",
+                    "liquor_variance": "liquor",
+                    "cost_analysis": "auto"  # Auto-detect from columns
+                }
+                analysis_type = analysis_type_map.get(task, "auto")
+                result = process_cost_csv_data(uploaded_file, analysis_type)
+                status_code = 400 if result.get("status") == "error" else 200
+                return JsonResponse(result, status=status_code)
             else:
                 return build_error_response(
                     ErrorCodes.UNKNOWN_TASK,
                     f"File upload not supported for task: {task}",
-                    details={"supported_tasks": ["product_mix", "kpi_analysis", "recipe_management"]}
+                    details={"supported_tasks": ["product_mix", "kpi_analysis", "recipe_management", "hr_retention", "hr_scheduling", "hr_performance", "hr_analysis", "labor_cost", "food_cost", "prime_cost", "liquor_cost", "beverage_cost", "liquor_variance", "cost_analysis"]}
                 )
         except Exception as e:
             trace_id = uuid4().hex

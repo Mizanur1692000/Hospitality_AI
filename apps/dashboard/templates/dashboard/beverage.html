@@ -371,7 +371,17 @@
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you optimize your bar operations. Ask me about liquor costs, inventory management, pricing strategies, or upload data for analysis.</div>
+            <div class="message-bubble">Hello! I'm here to help you optimize your bar operations. <strong>To get accurate analysis, please provide your data</strong>:<br><br>
+              <strong>🍸 Liquor Cost Analysis:</strong><br>
+              • Required: expected_oz, actual_oz, liquor_cost, total_sales<br>
+              • Optional: bottle_cost, bottle_size_oz, target_cost_percentage<br><br>
+              <strong>📦 Bar Inventory:</strong><br>
+              • Required: current_stock, reorder_point, monthly_usage, inventory_value<br>
+              • Optional: lead_time_days, safety_stock, item_cost, target_turnover<br><br>
+              <strong>💰 Beverage Pricing:</strong><br>
+              • Required: drink_price, cost_per_drink, sales_volume, competitor_price<br>
+              • Optional: target_margin, market_position, elasticity_factor<br><br>
+              Click the quick action buttons above to see example prompts with sample data.</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
@@ -430,7 +440,7 @@
         const file = e.target.files[0];
         if (!file) return;
 
-        addMessage(`Uploading file: ${file.name}`, true);
+        addMessage(`📁 Uploading: ${file.name}`, true);
         
         const formData = new FormData();
         formData.append('task', 'liquor_variance');
@@ -445,12 +455,14 @@
           const data = await response.json();
           
           if (data.error) {
-            addMessage(`Error: ${data.error}`, false);
+            addMessage(`❌ Error: ${data.error}`, false);
+          } else if (data.status === 'error') {
+            addMessage(`❌ ${data.message}\n\n${data.help || ''}`, false);
           } else {
-            addMessage(formatResponse(data), false);
+            formatCostResponse(data);
           }
         } catch (error) {
-          addMessage(`Error uploading file: ${error.message}`, false);
+          addMessage(`❌ Error uploading file: ${error.message}`, false);
         }
         
         fileInput.value = '';
@@ -474,15 +486,36 @@
             body: `message=${encodeURIComponent(message)}&context=beverage`
           });
           const data = await response.json();
-          
-          if (data.error) {
-            addMessage(`Error: ${data.error}`, false);
-          } else {
-            addMessage(data.response || 'No response received', false);
-          }
+          addMessage(data.error ? `❌ Error: ${data.error}` : (data.response || 'No response'), false);
         } catch (error) {
-          addMessage(`Error: ${error.message}`, false);
+          addMessage(`❌ Error: ${error.message}`, false);
         }
+      };
+
+      window.formatCostResponse = function(data) {
+        let html = '<div class="report"><div class="report__header"><h2>📊 Beverage Cost Analysis Results</h2><div class="report__meta">Analysis completed successfully</div></div><div class="report__body">';
+        
+        if (data.summary) {
+          html += '<h3 style="color: #667eea; margin: 0 0 1rem;">📈 Summary Metrics</h3><div class="kpi-grid">';
+          for (const [key, value] of Object.entries(data.summary)) {
+            const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            let displayValue = value;
+            if (typeof value === 'number') {
+              if (key.includes('cost') && !key.includes('percent')) displayValue = '$' + value.toLocaleString();
+              else if (key.includes('percent') || key.includes('rate')) displayValue = value.toFixed(1) + '%';
+              else displayValue = value.toFixed(2);
+            }
+            html += `<div class="kpi-card"><div class="kpi-value">${displayValue}</div><div class="kpi-label">${label}</div></div>`;
+          }
+          html += '</div>';
+        }
+        
+        if (data.business_report) {
+          html += `<div class="ai-analysis-section"><h4>Business Report</h4><pre style="white-space: pre-wrap; font-family: inherit; font-size: 0.9rem; line-height: 1.6;">${data.business_report}</pre></div>`;
+        }
+        
+        html += '</div></div>';
+        addMessage(html, false);
       };
 
       function addMessage(content, isUser) {
@@ -511,24 +544,28 @@
       window.clearChat = function() {
         messagesArea.innerHTML = `
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you optimize your bar operations. Ask me about liquor costs, inventory management, pricing strategies, or upload data for analysis.</div>
+            <div class="message-bubble">Hello! I'm here to help you optimize your bar operations. <strong>To get accurate analysis, please provide your data</strong>:<br><br>
+              <strong>🍷 Liquor Cost Analysis:</strong><br>
+              • Required: total_sales, liquor_cost (or beverage_cost)<br>
+              • Optional: waste_cost, covers, beginning_inventory, ending_inventory<br><br>
+              Upload a CSV file or tell me your numbers. Click the quick action buttons below for examples.</div>
             <div class="message-time">Just now</div>
           </div>
         `;
       };
 
       window.analyzeLiquorCosts = function() {
-        chatInput.value = 'Analyze my liquor costs and identify areas for improvement';
+        chatInput.value = 'Analyze my liquor cost. Total sales: $15,000. Liquor cost: $3,500. Waste cost: $200. Covers served: 600.';
         chatInput.focus();
       };
 
       window.manageBarInventory = function() {
-        chatInput.value = 'Help me manage my bar inventory and optimize stock levels';
+        chatInput.value = 'Analyze bar inventory turnover. Total sales: $20,000. Beginning inventory: $5,000. Ending inventory: $4,500. Purchases: $3,000.';
         chatInput.focus();
       };
 
       window.optimizeBeveragePricing = function() {
-        chatInput.value = 'Suggest optimal pricing strategies for my beverage menu';
+        chatInput.value = 'Optimize beverage pricing. Current liquor cost: 23%. Target: 20%. Average drink price: $12. Monthly sales: $25,000.';
         chatInput.focus();
       };
 

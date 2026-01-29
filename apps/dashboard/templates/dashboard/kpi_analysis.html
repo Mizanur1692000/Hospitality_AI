@@ -689,8 +689,11 @@
         messagesArea.innerHTML = `
           <div class="message assistant">
             <div class="message-bubble">Hello! I'm here to help you analyze your restaurant's KPIs. <strong>To get accurate analysis, please provide your data</strong> in one of these ways:<br><br>
-              1. <strong>Upload a CSV file</strong> with columns: date, sales, labor_cost, food_cost, labor_hours<br>
-              2. <strong>Type your numbers</strong> in the chat, for example: "My total sales are $50,000, labor cost is $15,000, food cost is $14,000, and we worked 800 hours"<br><br>
+              <strong>📊 KPI Analysis:</strong> Upload CSV with: date, sales, labor_cost, food_cost, labor_hours<br>
+              <strong>👥 Labor Cost:</strong> sales, labor_cost, hours_worked, overtime_hours, covers<br>
+              <strong>🍕 Food Cost:</strong> sales, food_cost, waste_cost, covers<br>
+              <strong>⚖️ Prime Cost:</strong> sales, labor_cost, food_cost, covers<br>
+              <strong>🍷 Liquor Cost:</strong> sales, liquor_cost, waste_cost, covers<br><br>
               Click the quick action buttons below to see example prompts with sample data.</div>
             <div class="message-time">Just now</div>
           </div>

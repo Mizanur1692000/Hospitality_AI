@@ -293,7 +293,14 @@
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Welcome to your KPI Dashboard! I've analyzed your current metrics. Ask me about trends, recommendations, or how to improve specific KPIs.</div>
+            <div class="message-bubble">Welcome to your KPI Dashboard! <strong>To get comprehensive analysis, provide your data</strong>:<br><br>
+              <strong>📊 Comprehensive Analysis:</strong><br>
+              • Required: total_sales, labor_cost, food_cost, prime_cost<br>
+              • Optional: hours_worked, hourly_rate, previous_sales, target_margin<br><br>
+              <strong>🎯 Performance Optimization:</strong><br>
+              • Required: current_performance, target_performance, optimization_potential, efficiency_score<br>
+              • Optional: baseline_metrics, improvement_rate, goal_timeframe, progress_tracking<br><br>
+              Example: "Run comprehensive analysis. Total sales: $50,000. Labor cost: $15,000. Food cost: $14,000. Prime cost: $29,000."</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
@@ -344,7 +351,8 @@
       });
 
       // Cost Chart
-      new Chart(document.getElementById('costChart'), {
+      const costCtx = document.getElementById('costChart');
+      window.costChartInstance = new Chart(costCtx, {
         type: 'doughnut',
         data: {
           labels: ['Labor', 'Food', 'Overhead', 'Profit'],
@@ -418,6 +426,79 @@
       }
       const CSRF_TOKEN = getCookie('csrftoken');
 
+      // Helpers: parsing and formatting for comprehensive analysis
+      function parseCurrencyToNumber(value) {
+        if (!value) return NaN;
+        const n = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+        return isNaN(n) ? NaN : n;
+      }
+
+      function formatCurrency(n) {
+        return `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+      }
+
+      function formatPercent(n) {
+        return `${Number(n).toFixed(1)}%`;
+      }
+
+      function extractKPIData(message) {
+        const patterns = {
+          sales: /(total\s*sales|sales)\s*:\s*([^\n]+)/i,
+          labor: /(labor\s*cost|labor)\s*:\s*([^\n]+)/i,
+          food: /(food\s*cost|food)\s*:\s*([^\n]+)/i,
+          prime: /(prime\s*cost|prime)\s*:\s*([^\n]+)/i,
+        };
+        const out = {};
+        for (const [key, rx] of Object.entries(patterns)) {
+          const match = message.match(rx);
+          if (match && match[2]) {
+            const v = parseCurrencyToNumber(match[2]);
+            if (!isNaN(v)) out[key] = v;
+          }
+        }
+        return out;
+      }
+
+      function updateKPIMetrics(kpi) {
+        const sales = kpi.sales;
+        const labor = kpi.labor;
+        const food = kpi.food;
+        const prime = typeof kpi.prime === 'number' ? kpi.prime : (labor + food);
+        if (![sales, labor, food].every(v => typeof v === 'number' && !isNaN(v))) return false;
+
+        const laborPct = (labor / sales) * 100;
+        const foodPct = (food / sales) * 100;
+        const primePct = (prime / sales) * 100;
+        const profit = sales - prime;
+        const profitPct = (profit / sales) * 100;
+        const overheadPct = Math.max(0, 100 - (laborPct + foodPct + profitPct));
+
+        // Update cards
+        document.getElementById('revenue-value').textContent = formatCurrency(sales);
+        document.getElementById('labor-cost-value').textContent = formatPercent(laborPct);
+        document.getElementById('food-cost-value').textContent = formatPercent(foodPct);
+        document.getElementById('prime-cost-value').textContent = formatPercent(primePct);
+
+        // Update Cost Distribution chart if present
+        if (window.costChartInstance) {
+          window.costChartInstance.data.datasets[0].data = [laborPct, foodPct, overheadPct, profitPct];
+          window.costChartInstance.update();
+        }
+
+        // Add summarized analysis message
+        const summary = [
+          `<strong>Comprehensive Analysis</strong>`,
+          `Sales: ${formatCurrency(sales)}`,
+          `Labor: ${formatCurrency(labor)} (${formatPercent(laborPct)})`,
+          `Food: ${formatCurrency(food)} (${formatPercent(foodPct)})`,
+          `Prime: ${formatCurrency(prime)} (${formatPercent(primePct)})`,
+          `Gross profit (after food): ${formatCurrency(sales - food)} (${formatPercent(((sales - food) / sales) * 100)})`,
+          `Net after prime: ${formatCurrency(profit)} (${formatPercent(profitPct)})`
+        ].join('<br>');
+        addMessage(summary, false);
+        return true;
+      }
+
       chatInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
@@ -431,6 +512,12 @@
 
         addMessage(message, true);
         chatInput.value = '';
+
+        // Local comprehensive analysis: supports $-prefixed amounts
+        if (/run\s+comprehensive\s+analysis/i.test(message)) {
+          const kpi = extractKPIData(message);
+          updateKPIMetrics(kpi);
+        }
 
         try {
           const response = await fetch('/chat/api/', {

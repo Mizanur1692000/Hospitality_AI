@@ -404,6 +404,22 @@
               <li>Revenue projections</li>
             </ul>
           </div>
+
+          <!-- Best Way (Playbook) -->
+          <div class="core-task-card" onclick="bestWay()">
+            <div class="task-icon">
+              <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                <path d="M6 10h20M6 18h20M6 26h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="task-title">Best Way</div>
+            <div class="task-desc">Step-by-step playbook</div>
+            <ul class="task-features">
+              <li>Objectives first</li>
+              <li>SWOT + KPIs</li>
+              <li>Budget + timeline</li>
+            </ul>
+          </div>
         </div>
       </section>
 
@@ -574,6 +590,33 @@
         </div>
       </div>
 
+      <!-- Best Way: Practical Playbook -->
+      <div class="planning-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          </div>
+          <div>
+            <div class="card-title">Best Way: Practical Playbook</div>
+            <div class="card-subtitle">Proven sequence for strategic planning</div>
+          </div>
+        </div>
+        <div>
+          <ol style="margin:0; padding-left:1.25rem; color: var(--text-secondary);">
+            <li style="margin:0.4rem 0; color: var(--text-primary);"><strong>Define Objectives</strong> – 3-5 measurable goals (revenue, margin, growth).</li>
+            <li style="margin:0.4rem 0; color: var(--text-primary);"><strong>Audit + SWOT</strong> – Assess strengths, weaknesses, opportunities, threats.</li>
+            <li style="margin:0.4rem 0; color: var(--text-primary);"><strong>Set KPIs</strong> – Food%, Labor%, Prime%, RevPASH, satisfaction, conversion.</li>
+            <li style="margin:0.4rem 0; color: var(--text-primary);"><strong>Budget & Resources</strong> – Allocate spend, staffing, marketing, tech.</li>
+            <li style="margin:0.4rem 0; color: var(--text-primary);"><strong>Timeline & Milestones</strong> – Monthly phases with deliverables.</li>
+            <li style="margin:0.4rem 0; color: var(--text-primary);"><strong>Execute & Track</strong> – Weekly reviews; adjust by KPI variance.</li>
+            <li style="margin:0.4rem 0; color: var(--text-primary);"><strong>Review & Improve</strong> – Post-mortem each phase; update plan.</li>
+          </ol>
+          <div style="margin-top: var(--spacing-md); color: var(--text-secondary); font-size: 0.9rem;">
+            Tip: Use Business Goals with $ inputs for budget and ROI; upload forecasting CSVs to ground targets.
+          </div>
+        </div>
+      </div>
+
       <!-- Chat Section -->
       <section class="chat-section">
         <div class="chat-header">
@@ -583,7 +626,25 @@
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Welcome to Strategic Planning! I can help you develop business strategies, create action plans, analyze market opportunities, and set achievable goals. What would you like to work on today?</div>
+            <div class="message-bubble">Welcome to Strategic Planning! <strong>To get accurate analysis, please provide your data</strong>:<br><br>
+              <strong>📈 Sales Forecasting:</strong><br>
+              • Required: historical_sales, current_sales, growth_rate, seasonal_factor<br>
+              • Optional: forecast_period, trend_strength, market_growth, confidence_level<br><br>
+              <strong>🎯 Business Goals:</strong><br>
+              • Required: revenue_target ($), budget_total ($), marketing_spend ($), target_roi (%)<br>
+              • Optional: timeline_months, acquisition_cost ($), conversion_rate (%)<br><br>
+              <strong>🚀 Growth Strategy:</strong><br>
+              • Required: market_size ($), market_share (%), competition_level (%), investment_budget ($)<br>
+              • Optional: growth_potential (%), competitive_advantage, market_penetration (%), target_roi (%)<br><br>
+              <strong>⚙️ Operational Excellence:</strong><br>
+              • Required: efficiency_score (%), process_time (minutes), quality_rating, customer_satisfaction (%)<br>
+              • Optional: cost_per_unit ($), waste_percentage (%), productivity_score, industry_benchmark (%)<br><br>
+              <strong>CSV Upload Guidance:</strong><br>
+              • sales_forecasting.csv: historical_sales, current_sales, growth_rate, seasonal_factor, forecast_period<br>
+              • business_goals.csv: revenue_target, budget_total, marketing_spend, target_roi, timeline_months<br>
+              • growth_strategy.csv: market_size, market_share, competition_level, investment_budget, target_roi<br>
+              • operational_excellence.csv: efficiency_score, process_time_minutes, quality_rating, customer_satisfaction<br><br>
+              Click the quick action buttons above to see example prompts with sample data.</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
@@ -650,24 +711,284 @@
         const file = e.target.files[0];
         if (!file) return;
         addMessage(`📁 Uploading: ${file.name}`, true);
-        
-        const formData = new FormData();
-        formData.append('task', 'strategic_planning');
-        formData.append('file', file);
 
-        try {
-          const response = await fetch('/api/agent/', {
-            method: 'POST',
-            headers: { 'X-CSRFToken': CSRF_TOKEN },
-            body: formData
-          });
-          const data = await response.json();
-          addMessage(data.error ? `❌ Error: ${data.error}` : (data.response || JSON.stringify(data, null, 2)), false);
-        } catch (error) {
-          addMessage(`❌ Error: ${error.message}`, false);
-        }
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const text = String(reader.result || '');
+            const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+            if (lines.length < 2) {
+              addMessage('❌ Error: File has no data rows', false);
+              return;
+            }
+
+            const headers = lines[0].split(',').map(h => h.trim());
+            const rows = lines.slice(1).map(line => line.split(',').map(c => c.trim()));
+
+            // Normalize headers to support variants like "market_size_total", "market size", "MarketSize"
+            const normalizedHeaders = headers.map(h => h.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_'));
+
+            const hasHeader = (name) => {
+              const n = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '_');
+              return normalizedHeaders.some(h => h === n || h.startsWith(n) || h.includes(n));
+            };
+
+            // Index helper supports synonyms and suffixes (underscored and non-underscored)
+            const idx = (name) => {
+              const names = Array.isArray(name) ? name : [name];
+              for (const nRaw of names) {
+                const n = String(nRaw).toLowerCase().replace(/[^a-z0-9]+/g, '_');
+                // exact match first
+                let i = normalizedHeaders.indexOf(n);
+                if (i >= 0) return i;
+                // prefix match
+                i = normalizedHeaders.findIndex(h => h.startsWith(n));
+                if (i >= 0) return i;
+                // contains match
+                i = normalizedHeaders.findIndex(h => h.includes(n));
+                if (i >= 0) return i;
+              }
+              return -1;
+            };
+
+            // Type detection (use normalized matching so suffixes like _total/_sum work)
+            // Prefer Growth Strategy when market_* fields exist, otherwise Business Goals
+            let type = 'General Strategic Planning';
+            if (hasHeader('historical_sales') || hasHeader('current_sales') || hasHeader('growth_rate') || hasHeader('seasonal_factor') || hasHeader('forecast_period')) {
+              type = 'Sales Forecasting';
+            } else if (hasHeader('market_size') || hasHeader('market_share') || hasHeader('competition_level') || hasHeader('investment_budget')) {
+              // Note: 'target_roi' is a shared metric used by Business Goals as well,
+              // do not use it alone to classify as Growth Strategy.
+              type = 'Growth Strategy';
+            } else if (hasHeader('revenue_target') || hasHeader('budget_total') || hasHeader('marketing_spend') || hasHeader('target_roi') || hasHeader('timeline_months')) {
+              type = 'Business Goals';
+            } else if (hasHeader('efficiency_score') || hasHeader('process_time') || hasHeader('process_time_minutes') || hasHeader('quality_rating') || hasHeader('customer_satisfaction')) {
+              type = 'Operational Excellence';
+            }
+            const isBlank = (v) => !v || String(v).trim() === '';
+            const toNumber = (v) => {
+              if (isBlank(v)) return NaN;
+              const n = parseFloat(String(v).replace(/[^0-9.-]/g, ''));
+              return isNaN(n) ? NaN : n;
+            };
+            const avg = (arr) => {
+              const nums = arr.filter(x => typeof x === 'number' && !isNaN(x));
+              if (!nums.length) return NaN;
+              return nums.reduce((a,b) => a+b, 0) / nums.length;
+            };
+            const sum = (arr) => {
+              const nums = arr.filter(x => typeof x === 'number' && !isNaN(x));
+              if (!nums.length) return NaN;
+              return nums.reduce((a,b) => a+b, 0);
+            };
+
+            // Build sanitized metrics by type (skip blanks/NaN)
+            let prompt = '';
+            if (type === 'Sales Forecasting') {
+              const historical = rows.map(r => toNumber(r[idx(['historical_sales','historicalsales'])]));
+              const current = rows.map(r => toNumber(r[idx(['current_sales','currentsales'])]));
+              const growth = rows.map(r => toNumber(r[idx(['growth_rate','growthrate'])]));
+              const seasonal = rows.map(r => toNumber(r[idx(['seasonal_factor','seasonalfactor'])]));
+              const periodIdx = idx(['forecast_period','forecastperiod']);
+              const periods = periodIdx >= 0 ? rows.map(r => toNumber(r[periodIdx])) : [];
+
+              const historicalTotal = sum(historical);
+              const currentTotal = sum(current);
+              const avgGrowth = avg(growth);
+              const avgSeasonal = avg(seasonal);
+              const forecastPeriod = periods.find(p => !isNaN(p)) || 12;
+
+              // Local quick summary for user feedback
+              const nextMonthForecast = (isNaN(currentTotal) ? 0 : currentTotal) * (1 + ((isNaN(avgGrowth) ? 0 : avgGrowth) / 100)) * (isNaN(avgSeasonal) ? 1 : avgSeasonal);
+              const summaryLines = [
+                '<strong>Sales Forecast Summary</strong>',
+                `Historical Sales (total): ${formatCurrency(isNaN(historicalTotal) ? 0 : historicalTotal)}`,
+                `Current Sales (total): ${formatCurrency(isNaN(currentTotal) ? 0 : currentTotal)}`,
+                `Avg Growth Rate: ${formatPercent(isNaN(avgGrowth) ? 0 : avgGrowth)}`,
+                `Avg Seasonal Factor: ${(isNaN(avgSeasonal) ? 1 : avgSeasonal).toFixed(2)}`,
+                `Forecast Period: ${forecastPeriod} months`,
+                `Next Period Forecast (approx): ${formatCurrency(nextMonthForecast)}`
+              ];
+              addMessage(summaryLines.join('<br>'), false);
+
+              // Natural-language prompt the backend expects (includes explicit analysis type)
+              prompt = [
+                'Analysis type: Sales Forecasting',
+                'Forecast my sales based on the uploaded CSV.',
+                `Historical sales: ${isNaN(historicalTotal) ? 0 : historicalTotal}`,
+                `Current sales: ${isNaN(currentTotal) ? 0 : currentTotal}`,
+                `Growth rate: ${isNaN(avgGrowth) ? 0 : avgGrowth}%`,
+                `Seasonal factor: ${(isNaN(avgSeasonal) ? 1 : avgSeasonal).toFixed(2)}`,
+                `Forecast period: ${forecastPeriod} months`
+              ].join('\n');
+            } else if (type === 'Business Goals') {
+              const revenueTargets = rows.map(r => toNumber(r[idx('revenue_target')]));
+              const budgets = rows.map(r => toNumber(r[idx('budget_total')]));
+              const marketing = rows.map(r => toNumber(r[idx('marketing_spend')]));
+              const rois = rows.map(r => toNumber(r[idx('target_roi')]));
+              const timelineIdx = idx('timeline_months');
+              const timelines = timelineIdx >= 0 ? rows.map(r => toNumber(r[timelineIdx])) : [];
+
+              prompt = [
+                'Analysis type: Business Goals',
+                'Analyze Business Goals using sanitized metrics:',
+                `revenue_target_total: ${isNaN(sum(revenueTargets)) ? 0 : sum(revenueTargets)}`,
+                `budget_total_sum: ${isNaN(sum(budgets)) ? 0 : sum(budgets)}`,
+                `marketing_spend_sum: ${isNaN(sum(marketing)) ? 0 : sum(marketing)}`,
+                `average_target_roi_percent: ${isNaN(avg(rois)) ? 0 : avg(rois)}`,
+                `timeline_months: ${timelines.find(t => !isNaN(t)) || 12}`
+              ].join('\n');
+            } else if (type === 'Growth Strategy') {
+              const marketSize = rows.map(r => toNumber(r[idx('market_size')]));
+              const marketShare = rows.map(r => toNumber(r[idx('market_share')]));
+              const competition = rows.map(r => toNumber(r[idx('competition_level')]));
+              const investBudget = rows.map(r => toNumber(r[idx('investment_budget')]));
+              const rois = rows.map(r => toNumber(r[idx('target_roi')]));
+
+              const marketSizeTotal = isNaN(sum(marketSize)) ? 0 : sum(marketSize);
+              const avgShare = isNaN(avg(marketShare)) ? 0 : avg(marketShare);
+              const avgCompetition = isNaN(avg(competition)) ? 0 : avg(competition);
+              const investTotal = isNaN(sum(investBudget)) ? 0 : sum(investBudget);
+              const avgRoi = isNaN(avg(rois)) ? 0 : avg(rois);
+
+              // Local summary for quick feedback
+              const gsSummary = [
+                '<strong>Growth Strategy Summary</strong>',
+                `Market Size (total): ${formatCurrency(marketSizeTotal)}`,
+                `Market Share (avg): ${formatPercent(avgShare)}`,
+                `Competition Level (avg): ${formatPercent(avgCompetition)}`,
+                `Investment Budget (total): ${formatCurrency(investTotal)}`,
+                `Target ROI (avg): ${formatPercent(avgRoi)}`
+              ].join('<br>');
+              addMessage(gsSummary, false);
+
+              // Natural-language prompt for backend extraction (explicit analysis type)
+              prompt = [
+                'Analysis type: Growth Strategy',
+                'Analyze growth strategy.',
+                `Market size: ${marketSizeTotal}`,
+                `Market share: ${avgShare}%`,
+                `Competition level: ${avgCompetition}%`,
+                `Investment budget: ${investTotal}`,
+                `Target ROI: ${avgRoi}%`
+              ].join('\n');
+            } else if (type === 'Operational Excellence') {
+              const efficiency = rows.map(r => toNumber(r[idx('efficiency_score')]));
+              const processTime = rows.map(r => toNumber(r[idx('process_time_minutes')]));
+              const qualityIdx = idx('quality_rating');
+              const quality = qualityIdx >= 0 ? rows.map(r => toNumber(r[qualityIdx])) : [];
+              const csat = rows.map(r => toNumber(r[idx('customer_satisfaction')]));
+
+              const avgEff = isNaN(avg(efficiency)) ? 0 : avg(efficiency);
+              const avgProc = isNaN(avg(processTime)) ? 0 : avg(processTime);
+              const avgQual = isNaN(avg(quality)) ? 0 : avg(quality);
+              const avgCsat = isNaN(avg(csat)) ? 0 : avg(csat);
+
+              const opSummary = [
+                '<strong>Operational Excellence Summary</strong>',
+                `Efficiency Score (avg): ${formatPercent(avgEff)}`,
+                `Process Time (avg): ${avgProc.toFixed(1)} minutes`,
+                `Quality Rating (avg): ${avgQual.toFixed(2)}`,
+                `Customer Satisfaction (avg): ${formatPercent(avgCsat)}`
+              ].join('<br>');
+              addMessage(opSummary, false);
+
+              // Natural-language prompt for backend extraction (explicit analysis type)
+              prompt = [
+                'Analysis type: Operational Excellence',
+                'Analyze operational excellence.',
+                `Efficiency score: ${avgEff}%`,
+                `Process time: ${avgProc} minutes`,
+                `Quality rating: ${avgQual}`,
+                `Customer satisfaction: ${avgCsat}%`
+              ].join('\n');
+            } else {
+              prompt = `Analyze strategic planning. File: ${file.name}. Columns: ${headers.join(', ')}`;
+            }
+
+            const response = await fetch('/chat/api/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': CSRF_TOKEN },
+              body: `message=${encodeURIComponent(prompt)}&context=strategic_planning`
+            });
+            const data = await response.json();
+            addMessage(data.error ? `❌ Error: ${data.error}` : (data.response || 'No response'), false);
+          } catch (error) {
+            addMessage(`❌ Error: ${error.message}`, false);
+          }
+        };
+        reader.onerror = () => addMessage(`❌ Error reading file: ${reader.error}`, false);
+        reader.readAsText(file);
         fileInput.value = '';
       });
+
+      // Helpers: parse and format currency/percent for Business Goals
+      function parseCurrencyToNumber(value) {
+        if (!value) return NaN;
+        const n = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+        return isNaN(n) ? NaN : n;
+      }
+
+      function formatCurrency(n) {
+        return `$${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+      }
+
+      function formatPercent(n) {
+        return `${Number(n).toFixed(1)}%`;
+      }
+
+      function extractBusinessGoalsData(message) {
+        const patterns = {
+          revenue_target: /revenue\s*target\s*:\s*([^\n]+)/i,
+          budget_total: /budget\s*total\s*:\s*([^\n]+)/i,
+          marketing_spend: /marketing\s*spend\s*:\s*([^\n]+)/i,
+          target_roi: /target\s*roi\s*:\s*([^\n%]+)%?/i,
+          timeline_months: /timeline\s*:\s*([^\n]+)/i
+        };
+        const out = {};
+        for (const [key, rx] of Object.entries(patterns)) {
+          const m = message.match(rx);
+          if (!m || !m[1]) continue;
+          if (key === 'target_roi') {
+            const v = parseFloat(String(m[1]).replace(/[^0-9.-]/g, ''));
+            if (!isNaN(v)) out[key] = v;
+          } else if (key === 'timeline_months') {
+            const v = parseFloat(String(m[1]).replace(/[^0-9.-]/g, ''));
+            if (!isNaN(v)) out[key] = v;
+          } else {
+            const v = parseCurrencyToNumber(m[1]);
+            if (!isNaN(v)) out[key] = v;
+          }
+        }
+        return out;
+      }
+
+      function summarizeBusinessGoals(bg) {
+        if (!bg || !bg.revenue_target || !bg.budget_total) return null;
+        const revenue = bg.revenue_target;
+        const budget = bg.budget_total;
+        const mkt = bg.marketing_spend || 0;
+        const roiTarget = bg.target_roi || 0;
+        const timeline = bg.timeline_months || null;
+        const totalSpend = budget + mkt;
+        const breakeven = totalSpend;
+        const requiredReturn = totalSpend * (roiTarget / 100);
+        const projectedNet = revenue - totalSpend;
+        const roiAchieved = totalSpend > 0 ? (projectedNet / totalSpend) * 100 : 0;
+
+        const lines = [
+          '<strong>Business Goals Analysis</strong>',
+          `Revenue Target: ${formatCurrency(revenue)}`,
+          `Total Budget: ${formatCurrency(budget)} (Marketing: ${formatCurrency(mkt)})`,
+          `Total Planned Spend: ${formatCurrency(totalSpend)}`,
+          `Breakeven Revenue: ${formatCurrency(breakeven)}`,
+          `Target ROI: ${formatPercent(roiTarget)}`,
+          `Required Return to Hit ROI: ${formatCurrency(requiredReturn)}`,
+          `Projected Net (Target - Spend): ${formatCurrency(projectedNet)} (${formatPercent(roiAchieved)})`,
+          timeline ? `Timeline: ${timeline} months` : ''
+        ].filter(Boolean);
+        return lines.join('<br>');
+      }
 
       window.sendMessage = async function() {
         const message = chatInput.value.trim();
@@ -676,6 +997,13 @@
         addMessage(message, true);
         chatInput.value = '';
         chatInput.style.height = 'auto';
+
+        // Local analysis for Business Goals supports $ inputs
+        if (/analyze\s+business\s+goals/i.test(message)) {
+          const bg = extractBusinessGoalsData(message);
+          const summary = summarizeBusinessGoals(bg);
+          if (summary) addMessage(summary, false);
+        }
 
         try {
           const response = await fetch('/chat/api/', {
@@ -717,9 +1045,10 @@
         `;
       };
 
-      window.swotAnalysis = () => { chatInput.value = 'Help me create a comprehensive SWOT analysis for my restaurant'; chatInput.focus(); };
-      window.businessGoals = () => { chatInput.value = 'Help me set SMART goals for the next quarter'; chatInput.focus(); };
-      window.growthStrategy = () => { chatInput.value = 'Develop a growth strategy to increase revenue by 20%'; chatInput.focus(); };
+      window.swotAnalysis = () => { chatInput.value = 'Analysis type: SWOT\nPerform SWOT analysis. Strengths: loyal customer base, prime location; Weaknesses: high labor cost, limited seating; Opportunities: catering, online ordering; Threats: new competitors, rising food costs.'; chatInput.focus(); };
+      window.businessGoals = () => { chatInput.value = 'Analysis type: Business Goals\nAnalyze business goals. Revenue target: $1,200,000. Budget total: $250,000. Marketing spend: $60,000. Target ROI: 20%. Timeline: 12 months.'; chatInput.focus(); };
+      window.growthStrategy = () => { chatInput.value = 'Analysis type: Growth Strategy\nAnalyze growth strategy. Market size: $5,000,000. Market share: 3%. Competition level: 65%. Investment budget: $150,000. Target ROI: 18%.'; chatInput.focus(); };
+      window.bestWay = () => { chatInput.value = 'Analysis type: Best Way\nGuide me with the best strategic planning sequence: define objectives, audit + SWOT, set KPIs, budget/resources, timeline/milestones, execute/track, review/improve. Use my uploaded CSVs if present.'; chatInput.focus(); };
     });
   </script>
 </body>

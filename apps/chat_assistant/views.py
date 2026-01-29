@@ -15,6 +15,7 @@ def chat_ui(request):
 def chat_api(request):
     if request.method == "POST":
         user_input = request.POST.get("message")
-        response = chat_with_gpt(user_input)
+        context = request.POST.get("context")
+        response = chat_with_gpt(user_input, context)
         return JsonResponse({"response": response})
     return JsonResponse({"error": "Invalid request"}, status=400)

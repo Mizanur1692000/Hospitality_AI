@@ -4,6 +4,9 @@ Contains the core business logic for recipe management analysis.
 """
 
 from backend.consulting_services.kpi.kpi_utils import format_business_report
+import pandas as pd
+import io
+from typing import Dict, Any, List
 
 
 def calculate_recipe_costing_analysis(ingredient_cost, portion_cost, recipe_price, total_cost, portion_size=1.0, servings=1.0, target_margin=70.0, labor_cost=0.0):

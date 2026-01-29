@@ -166,7 +166,11 @@ def format_business_report(analysis_type, metrics, performance, recommendations,
             else:
                 key_metrics_lines.append(f"{label}: {v:.2f}")
         else:
-            key_metrics_lines.append(f"{label}: {v:,}")
+            # Only apply numeric grouping if value is an int
+            if isinstance(v, int):
+                key_metrics_lines.append(f"{label}: {v:,}")
+            else:
+                key_metrics_lines.append(f"{label}: {v}")
 
     bench_lines = []
     if benchmarks:
