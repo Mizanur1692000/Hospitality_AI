@@ -649,7 +649,17 @@
             if (e.key === 'Enter') sendMessage();
         });
 
+        // Add initial welcome assistant message including CSV column guidance
+        document.addEventListener('DOMContentLoaded', function() {
+            const welcomeGuidance = `Welcome! I can help with recipes, cost analysis, and scaling recipes.\n\nFor CSV imports and analysis, please include columns such as:\n- recipe_name\n- ingredient_name\n- quantity\n- unit\n- ingredient_cost (optional)\n- labor_cost (optional)\n- total_cost (optional)\n- recipe_price (optional)\n- servings (optional)\n\nExamples you can ask: \n- \"Calculate food cost and margins for my recipes using the uploaded CSV.\"\n- \"Scale \"Classic Tomato Soup\" from 6 to 48 servings. Include converted units.\"`;
+
+            addMessage(welcomeGuidance);
+        });
+
         async function sendMessage() {
+            // Remove any pending confirm panel when user explicitly sends
+            const existingPanel = document.getElementById('chat-confirm');
+            if (existingPanel) existingPanel.remove();
             const input = document.getElementById('message-input');
             const message = input.value.trim();
             if (!message) return;
@@ -674,6 +684,53 @@
                 addMessage('assistant', `⚠️ Error: ${err.message}`);
             }
         }
+
+        // Helper functions for external pages to trigger example inputs (populate only, require approval)
+        function showChatConfirm(exampleText) {
+            // create or reuse confirm panel
+            let panel = document.getElementById('chat-confirm');
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.id = 'chat-confirm';
+                panel.style.cssText = 'margin-top:8px; display:flex; gap:8px; align-items:center;';
+                const container = document.querySelector('.input-container');
+                if (container) container.after(panel);
+            }
+            panel.innerHTML = `<div style="flex:1; color:#475569;">Example ready for analysis. Review the input, then click Analyze.</div>`;
+            const analyzeBtn = document.createElement('button');
+            analyzeBtn.textContent = 'Analyze';
+            analyzeBtn.style.cssText = 'background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none; padding:8px 12px; border-radius:12px; cursor:pointer;';
+            analyzeBtn.onclick = function() { sendMessage(); panel.remove(); };
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.style.cssText = 'background:#f1f5f9; color:#0f172a; border:1px solid rgba(148,163,184,0.12); padding:8px 12px; border-radius:12px; cursor:pointer;';
+            editBtn.onclick = function() { document.getElementById('message-input').focus(); };
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.cssText = 'background:transparent; color:#64748b; border:1px solid rgba(148,163,184,0.12); padding:8px 12px; border-radius:12px; cursor:pointer;';
+            cancelBtn.onclick = function() { document.getElementById('message-input').value = ''; panel.remove(); };
+            panel.appendChild(analyzeBtn);
+            panel.appendChild(editBtn);
+            panel.appendChild(cancelBtn);
+        }
+
+        window.createRecipe = function() {
+            const example = 'Create a recipe named "Classic Tomato Soup" for 6 servings. Ingredients:\n- Tomato, 48 oz\n- Onion, 8 oz\n- Butter, 2 oz\nPlease include servings, prep_time=20, cook_time=30 and calculate cost per serving.';
+            document.getElementById('message-input').value = example;
+            showChatConfirm(example);
+        };
+
+        window.costAnalysis = function() {
+            const example = 'analysis_type: recipe_costing\nAnalyze recipe costs from uploaded CSV. Sample rows:\nrecipe_name,ingredient_cost,portion_cost,recipe_price,servings,labor_cost\nGrilled Salmon,5.80,2.30,13.50,2,3.50\nChocolate Lava Cake,8.20,3.20,18.00,5,5.00\nCalculate food cost %, margin, and recommend price to hit 70% margin.';
+            document.getElementById('message-input').value = example;
+            showChatConfirm(example);
+        };
+
+        window.scaleRecipe = function() {
+            const example = 'Scale "Classic Tomato Soup" which serves 6 to 48 servings. Provide ingredient quantities, converted units, and suggested batch yields.';
+            document.getElementById('message-input').value = example;
+            showChatConfirm(example);
+        };
 
         function escapeHtml(text) {
             const div = document.createElement('div');

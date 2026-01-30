@@ -311,6 +311,9 @@
               <li>Yield optimization</li>
             </ul>
           </div>
+          <div id="analysis-confirm" style="display:none; margin-top:0.75rem;">
+            <!-- Confirmation UI injected here -->
+          </div>
         </div>
       </section>
 
@@ -669,6 +672,10 @@
       }
 
       window.sendMessage = async function() {
+        // Hide any pending confirm panel when user sends the message
+        const pending = document.getElementById('analysis-confirm');
+        if (pending) { pending.style.display = 'none'; }
+
         const message = chatInput.value.trim();
         if (!message) return;
 
@@ -716,9 +723,44 @@
         `;
       };
 
-      window.createRecipe = () => { chatInput.value = 'Help me create a new recipe with cost analysis'; chatInput.focus(); };
-      window.costAnalysis = () => { chatInput.value = 'Calculate the food cost for my recipes and suggest pricing'; chatInput.focus(); };
-      window.scaleRecipe = () => { chatInput.value = 'Help me scale a recipe for a larger batch size'; chatInput.focus(); };
+      function showConfirmPanel(exampleText) {
+        const confirm = document.getElementById('analysis-confirm');
+        confirm.style.display = 'block';
+      
+        document.getElementById('confirm-analyze').onclick = function() {
+          if (typeof window.sendMessage === 'function') {
+            window.sendMessage();
+          }
+          confirm.style.display = 'none';
+        };
+
+        document.getElementById('confirm-edit').onclick = function() {
+          document.getElementById('chat-input').focus();
+        };
+
+        document.getElementById('confirm-cancel').onclick = function() {
+          document.getElementById('chat-input').value = '';
+          confirm.style.display = 'none';
+        };
+      }
+
+      window.createRecipe = () => {
+        const example = 'Create a recipe named "Classic Tomato Soup" for 6 servings. Ingredients:\n- Tomato, 48 oz\n- Onion, 8 oz\n- Butter, 2 oz\nPlease include servings, prep_time=20, cook_time=30 and calculate cost per serving.';
+        document.getElementById('chat-input').value = example;
+        showConfirmPanel(example);
+      };
+
+      window.costAnalysis = () => {
+        const example = 'analysis_type: recipe_costing\nAnalyze recipe costs from uploaded CSV. Sample rows:\nrecipe_name,ingredient_cost,portion_cost,recipe_price,servings,labor_cost\nGrilled Salmon,5.80,2.30,13.50,2,3.50\nChocolate Lava Cake,8.20,3.20,18.00,5,5.00\nCalculate food cost %, margin, and recommend price to hit 70% margin.';
+        document.getElementById('chat-input').value = example;
+        showConfirmPanel(example);
+      };
+
+      window.scaleRecipe = () => {
+        const example = 'Scale "Classic Tomato Soup" which serves 6 to 48 servings. Provide ingredient quantities, converted units, and suggested batch yields.';
+        document.getElementById('chat-input').value = example;
+        showConfirmPanel(example);
+      };
       window.searchRecipes = () => {
         const query = document.getElementById('recipe-search').value.toLowerCase();
         recipeCards.forEach(card => {

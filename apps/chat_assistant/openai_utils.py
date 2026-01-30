@@ -811,6 +811,67 @@ def handle_kpi_analysis(prompt: str) -> str:
             forced = forced_match.group(1).strip()
             logger.info(f"Forced analysis type detected: {forced}")
 
+            # If the frontend explicitly forced recipe costing, route to recipe handler
+            if any(tok in forced for tok in ['recipe', 'recipe_cost', 'recipe_costing', 'recipe-costing']):
+                logger.info("Routing: Recipe Costing (forced)")
+                # Ensure we have at least one recipe metric or a recipe_name to proceed.
+                has_numeric_metric = any(k in data for k in ('ingredient_cost', 'portion_cost', 'recipe_price'))
+                has_recipe_name = 'recipe_name' in data
+                # If no numeric params or recipe name, attempt to parse inline CSV-like rows from the prompt
+                if not has_numeric_metric and not has_recipe_name:
+                    try:
+                        import io
+                        # Match rows like: Name,number,number,number[,number[,number]]
+                        row_pattern = re.compile(r"([A-Za-z0-9 &'\"\-\.]+)\s*,\s*([0-9]+(?:\.[0-9]+)?)\s*,\s*([0-9]+(?:\.[0-9]+)?)\s*,\s*([0-9]+(?:\.[0-9]+)?)(?:\s*,\s*([0-9]+(?:\.[0-9]+)?))?(?:\s*,\s*([0-9]+(?:\.[0-9]+)?))?", re.IGNORECASE)
+                        matches = list(row_pattern.finditer(prompt))
+                        if matches:
+                            csv_lines = ["recipe_name,ingredient_cost,portion_cost,recipe_price,servings,labor_cost"]
+                            for m in matches:
+                                cols = [m.group(1).strip(), m.group(2) or '', m.group(3) or '', m.group(4) or '', m.group(5) or '', m.group(6) or '']
+                                csv_lines.append(','.join(str(c) for c in cols))
+                            csv_text = '\n'.join(csv_lines)
+                            csv_file = io.StringIO(csv_text)
+                            try:
+                                csv_file.name = 'inline_recipes.csv'
+                            except Exception:
+                                pass
+                            from backend.consulting_services.recipe.analysis_functions import process_recipe_csv_data
+                            outcome = process_recipe_csv_data(csv_file)
+                            if outcome.get('status') == 'success':
+                                s = outcome.get('summary', {})
+                                top = outcome.get('top_performers', [])
+                                html = f"<div><strong>Recipe Portfolio Summary</strong><br>Total Recipes: {s.get('total_recipes')} — Avg Food Cost: {s.get('avg_food_cost_percent')} — Avg Margin: {s.get('avg_profit_margin')}<br></div>"
+                                if top:
+                                    html += "<div style=\"margin-top:0.5rem\"><strong>Top Performers:</strong><ul>"
+                                    for t in top:
+                                        html += f"<li>{t.get('recipe_name')} — Price ${t.get('recipe_price')} — Margin {t.get('profit_margin')}%</li>"
+                                    html += "</ul></div>"
+                                html += "<div style=\"margin-top:0.5rem\"><em>Full portfolio report is available via the Recipe Management upload.</em></div>"
+                                return html
+                            # If parsing succeeded but processing failed, fall through to guidance below
+                    except Exception as e:
+                        logger.exception("Inline CSV parsing failed: %s", str(e))
+                    # Helpful guidance if inline parsing not found or processing failed
+                    return ("To analyze recipe costing I need either an uploaded CSV or sample recipe rows.\n\n"
+                            "Required CSV columns: recipe_name, ingredient_cost, portion_cost, recipe_price\n"
+                            "Optional columns: labor_cost, total_cost, servings\n\n"
+                            "Example CSV (paste or upload):\n"
+                            "recipe_name,ingredient_cost,portion_cost,recipe_price,servings,labor_cost\n"
+                            "Classic Tomato Soup,5.50,2.00,15.00,6,3.00\n\n"
+                            "Please upload your CSV using the Upload button on the Recipe Management page or paste a few sample rows into the chat, then try again.")
+                try:
+                    result, status = task_registry.execute_task(
+                        service="recipe",
+                        subtask="costing",
+                        params=data
+                    )
+                    if result.get('status') == 'success':
+                        return result.get('data', {}).get('business_report_html', result.get('data', {}).get('business_report', 'Analysis completed but no report generated.'))
+                    else:
+                        return f"Error: {result.get('error', 'Analysis failed')}"
+                except Exception as e:
+                    return f"Error: Recipe costing failed: {str(e)}"
+
             # Support explicit SWOT requests (parse lists and return HTML)
             if 'swot' in forced or 'strength' in forced or 'weakness' in forced:
                 logger.info("Routing: SWOT Analysis (forced)")
@@ -2090,6 +2151,16 @@ def chat_with_gpt(prompt: str, context: str | None = None) -> str:
     """Chat with GPT-4 using the OpenAI API, with KPI and Beverage analysis integration."""
     if not prompt or not prompt.strip():
         return "Error: Please provide a message."
+
+    # If frontend explicitly set a context for recipes, route those requests
+    # directly to the KPI/recipe handler first so recipe-specific analysis
+    # (costing, scaling, ingredient optimization) is used instead of
+    # the more general conversational or KPI food-cost flows.
+    prompt_lower = prompt.lower()
+    if context == 'recipes' or any(k in prompt_lower for k in ['recipe costing', 'ingredient cost', 'portion cost', 'scale recipe', 'scale recipes', 'analyze recipes']):
+        recipe_response = handle_kpi_analysis(prompt)
+        if recipe_response:
+            return sanitize_response(recipe_response)
 
     # STEP 1: Try Conversational AI first (natural language queries about menu/business)
     conversational_response = handle_conversational_ai(prompt)
