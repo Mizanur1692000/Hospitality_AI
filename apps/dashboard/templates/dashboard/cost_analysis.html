@@ -1,0 +1,173 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cost Analysis - Restaurant Consulting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
+  <style>
+    .main-container {
+        padding-top: 100px;
+    }
+    .cost-analysis-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 2rem;
+    }
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+    .input-group input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    #calculate-btn {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: white;
+      background: var(--primary-gradient);
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    #calculate-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.2);
+    }
+    .results-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(248, 250, 252, 0.05) 100%);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      margin-top: 2rem;
+      border: 1px solid rgba(102, 126, 234, 0.12);
+    }
+    .results-card h3 {
+        margin-top: 0;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    .result-item:last-child {
+        border-bottom: none;
+    }
+    .result-item span {
+      font-weight: 700;
+    }
+    .example-input {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: rgba(0,0,0,0.2);
+        border-radius: var(--radius-lg);
+        font-family: 'Courier New', Courier, monospace;
+        color: #eee;
+        white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="animated-bg"></div>
+  <header class="glass-header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-circle" aria-hidden="true">C</div>
+        <div class="brand-text">
+          <div class="company-name">Curated Restaurant Consulting</div>
+          <div class="company-tagline">Driven by Data. Crafted for Excellence.</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="{% url 'dashboard:recipes' %}" class="back-button">← Back to Recipes</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="glass-interface cost-analysis-container">
+      <section class="page-header">
+        <h1 class="page-title">Recipe Cost & Margin Analysis</h1>
+        <p class="page-subtitle">Calculate profitability and get pricing recommendations.</p>
+      </section>
+
+      <div class="input-form">
+        <div class="input-group">
+          <label for="ingredient-cost">Total Ingredient Cost ($)</label>
+          <input type="number" id="ingredient-cost" placeholder="e.g., 5.80">
+        </div>
+        <div class="input-group">
+          <label for="labor-cost">Labor Cost per Serving ($)</label>
+          <input type="number" id="labor-cost" placeholder="e.g., 3.50">
+        </div>
+        <div class="input-group">
+          <label for="recipe-price">Current Recipe Price ($)</label>
+          <input type="number" id="recipe-price" placeholder="e.g., 13.50">
+        </div>
+        <button id="calculate-btn">Analyze Recipe</button>
+      </div>
+
+      <div class="results-card" style="display: none;">
+        <h3>Analysis Results</h3>
+        <div class="result-item">Total Cost per Serving: <span id="total-cost">$0.00</span></div>
+        <div class="result-item">Profit Margin: <span id="margin">0%</span></div>
+        <div class="result-item">Recommended Price (70% Margin): <span id="recommended-price">$0.00</span></div>
+      </div>
+
+      <div class="example-input">
+        <strong>Example Input:</strong>
+        <p>For a "Grilled Salmon" dish:</p>
+        <ul>
+            <li><strong>Total Ingredient Cost:</strong> 5.80</li>
+            <li><strong>Labor Cost per Serving:</strong> 3.50</li>
+            <li><strong>Current Recipe Price:</strong> 13.50</li>
+        </ul>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById('calculate-btn').addEventListener('click', function() {
+      const ingredientCost = parseFloat(document.getElementById('ingredient-cost').value);
+      const laborCost = parseFloat(document.getElementById('labor-cost').value);
+      const recipePrice = parseFloat(document.getElementById('recipe-price').value);
+
+      if (isNaN(ingredientCost) || isNaN(laborCost) || isNaN(recipePrice)) {
+        alert("Please fill in all fields with valid numbers.");
+        return;
+      }
+
+      const totalCost = ingredientCost + laborCost;
+      const margin = recipePrice > 0 ? ((recipePrice - totalCost) / recipePrice) * 100 : 0;
+      const recommendedPrice = totalCost / 0.3; // For a 70% margin, cost should be 30% of price
+
+      document.getElementById('total-cost').textContent = '$' + totalCost.toFixed(2);
+      document.getElementById('margin').textContent = margin.toFixed(2) + '%';
+      document.getElementById('recommended-price').textContent = '$' + recommendedPrice.toFixed(2);
+
+      document.querySelector('.results-card').style.display = 'block';
+    });
+  </script>
+</body>
+</html>

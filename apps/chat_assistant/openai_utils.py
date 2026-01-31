@@ -533,18 +533,67 @@ def extract_kpi_data(prompt: str) -> dict:
         data['visual_hierarchy'] = float(visual_hierarchy_match.group(1).replace(',', ''))
 
     # Extract Recipe Management metrics
-    # Recipe costing metrics
-    ingredient_cost_match = re.search(r'ingredient\s+cost[:\s]*([0-9,]+)', prompt_lower)
+    # Recipe costing metrics (support both space and underscore variants)
+    ingredient_cost_match = re.search(r'(?:ingredient[\s_]+cost)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', decoded_prompt, re.IGNORECASE)
     if ingredient_cost_match:
-        data['ingredient_cost'] = float(ingredient_cost_match.group(1).replace(',', ''))
+        try:
+            data['ingredient_cost'] = float(ingredient_cost_match.group(1).replace(',', ''))
+        except Exception:
+            pass
 
-    portion_cost_match = re.search(r'portion\s+cost[:\s]*([0-9,]+)', prompt_lower)
+    portion_cost_match = re.search(r'(?:portion[\s_]+cost)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', decoded_prompt, re.IGNORECASE)
     if portion_cost_match:
-        data['portion_cost'] = float(portion_cost_match.group(1).replace(',', ''))
+        try:
+            data['portion_cost'] = float(portion_cost_match.group(1).replace(',', ''))
+        except Exception:
+            pass
 
-    recipe_price_match = re.search(r'recipe\s+price[:\s]*([0-9,]+)', prompt_lower)
+    recipe_price_match = re.search(r'(?:recipe[\s_]+price)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', decoded_prompt, re.IGNORECASE)
     if recipe_price_match:
-        data['recipe_price'] = float(recipe_price_match.group(1).replace(',', ''))
+        try:
+            data['recipe_price'] = float(recipe_price_match.group(1).replace(',', ''))
+        except Exception:
+            pass
+
+    # Optional recipe fields
+    labor_cost_match_recipe = re.search(r'(?:labor[\s_]+cost)[:\s]*\$?([0-9,]+(?:\.[0-9]+)?)', decoded_prompt, re.IGNORECASE)
+    if labor_cost_match_recipe and 'labor_cost' not in data:
+        try:
+            data['labor_cost'] = float(labor_cost_match_recipe.group(1).replace(',', ''))
+        except Exception:
+            pass
+
+    servings_match = re.search(r'(?:servings?)[:\s]*([0-9]+(?:\.[0-9]+)?)', decoded_prompt, re.IGNORECASE)
+    if servings_match:
+        try:
+            data['servings'] = float(servings_match.group(1).replace(',', ''))
+        except Exception:
+            pass
+
+
+    # Recipe scaling: detect patterns like "serves 6 to 48 servings" or "6 to 48 servings"
+    scale_match = re.search(r'(?:serves|servings?)\s*([0-9]+)\s*(?:to|\-+)\s*([0-9]+)\s*(?:servings?)', decoded_prompt, re.IGNORECASE)
+    if not scale_match:
+        # Alternate phrasing: "Scale ... 6 to 48 servings"
+        scale_match = re.search(r'([0-9]+)\s*(?:to|\-+)\s*([0-9]+)\s*(?:servings?)', decoded_prompt, re.IGNORECASE)
+    if scale_match:
+        try:
+            data['current_batch'] = float(scale_match.group(1).replace(',', ''))
+            data['target_batch'] = float(scale_match.group(2).replace(',', ''))
+        except Exception:
+            pass
+
+    # Recipe name: support quoted and unquoted after recipe_name or recipe name
+    recipe_name_match = re.search(r'(?:recipe[\s_]*name)[:\s]*"([^"]+)"', decoded_prompt, re.IGNORECASE)
+    if not recipe_name_match:
+        recipe_name_match = re.search(r'(?:recipe[\s_]*name)[:\s]*([A-Za-z0-9 &\'"\-\.]+)', decoded_prompt, re.IGNORECASE)
+    if recipe_name_match:
+        try:
+            name_val = recipe_name_match.group(1).strip()
+            if name_val:
+                data['recipe_name'] = name_val
+        except Exception:
+            pass
 
     # Ingredient optimization metrics
     current_cost_match = re.search(r'current\s+cost[:\s]*([0-9,]+)', prompt_lower)
@@ -1466,8 +1515,181 @@ Example: "Analyze operational excellence. Efficiency score: 80%. Process time: 2
 
 Or upload a CSV file with columns: efficiency_score, process_time, quality_rating, customer_satisfaction"""
 
-        # Check for Recipe Management analysis requests
-        elif any(keyword in prompt_lower for keyword in ['recipe costing', 'ingredient cost', 'portion cost']):
+        # Create Recipe: generate ingredient suggestions, auto-costing, and nutrition analysis (HTML sections)
+        elif any(keyword in prompt_lower for keyword in ['create a recipe', 'create recipe', 'recipe named']):
+            # Basic extractions
+            recipe_name = data.get('recipe_name')
+            servings = data.get('servings')
+            ingredient_cost = data.get('ingredient_cost')
+            labor_cost = data.get('labor_cost')
+            recipe_price = data.get('recipe_price')
+
+            # Capture a simple ingredients line and prep/cook times if present
+            import urllib.parse
+            decoded_prompt_full = urllib.parse.unquote(prompt)
+            ing_line = None
+            m = re.search(r'ingredients?[:\s]*(.*)', decoded_prompt_full, re.IGNORECASE)
+            if m:
+                ing_line = m.group(1).strip()
+                stop = re.search(r'\.(?:\s|$)', ing_line)
+                if stop:
+                    ing_line = ing_line[:stop.start()] if stop.start() > 0 else ing_line
+            # Parse prep_time and cook_time locally
+            prep_val = None
+            cook_val = None
+            pm = re.search(r'(?:prep[\s_]*time)[:=\s]*([0-9]+(?:\.[0-9]+)?)', decoded_prompt_full, re.IGNORECASE)
+            if pm:
+                try:
+                    prep_val = float(pm.group(1))
+                except Exception:
+                    prep_val = None
+            cm = re.search(r'(?:cook[\s_]*time)[:=\s]*([0-9]+(?:\.[0-9]+)?)', decoded_prompt_full, re.IGNORECASE)
+            if cm:
+                try:
+                    cook_val = float(cm.group(1))
+                except Exception:
+                    cook_val = None
+
+            # Compute auto-costing if possible
+            costing_text = None
+            try:
+                if servings and (ingredient_cost or 0) + (labor_cost or 0) > 0:
+                    total_cost = float((ingredient_cost or 0)) + float((labor_cost or 0))
+                    cps = total_cost / float(servings)
+                    if recipe_price and float(recipe_price) > 0:
+                        margin = ((float(recipe_price) - cps) / float(recipe_price)) * 100
+                        costing_text = (
+                            f"Auto-costing: Total cost ${total_cost:.2f}, cost per serving ${cps:.2f}. "
+                            f"At price ${float(recipe_price):.2f}, estimated margin {margin:.1f}%"
+                        )
+                    else:
+                        costing_text = (
+                            f"Auto-costing: Total cost ${total_cost:.2f}, cost per serving ${cps:.2f}. "
+                            f"Provide recipe_price to estimate margin."
+                        )
+            except Exception:
+                costing_text = None
+
+            # Build AI prompts for ingredient suggestions/steps and nutrition separately
+            suggestions_text = None
+            nutrition_text = None
+            try:
+                api_key = os.getenv("OPENAI_API_KEY")
+                if api_key:
+                    client = OpenAI(api_key=api_key)
+                    # Build common context
+                    context_lines = []
+                    if recipe_name:
+                        context_lines.append(f"Recipe Name: {recipe_name}")
+                    if servings:
+                        context_lines.append(f"Servings: {int(float(servings))}")
+                    if ing_line:
+                        context_lines.append(f"Ingredients: {ing_line}")
+                    if prep_val is not None:
+                        context_lines.append(f"Prep Time: {int(prep_val)} minutes")
+                    if cook_val is not None:
+                        context_lines.append(f"Cook Time: {int(cook_val)} minutes")
+
+                    ai_content = "\n".join(context_lines)
+                    # 1) Ingredient suggestions + steps
+                    sugg_system = (
+                        "Provide clear, natural English. No markdown or special formatting. "
+                        "Write like a helpful chef. Include: 1) Ingredient suggestions with rough quantities, 2) 6-8 concise cooking steps."
+                    )
+                    sugg_user = (
+                        "Based on the context, propose complementary ingredient suggestions (with rough quantities and common units) "
+                        "and provide 6-8 concise steps to prepare the dish."
+                    )
+                    resp1 = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": sugg_system},
+                            {"role": "user", "content": f"{sugg_user}\n\n{ai_content}"},
+                        ],
+                        temperature=0.7,
+                        max_tokens=900,
+                    )
+                    suggestions_text = resp1.choices[0].message.content
+
+                    # 2) Nutrition analysis per serving
+                    nutr_system = (
+                        "Provide clear, natural English. No markdown or special formatting. "
+                        "Estimate per-serving nutrition with brief rationale, including calories, protein (g), carbs (g), and fat (g)."
+                    )
+                    nutr_user = (
+                        "Based on the context, estimate per-serving nutrition (calories, protein grams, carbs grams, fat grams). "
+                        "Provide a short rationale for key drivers of the estimate."
+                    )
+                    resp2 = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": nutr_system},
+                            {"role": "user", "content": f"{nutr_user}\n\n{ai_content}"},
+                        ],
+                        temperature=0.5,
+                        max_tokens=600,
+                    )
+                    nutrition_text = resp2.choices[0].message.content
+                else:
+                    suggestions_text = (
+                        "AI ingredient suggestions are unavailable because the AI key is not configured. "
+                        "Please set OPENAI_API_KEY to enable this feature."
+                    )
+                    nutrition_text = (
+                        "AI nutrition analysis is unavailable because the AI key is not configured. "
+                        "Please set OPENAI_API_KEY to enable this feature."
+                    )
+            except Exception as e:
+                suggestions_text = f"Ingredient suggestions unavailable: {str(e)}"
+                nutrition_text = f"Nutrition analysis unavailable: {str(e)}"
+
+            # Build minimal HTML with three sections
+            def _p(s):
+                return (s or '').replace('\n\n', '\n').replace('\n', '<br>')
+
+            html_parts = []
+            html_parts.append('<div style="display:flex;flex-direction:column;gap:12px;color: var(--text-primary, #111827); font-size: 14px; line-height: 1.6;">')
+            # Header
+            title_bits = []
+            if recipe_name:
+                title_bits.append(f"<strong>{recipe_name}</strong>")
+            if servings:
+                try:
+                    title_bits.append(f"Servings: {int(float(servings))}")
+                except Exception:
+                    pass
+            if prep_val is not None:
+                title_bits.append(f"Prep: {int(prep_val)} min")
+            if cook_val is not None:
+                title_bits.append(f"Cook: {int(cook_val)} min")
+            if title_bits:
+                html_parts.append('<div style="font-size:14px;color: var(--text-secondary, #374151);">' + ' • '.join(title_bits) + '</div>')
+
+            # Ingredient Suggestions
+            html_parts.append('<div style="background: rgba(59,130,246,0.08); padding:12px; border-radius:8px; border:1px solid rgba(59,130,246,0.25);">')
+            html_parts.append('<div style="font-weight:600; color: var(--accent-primary, #1d4ed8); margin-bottom:6px;">Ingredient Suggestions</div>')
+            html_parts.append(f'<div style="font-size:14px; line-height:1.6; color: var(--text-primary, #111827);">{_p(suggestions_text)}</div>')
+            html_parts.append('</div>')
+
+            # Auto-Costing
+            html_parts.append('<div style="background: rgba(16,185,129,0.08); padding:12px; border-radius:8px; border:1px solid rgba(16,185,129,0.25);">')
+            html_parts.append('<div style="font-weight:600; color: #059669; margin-bottom:6px;">Auto-Costing</div>')
+            auto_cost_text = costing_text or 'No costing available. Provide ingredient_cost, labor_cost, and servings.'
+            html_parts.append(f'<div style="font-size:14px; line-height:1.6; color: var(--text-primary, #111827);">{_p(auto_cost_text)}</div>')
+            html_parts.append('</div>')
+
+            # Nutrition Analysis
+            html_parts.append('<div style="background: rgba(139,92,246,0.08); padding:12px; border-radius:8px; border:1px solid rgba(139,92,246,0.25);">')
+            html_parts.append('<div style="font-weight:600; color:#6d28d9; margin-bottom:6px;">Nutrition Analysis</div>')
+            html_parts.append(f'<div style="font-size:14px; line-height:1.6; color: var(--text-primary, #111827);">{_p(nutrition_text)}</div>')
+            html_parts.append('</div>')
+
+            html_parts.append('</div>')
+            return ''.join(html_parts)
+
+        # Check for Recipe Management costing requests (intent-specific)
+        elif any(keyword in prompt_lower for keyword in ['recipe costing', 'analyze recipe costs', 'portion cost']):
+            # Route to recipe costing if key metrics are present or keywords indicate costing
             if 'ingredient_cost' in data and 'portion_cost' in data and 'recipe_price' in data:
                 result, status = task_registry.execute_task(
                     service="recipe",
@@ -1479,7 +1701,7 @@ Or upload a CSV file with columns: efficiency_score, process_time, quality_ratin
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
             else:
-                return """To analyze recipe costing, I need your actual data. Please provide:
+                return """To analyze recipe costing, please provide:
 
 **Required:**
 1. Ingredient Cost (e.g., $5.50)
@@ -1491,9 +1713,9 @@ Or upload a CSV file with columns: efficiency_score, process_time, quality_ratin
 - Labor Cost (e.g., $3)
 - Overhead Cost (e.g., $1.50)
 
-Example: "Analyze recipe costing. Ingredient cost: $5.50. Portion cost: $2.25. Recipe price: $15."
+Example: "Analyze recipe costs of: recipe_name \"Grilled Salmon\", ingredient_cost 5.80, portion_cost 2.30, recipe_price 13.50, servings 2, labor_cost 3.50."
 
-Or upload a CSV file with columns: ingredient_cost, portion_cost, recipe_price"""
+Or upload a CSV file with columns: recipe_name, ingredient_cost, portion_cost, recipe_price, servings, labor_cost"""
 
         elif any(keyword in prompt_lower for keyword in ['ingredient optimization', 'supplier cost', 'waste reduction']):
             if 'current_cost' in data and 'supplier_cost' in data and 'waste_percentage' in data and 'quality_score' in data:
@@ -1524,7 +1746,13 @@ Example: "Optimize ingredients. Current cost: $5.50. Supplier cost: $4.50. Waste
 
 Or upload a CSV file with columns: current_cost, supplier_cost, waste_percentage, quality_score"""
 
-        elif any(keyword in prompt_lower for keyword in ['recipe scaling', 'batch size', 'yield calculation']):
+        elif any(keyword in prompt_lower for keyword in ['recipe scaling', 'batch size', 'yield calculation', 'scale recipe', 'scale "', 'scale recipes']):
+            # If we have current/target batch, ensure defaults for missing metrics
+            if 'current_batch' in data and 'target_batch' in data:
+                if 'yield_percentage' not in data or not data.get('yield_percentage'):
+                    data['yield_percentage'] = 90.0
+                if 'consistency_score' not in data or not data.get('consistency_score'):
+                    data['consistency_score'] = 8.0
             if 'current_batch' in data and 'target_batch' in data and 'yield_percentage' in data and 'consistency_score' in data:
                 result, status = task_registry.execute_task(
                     service="recipe",
@@ -1536,7 +1764,7 @@ Or upload a CSV file with columns: current_cost, supplier_cost, waste_percentage
                 else:
                     return f"Error: {result.get('error', 'Analysis failed')}"
             else:
-                return """To scale recipes, I need your actual data. Please provide:
+                return """To scale recipes, please provide:
 
 **Required:**
 1. Current Batch (e.g., 10 servings)
@@ -1549,9 +1777,106 @@ Or upload a CSV file with columns: current_cost, supplier_cost, waste_percentage
 - Ingredient Adjustment (e.g., 1.1)
 - Equipment Capacity (e.g., 100)
 
-Example: "Scale my recipe. Current batch: 10. Target batch: 50. Yield percentage: 95%. Consistency score: 90%."
+Example: "Scale \"Classic Tomato Soup\" which serves 6 to 48 servings. Provide ingredient quantities, converted units, and suggested batch yields."
 
 Or upload a CSV file with columns: current_batch, target_batch, yield_percentage, consistency_score"""
+
+        # Create Recipe: generate ingredient suggestions, auto-costing, and nutrition analysis (plain text)
+        elif any(keyword in prompt_lower for keyword in ['create a recipe', 'create recipe', 'recipe named']):
+            # Basic extractions
+            recipe_name = data.get('recipe_name')
+            servings = data.get('servings')
+            ingredient_cost = data.get('ingredient_cost')
+            labor_cost = data.get('labor_cost')
+            recipe_price = data.get('recipe_price')
+
+            # Capture a simple ingredients line if present
+            import urllib.parse
+            decoded_prompt_full = urllib.parse.unquote(prompt)
+            ing_line = None
+            m = re.search(r'ingredients?[:\s]*(.*)', decoded_prompt_full, re.IGNORECASE)
+            if m:
+                ing_line = m.group(1).strip()
+                stop = re.search(r'\.(?:\s|$)', ing_line)
+                if stop:
+                    ing_line = ing_line[:stop.start()] if stop.start() > 0 else ing_line
+
+            # Compute auto-costing if possible
+            costing_text = None
+            try:
+                if servings and (ingredient_cost or 0) + (labor_cost or 0) > 0:
+                    total_cost = float((ingredient_cost or 0)) + float((labor_cost or 0))
+                    cps = total_cost / float(servings)
+                    if recipe_price and float(recipe_price) > 0:
+                        margin = ((float(recipe_price) - cps) / float(recipe_price)) * 100
+                        costing_text = (
+                            f"Auto-costing: Total cost ${total_cost:.2f}, cost per serving ${cps:.2f}. "
+                            f"At price ${float(recipe_price):.2f}, estimated margin {margin:.1f}%"
+                        )
+                    else:
+                        costing_text = (
+                            f"Auto-costing: Total cost ${total_cost:.2f}, cost per serving ${cps:.2f}. "
+                            f"Provide recipe_price to estimate margin."
+                        )
+            except Exception:
+                costing_text = None
+
+            # Build AI prompt for ingredient suggestions and nutrition
+            try:
+                api_key = os.getenv("OPENAI_API_KEY")
+                if api_key:
+                    client = OpenAI(api_key=api_key)
+                    user_prompt = (
+                        "You are an expert chef and nutritionist. Based on the following, suggest ingredients to complete a balanced recipe, "
+                        "provide a brief step-by-step, and estimate nutrition per serving (calories, protein, carbs, fat)."
+                    )
+                    context_lines = []
+                    if recipe_name:
+                        context_lines.append(f"Recipe Name: {recipe_name}")
+                    if servings:
+                        context_lines.append(f"Servings: {int(float(servings))}")
+                    if ing_line:
+                        context_lines.append(f"Ingredients: {ing_line}")
+                    if data.get('prep_time'):
+                        context_lines.append(f"Prep Time: {int(float(data.get('prep_time')))} minutes")
+                    if data.get('cook_time'):
+                        context_lines.append(f"Cook Time: {int(float(data.get('cook_time')))} minutes")
+
+                    ai_content = "\n".join(context_lines)
+
+                    system_msg = (
+                        "Provide clear, natural English. No markdown or special formatting. "
+                        "Write like a helpful chef. Include: 1) Ingredient suggestions with rough quantities, "
+                        "2) 6-8 concise steps, 3) Per-serving nutrition estimates with brief rationale."
+                    )
+
+                    response = client.chat.completions.create(
+                        model="gpt-4o",
+                        messages=[
+                            {"role": "system", "content": system_msg},
+                            {"role": "user", "content": f"{user_prompt}\n\n{ai_content}"},
+                        ],
+                        temperature=0.7,
+                        max_tokens=1200,
+                    )
+                    ai_text = response.choices[0].message.content
+                else:
+                    ai_text = (
+                        "Ingredient suggestions and nutrition analysis are unavailable because the AI key is not configured. "
+                        "Please set OPENAI_API_KEY to enable this feature."
+                    )
+            except Exception as e:
+                ai_text = f"Ingredient suggestions and nutrition analysis unavailable: {str(e)}"
+
+            combined = []
+            if recipe_name:
+                combined.append(f"Recipe: {recipe_name}")
+            if servings:
+                combined.append(f"Servings: {int(float(servings))}")
+            if costing_text:
+                combined.append(costing_text)
+            combined.append(ai_text)
+            return "\n\n".join(combined)
 
         # Check for Menu Engineering analysis requests
         elif any(keyword in prompt_lower for keyword in ['product mix', 'menu analysis', 'item performance', 'menu engineering']):

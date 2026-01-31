@@ -90,6 +90,13 @@ def recipes_view(request):
     return _render_dashboard_page(request, "recipes", "Recipe Management")
 
 
+def cost_analysis_view(request):
+    """
+    Dedicated page for recipe cost and margin analysis.
+    """
+    return _render_dashboard_page(request, "cost_analysis", "Cost Analysis")
+
+
 def strategic_planning_view(request):
     """
     Strategic Planning page with core tasks and chat functionality

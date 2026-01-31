@@ -438,7 +438,9 @@ def process_recipe_csv_data(csv_file) -> dict:
             labor_cost = float(row.get("labor_cost", 0))
             
             # Calculate metrics
-            total_cost = ingredient_cost + labor_cost
+            # Prefer ingredient_cost; if missing/zero and portion_cost provided, derive from portion_cost * servings
+            base_cost = ingredient_cost if ingredient_cost > 0 else (portion_cost * servings if portion_cost > 0 and servings > 0 else 0)
+            total_cost = base_cost + labor_cost
             cost_per_serving = total_cost / servings if servings > 0 else total_cost
             
             if recipe_price > 0:
