@@ -461,17 +461,18 @@
 
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
-            <div class="message-bubble">Welcome to Menu Engineering! <strong>To analyze your menu, upload a CSV file</strong> or provide data:<br><br>
-              <strong>📄 CSV File Format (Product Mix):</strong><br>
-              • Required: product_name, quantity_sold, unit_price, cost<br>
-              • Optional: category, revenue, profit, contribution_margin<br><br>
-              <strong>💰 Menu Pricing Analysis:</strong><br>
-              • Required: item_price, item_cost, competitor_price<br>
-              • Optional: target_food_cost_percent<br><br>
-              <strong>🎨 Menu Design Analysis:</strong><br>
-              • Requires product mix data first<br><br>
-              <strong>Example CSV:</strong><br>
-              product_name,quantity_sold,unit_price,cost<br>
+            <div class="message-bubble">Welcome to Menu Engineering! <strong>Upload a CSV</strong> or use the quick action cards for examples.<br><br>
+              <strong>📄 CSV Columns (Product Mix):</strong><br>
+              • <em>Required (any matching header)</em>: item_name | product_name | Menu Item, quantity_sold | quantity | Units Sold, price | unit_price | Price<br>
+              • <em>Optional</em>: cost | Food Cost % | Contribution Margin %, revenue, profit, category<br><br>
+              <strong>💰 Pricing Strategy Columns:</strong><br>
+              • <em>Required</em>: item_name | Menu Item, item_price | price, item_cost | cost, competitor_price<br>
+              • <em>Optional</em>: target_food_cost_percent, elasticity_index, category<br><br>
+              <strong>🛠️ Item Optimization Columns:</strong><br>
+              • <em>Required</em>: item_name, quantity_sold, item_cost | cost<br>
+              • <em>Optional</em>: portion_size, portion_cost, recipe_ingredients, description, waste_percent<br><br>
+              <strong>Example CSV (Product Mix):</strong><br>
+              item_name,quantity_sold,price,cost<br>
               Margherita Pizza,94,21,6<br>
               Pepperoni Pizza,125,22,5</div>
             <div class="message-time">Just now</div>
@@ -480,8 +481,8 @@
 
         <div class="input-section">
           <div class="input-container">
-            <textarea id="chat-input" class="chat-input" placeholder="Describe your menu or ask about optimization strategies..." rows="1"></textarea>
-            <input type="file" id="file-input" accept=".csv,.xlsx" class="file-input"/>
+            <textarea id="chat-input" class="chat-input" placeholder="Click a card to insert an example, or upload a CSV to auto-run analysis." rows="1"></textarea>
+            <input type="file" id="file-input" accept=".csv" class="file-input"/>
             <button id="upload-button" class="upload-button" title="Upload menu data">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,12L16,16H13.5V19H10.5V16H8L12,12Z"/>
@@ -505,6 +506,9 @@
       const chatInput = document.getElementById('chat-input');
       const fileInput = document.getElementById('file-input');
       const uploadButton = document.getElementById('upload-button');
+      let selectedFile = null;
+      let selectedCsvType = null;
+      let selectedKind = null;
 
       function getCookie(name) {
         const value = `; ${document.cookie}`;
@@ -531,32 +535,233 @@
       fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
-        addMessage(`📁 Uploading: ${file.name}`, true);
-        
-        const formData = new FormData();
-        formData.append('task', 'product_mix');
-        formData.append('file', file);
-
+        // Read CSV to detect type and auto-run analysis
+        const text = await file.text();
+        const { columns, rows } = parseCsv(text);
+        selectedCsvType = detectCsvType(columns);
+        const kind = selectedCsvType === 'product_mix' ? 'menu'
+                    : selectedCsvType === 'pricing' ? 'pricing'
+                    : selectedCsvType === 'optimization' ? 'optimization'
+                    : null;
+        // Use current input or a sensible default prompt
+        const message = (chatInput.value && chatInput.value.trim()) ? chatInput.value.trim() : (kind ? buildAnalysisPromptText(kind) : 'Analyze menu engineering with the attached CSV');
+        // Inform user and kick off analysis
+        addMessage(`📁 Analyzing CSV: <strong>${file.name}</strong><br><em>Detected type:</em> ${selectedCsvType || 'unknown'}`, true);
         try {
+          const formData = new FormData();
+          const task = selectedCsvType === 'product_mix' ? 'product_mix'
+                      : selectedCsvType === 'pricing' ? 'pricing'
+                      : selectedCsvType === 'optimization' ? 'design'
+                      : 'menu_engineering';
+          formData.append('task', task);
+          formData.append('file', file);
+          formData.append('message', message);
+          formData.append('context', 'menu_engineering');
           const response = await fetch('/api/agent/', {
             method: 'POST',
             headers: { 'X-CSRFToken': CSRF_TOKEN },
             body: formData
           });
           const data = await response.json();
-          console.log('Product Mix Response:', data);
-          if (data.error) {
-            addMessage(`❌ Error: ${data.error}`, false);
-          } else if (data.status === 'error') {
-            addMessage(`❌ ${data.message || 'Analysis error'}<br><strong>Help:</strong> ${data.help || ''}<br><strong>Your columns:</strong> ${data.your_columns?.join(', ') || 'N/A'}`, false);
-          } else {
+          if (data.error || data.status === 'error') {
+            const help = data.help ? `<br><strong>Help:</strong> ${data.help}` : '';
+            const cols = data.your_columns?.length ? `<br><strong>Your columns:</strong> ${data.your_columns.join(', ')}` : '';
+            addMessage(`❌ ${data.error || data.message || 'Analysis error'}${help}${cols}`, false);
+          } else if (data.business_report_html) {
+            addMessage(data.business_report_html, false);
+          } else if (selectedCsvType === 'product_mix') {
             addMessage(formatProductMixReport(data), false);
+          } else if (selectedCsvType === 'pricing') {
+            // Fallback: client-side pricing HTML
+            const html = generatePricingReportFromCsv(rows, columns);
+            addMessage(html, false);
+          } else if (selectedCsvType === 'optimization') {
+            // Fallback: client-side optimization HTML
+            const html = generateItemOptimizationReportFromCsv(rows, columns);
+            addMessage(html, false);
+          } else {
+            // Fallback to plain response if HTML not provided
+            addMessage(data.response || 'Analysis complete.', false);
           }
         } catch (error) {
           addMessage(`❌ Error: ${error.message}`, false);
+        } finally {
+          // Clear attachment state
+          selectedFile = null;
+          selectedCsvType = null;
+          fileInput.value = '';
         }
-        fileInput.value = '';
       });
+
+      // --- CSV helpers ---
+      function parseCsv(text) {
+        const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+        if (lines.length === 0) return { columns: [], rows: [] };
+        const header = lines[0].split(',').map(h => h.trim());
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+          const parts = lines[i].split(',');
+          const obj = {};
+          header.forEach((h, idx) => obj[h.trim()] = (parts[idx] ?? '').trim());
+          rows.push(obj);
+        }
+        return { columns: header, rows };
+      }
+
+      function detectCsvType(columns) {
+        const lower = columns.map(c => c.toLowerCase());
+        const has = (key) => lower.some(c => c === key || c.includes(key));
+        const hasAny = (...keys) => keys.some(k => has(k));
+        // Product mix requires quantity + price
+        if (hasAny('item_name','product_name','menu item') && hasAny('quantity_sold','quantity','units sold') && hasAny('price','unit_price')) {
+          return 'product_mix';
+        }
+        // Pricing strategy signature
+        if (hasAny('item_name','menu item') && hasAny('item_price','price') && hasAny('item_cost','cost') && has('competitor_price')) {
+          return 'pricing';
+        }
+        // Item optimization signature
+        if (hasAny('item_name') && hasAny('quantity_sold','quantity') && hasAny('item_cost','cost')) {
+          return 'optimization';
+        }
+        return 'unknown';
+      }
+
+      function toNumber(v) {
+        if (v == null) return 0;
+        const s = String(v).replace(/[$,%]/g, '').replace(/\s/g, '');
+        const n = parseFloat(s);
+        return isNaN(n) ? 0 : n;
+      }
+
+      function generatePricingReportFromCsv(rows, columns) {
+        // Map common names
+        const map = (row, keys) => {
+          for (const k of keys) {
+            if (row[k] !== undefined) return row[k];
+          }
+          // fuzzy contains
+          const foundKey = Object.keys(row).find(h => keys.some(k => h.toLowerCase().includes(k)));
+          return foundKey ? row[foundKey] : undefined;
+        };
+
+        const items = rows.map(r => {
+          const name = map(r, ['item_name','menu item','product_name']);
+          const price = toNumber(map(r, ['item_price','price']));
+          const cost = toNumber(map(r, ['item_cost','cost']));
+          const competitor = toNumber(map(r, ['competitor_price']));
+          const target = toNumber(map(r, ['target_food_cost_percent','target food cost %']));
+          return { name, price, cost, competitor, target };
+        }).filter(i => i.name && i.price > 0 && i.cost >= 0);
+
+        const defaultTarget = items.find(i => i.target > 0)?.target || 32.0;
+        let underpriced = [], overpriced = [], wellPriced = [];
+        items.forEach(i => {
+          const foodCostPct = i.price > 0 ? (i.cost / i.price) * 100 : 0;
+          const competitorGap = i.competitor > 0 ? ((i.price - i.competitor) / i.competitor) * 100 : 0;
+          if (foodCostPct > defaultTarget) {
+            underpriced.push({ ...i, foodCostPct, competitorGap });
+          } else if (i.competitor > 0 && competitorGap > 10) {
+            overpriced.push({ ...i, foodCostPct, competitorGap });
+          } else {
+            wellPriced.push({ ...i, foodCostPct, competitorGap });
+          }
+        });
+
+        const metrics = {
+          underpricedCount: underpriced.length,
+          overpricedCount: overpriced.length,
+          wellPricedCount: wellPriced.length,
+          avgPrice: items.length ? (items.reduce((a,b)=>a+b.price,0)/items.length) : 0,
+          minPrice: items.length ? Math.min(...items.map(i=>i.price)) : 0,
+          maxPrice: items.length ? Math.max(...items.map(i=>i.price)) : 0,
+          targetFoodCost: defaultTarget
+        };
+
+        // Build HTML with our pricing template
+        let html = renderPricingStrategyTemplate();
+        html += '<div class="report__body">';
+        html += '<h3 style="color:#10b981; margin-bottom:0.5rem;">Key Metrics</h3><div class="kpi-grid">';
+        html += `<div class="kpi-card"><div class="kpi-value">${metrics.underpricedCount}</div><div class="kpi-label">Underpriced</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">${metrics.overpricedCount}</div><div class="kpi-label">Overpriced</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">${metrics.wellPricedCount}</div><div class="kpi-label">Well-Priced</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">$${metrics.avgPrice.toFixed(2)}</div><div class="kpi-label">Avg Price</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">$${metrics.minPrice.toFixed(2)}</div><div class="kpi-label">Min Price</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">$${metrics.maxPrice.toFixed(2)}</div><div class="kpi-label">Max Price</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">${metrics.targetFoodCost.toFixed(1)}%</div><div class="kpi-label">Target Food Cost</div></div>`;
+        html += '</div>';
+
+        // Underpriced table (top 5 by highest food cost %)
+        if (underpriced.length) {
+          const top = underpriced.sort((a,b)=>b.foodCostPct-a.foodCostPct).slice(0,5);
+          html += '<h3 style="color:#10b981; margin-top:1rem;">Top Underpriced Items</h3><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.875rem">';
+          html += '<thead><tr style="background:#10b981;color:white"><th style="padding:0.5rem;text-align:left">Item</th><th style="padding:0.5rem;text-align:right">Price</th><th style="padding:0.5rem;text-align:right">Cost</th><th style="padding:0.5rem;text-align:right">Food Cost %</th></tr></thead><tbody>';
+          top.forEach(i=>{
+            html += `<tr><td style="padding:0.5rem">${i.name}</td><td style="padding:0.5rem;text-align:right">$${i.price.toFixed(2)}</td><td style="padding:0.5rem;text-align:right">$${i.cost.toFixed(2)}</td><td style="padding:0.5rem;text-align:right">${i.foodCostPct.toFixed(1)}%</td></tr>`;
+          });
+          html += '</tbody></table></div>';
+        }
+
+        // Overpriced table (top 5 by competitor gap)
+        if (overpriced.length) {
+          const top = overpriced.sort((a,b)=>b.competitorGap-a.competitorGap).slice(0,5);
+          html += '<h3 style="color:#ef4444; margin-top:1rem;">Potentially Overpriced Items</h3><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.875rem">';
+          html += '<thead><tr style="background:#ef4444;color:white"><th style="padding:0.5rem;text-align:left">Item</th><th style="padding:0.5rem;text-align:right">Price</th><th style="padding:0.5rem;text-align:right">Competitor</th><th style="padding:0.5rem;text-align:right">Gap %</th></tr></thead><tbody>';
+          top.forEach(i=>{
+            html += `<tr><td style="padding:0.5rem">${i.name}</td><td style="padding:0.5rem;text-align:right">$${i.price.toFixed(2)}</td><td style="padding:0.5rem;text-align:right">$${i.competitor.toFixed(2)}</td><td style="padding:0.5rem;text-align:right">${i.competitorGap.toFixed(1)}%</td></tr>`;
+          });
+          html += '</tbody></table></div>';
+        }
+
+        html += '</div>'; // close report body
+        return html;
+      }
+
+      function generateItemOptimizationReportFromCsv(rows, columns) {
+        const map = (row, keys) => {
+          for (const k of keys) {
+            if (row[k] !== undefined) return row[k];
+          }
+          const foundKey = Object.keys(row).find(h => keys.some(k => h.toLowerCase().includes(k)));
+          return foundKey ? row[foundKey] : undefined;
+        };
+
+        const items = rows.map(r => {
+          const name = map(r, ['item_name','menu item','product_name']);
+          const qty = toNumber(map(r, ['quantity_sold','quantity','units sold']));
+          const cost = toNumber(map(r, ['item_cost','cost']));
+          const portionSize = map(r, ['portion_size']);
+          const portionCost = toNumber(map(r, ['portion_cost']));
+          const waste = toNumber(map(r, ['waste_percent','waste %']));
+          return { name, qty, cost, portionSize, portionCost, waste };
+        }).filter(i => i.name);
+
+        const avgCost = items.length ? (items.reduce((a,b)=>a+b.cost,0)/items.length) : 0;
+        const avgQty = items.length ? (items.reduce((a,b)=>a+b.qty,0)/items.length) : 0;
+        const highWaste = items.filter(i => i.waste >= 5);
+
+        let html = renderItemOptimizationTemplate();
+        html += '<div class="report__body">';
+        html += '<h3 style="color:#f59e0b; margin-bottom:0.5rem;">Key Metrics</h3><div class="kpi-grid">';
+        html += `<div class="kpi-card"><div class="kpi-value">${items.length}</div><div class="kpi-label">Items</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">$${avgCost.toFixed(2)}</div><div class="kpi-label">Avg Cost/Item</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">${avgQty.toFixed(0)}</div><div class="kpi-label">Avg Units Sold</div></div>`;
+        html += `<div class="kpi-card"><div class="kpi-value">${highWaste.length}</div><div class="kpi-label">High Waste (>=5%)</div></div>`;
+        html += '</div>';
+
+        if (highWaste.length) {
+          const top = highWaste.sort((a,b)=>b.waste-a.waste).slice(0,5);
+          html += '<h3 style="color:#f59e0b; margin-top:1rem;">Items with High Waste</h3><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.875rem">';
+          html += '<thead><tr style="background:#f59e0b;color:white"><th style="padding:0.5rem;text-align:left">Item</th><th style="padding:0.5rem;text-align:right">Waste %</th><th style="padding:0.5rem;text-align:left">Portion</th><th style="padding:0.5rem;text-align:right">Portion Cost</th></tr></thead><tbody>';
+          top.forEach(i=>{
+            html += `<tr><td style="padding:0.5rem">${i.name}</td><td style="padding:0.5rem;text-align:right">${i.waste.toFixed(1)}%</td><td style="padding:0.5rem">${i.portionSize||'-'}</td><td style="padding:0.5rem;text-align:right">${i.portionCost?`$${i.portionCost.toFixed(2)}`:'-'}</td></tr>`;
+          });
+          html += '</tbody></table></div>';
+        }
+
+        html += '</div>';
+        return html;
+      }
 
       window.sendMessage = async function() {
         const message = chatInput.value.trim();
@@ -567,6 +772,43 @@
         chatInput.style.height = 'auto';
 
         try {
+          // If a CSV is attached, prefer the agent endpoint with multipart
+          if (selectedFile) {
+            const formData = new FormData();
+            // Hint task based on detected CSV type
+            const task = selectedCsvType === 'product_mix' ? 'product_mix'
+                        : selectedCsvType === 'pricing' ? 'pricing'
+                        : selectedCsvType === 'optimization' ? 'design'
+                        : 'menu_engineering';
+            formData.append('task', task);
+            formData.append('file', selectedFile);
+            formData.append('message', message);
+            formData.append('context', 'menu_engineering');
+            const response = await fetch('/api/agent/', {
+              method: 'POST',
+              headers: { 'X-CSRFToken': CSRF_TOKEN },
+              body: formData
+            });
+            const data = await response.json();
+            if (data.error || data.status === 'error') {
+              const help = data.help ? `<br><strong>Help:</strong> ${data.help}` : '';
+              const cols = data.your_columns?.length ? `<br><strong>Your columns:</strong> ${data.your_columns.join(', ')}` : '';
+              addMessage(`❌ ${data.error || data.message || 'Analysis error'}${help}${cols}`, false);
+            } else if (data.business_report_html) {
+              addMessage(data.business_report_html, false);
+            } else if (selectedCsvType === 'product_mix') {
+              addMessage(formatProductMixReport(data), false);
+            } else {
+              addMessage(data.response || 'Analysis complete.', false);
+            }
+            // Clear attachment after processing
+            selectedFile = null;
+            selectedCsvType = null;
+            fileInput.value = '';
+            return;
+          }
+
+          // No attachment → standard chat API
           const response = await fetch('/chat/api/', {
             method: 'POST',
             headers: {
@@ -576,7 +818,18 @@
             body: `message=${encodeURIComponent(message)}&context=menu_engineering`
           });
           const data = await response.json();
-          addMessage(data.error ? `❌ Error: ${data.error}` : (data.response || 'No response'), false);
+          if (data.error) {
+            addMessage(`❌ Error: ${data.error}`, false);
+          } else if (data.business_report_html) {
+            addMessage(data.business_report_html, false);
+          } else {
+            const text = data.response || '';
+            if (selectedKind && text) {
+              addMessage(wrapTextInReport(selectedKind, text), false);
+            } else {
+              addMessage(text || 'No response', false);
+            }
+          }
         } catch (error) {
           addMessage(`❌ Error: ${error.message}`, false);
         }
@@ -606,7 +859,7 @@
         }
         
         // Otherwise build custom report
-        let html = `<div class="report"><div class="report__header"><h2>🍽️ Menu Engineering Analysis</h2>`;
+        let html = `<div class="report"><div class="report__header"><h2>🍽️ Comprehensive Menu Performance Review</h2>`;
         html += `<div class="report__meta">Generated: ${new Date().toLocaleString()}</div>`;
         if (data.file_info) html += `<div class="report__meta">${data.file_info}</div>`;
         if (data.performance_rating) {
@@ -700,19 +953,153 @@
       window.clearChat = function() {
         messagesArea.innerHTML = `
           <div class="message assistant">
-            <div class="message-bubble">Welcome to Menu Engineering! <strong>To get accurate analysis, please provide your data</strong>:<br><br>
-              <strong>📊 Menu Engineering Analysis:</strong><br>
-              • Required: item_name, price, cost, quantity_sold<br>
-              • Optional: category, food_cost_percent, popularity_rank<br><br>
-              Upload a CSV file or describe your menu items. Click the quick action buttons below for examples.</div>
+            <div class="message-bubble">Welcome to Menu Engineering! <strong>Provide data</strong> or click a card for examples:<br><br>
+              <strong>📊 Product Mix (Menu Analysis):</strong><br>
+              • Required: item_name | product_name | Menu Item; quantity_sold | quantity | Units Sold; price | unit_price | Price<br>
+              • Optional: cost | Food Cost % | Contribution Margin %, revenue, profit, category<br><br>
+              <strong>💰 Pricing Strategy:</strong><br>
+              • Required: item_name, item_price | price, item_cost | cost, competitor_price<br>
+              • Optional: target_food_cost_percent, elasticity_index<br><br>
+              <strong>🛠️ Item Optimization:</strong><br>
+              • Required: item_name, quantity_sold, item_cost | cost<br>
+              • Optional: portion_size, portion_cost, recipe_ingredients, description, waste_percent</div>
             <div class="message-time">Just now</div>
           </div>
         `;
       };
 
-      window.analyzeMenu = () => { chatInput.value = 'Analyze my product mix. Total sales: $50,000. Item sales: $5,000. Item cost: $1,500. Item profit: $3,500.'; chatInput.focus(); };
-      window.pricingStrategy = () => { chatInput.value = 'Analyze menu pricing. Item price: $18. Item cost: $5.50. Competitor price: $16. Target food cost: 32%.'; chatInput.focus(); };
-      window.itemOptimization = () => { chatInput.value = 'Analyze menu design. Menu items: 25. High profit items: 8. Sales distribution: appetizers 40%, entrees 60%. Visual hierarchy: top-right placement.'; chatInput.focus(); };
+      // HTML response templates
+      function renderMenuAnalysisTemplate() {
+        return `
+          <div class="report"><div class="report__header"><h2>🍽️ Comprehensive Menu Performance Review</h2>
+          <div class="report__meta">Sales mix analysis • Contribution margins • Menu matrix mapping</div></div>
+          <div class="report__body">
+            <h3 style="color:#667eea;">What You'll Get</h3>
+            <ul style="margin:0 0 1rem 1rem; color:#555;">
+              <li>Item-level sales, revenue, and profit distribution</li>
+              <li>Contribution margins and food cost % across items</li>
+              <li>Quadrant map: Stars, Plowhorses, Puzzles, Dogs</li>
+              <li>Clear, prioritized recommendations</li>
+            </ul>
+            <h3 style="color:#667eea;">📊 Sales Mix Analysis</h3>
+            <p>Breakdown of volume and revenue by item and category.</p>
+            <h3 style="color:#667eea;">💵 Contribution Margins</h3>
+            <p>Price vs cost per item, gross margin, and food cost %.</p>
+            <h3 style="color:#667eea;">🎯 Menu Matrix Mapping</h3>
+            <p>Stars, Plowhorses, Puzzles, Dogs distribution with recommendations.</p>
+          </div></div>`;
+      }
+
+      function renderPricingStrategyTemplate() {
+        return `
+          <div class="report"><div class="report__header"><h2>💰 Data-Driven Pricing Optimization</h2>
+          <div class="report__meta">Price elasticity • Competitive analysis • Profit maximization</div></div>
+          <div class="report__body">
+            <h3 style="color:#10b981;">What You'll Get</h3>
+            <ul style="margin:0 0 1rem 1rem; color:#555;">
+              <li>Underpriced and overpriced item detection</li>
+              <li>Competitive gap and anchor opportunities</li>
+              <li>Target food cost alignment and adjustments</li>
+              <li>Actionable recommendations to maximize profit</li>
+            </ul>
+            <h3 style="color:#10b981;">📈 Price Elasticity</h3>
+            <p>Modeled volume impact from price changes to optimize revenue.</p>
+            <h3 style="color:#10b981;">🏁 Competitive Analysis</h3>
+            <p>Positioning vs competitor pricing and anchor strategies.</p>
+            <h3 style="color:#10b981;">💹 Profit Maximization</h3>
+            <p>Identify underpriced/overpriced items and calculate opportunity.</p>
+          </div></div>`;
+      }
+
+      function renderItemOptimizationTemplate() {
+        return `
+          <div class="report"><div class="report__header"><h2>🛠️ Improve Underperforming Items</h2>
+          <div class="report__meta">Recipe costing • Portion control • Description optimization</div></div>
+          <div class="report__body">
+            <h3 style="color:#f59e0b;">What You'll Get</h3>
+            <ul style="margin:0 0 1rem 1rem; color:#555;">
+              <li>Cost drivers and portion standardization opportunities</li>
+              <li>Waste hotspots and action items</li>
+              <li>Menu description improvements to boost conversion</li>
+            </ul>
+            <h3 style="color:#f59e0b;">📋 Recipe Costing</h3>
+            <p>Ingredient breakdowns to reduce cost while maintaining quality.</p>
+            <h3 style="color:#f59e0b;">⚖️ Portion Control</h3>
+            <p>Standardize portion sizes to stabilize margins and consistency.</p>
+            <h3 style="color:#f59e0b;">📝 Description Optimization</h3>
+            <p>Enhance menu language to boost appeal and conversion.</p>
+          </div></div>`;
+      }
+
+      function wrapTextInReport(kind, text) {
+        let base = '';
+        if (kind === 'menu') base = renderMenuAnalysisTemplate();
+        else if (kind === 'pricing') base = renderPricingStrategyTemplate();
+        else base = renderItemOptimizationTemplate();
+        // Insert assistant text inside a section after the header/body
+        return base.replace('</div></div>', `
+          <div class="report__body" style="margin-top:0.5rem">
+            <h3 style="color:#667eea;">Assistant Insights</h3>
+            <div style="background: rgba(0,0,0,0.03); border:1px solid rgba(0,0,0,0.06); border-radius:0.5rem; padding:0.75rem; white-space:pre-wrap;">${text}</div>
+          </div></div>`);
+      }
+
+      // Build comprehensive example prompts (text and html) per card
+      function buildAnalysisPromptText(kind) {
+        if (kind === 'menu') {
+          return [
+            'Analyze my menu analysis.',
+            'CSV Columns: item_name, quantity_sold, price, cost',
+            'CSV Sample:',
+            'item_name,quantity_sold,price,cost',
+            'Grilled Salmon,85,28,8',
+            'Ribeye Steak,72,42,17',
+            'Please include Sales mix analysis, Contribution margins, and Menu matrix mapping.'
+          ].join('\n');
+        }
+        if (kind === 'pricing') {
+          return [
+            'Analyze my pricing strategy.',
+            'CSV Columns: item_name,item_price,item_cost,competitor_price,target_food_cost_percent',
+            'CSV Sample:',
+            'item_name,item_price,item_cost,competitor_price,target_food_cost_percent',
+            'Margherita Pizza,18,5.5,16,32',
+            'Pepperoni Pizza,22,5.0,20,32',
+            'Focus on price elasticity, competitive analysis, and profit maximization.'
+          ].join('\n');
+        }
+        // optimization
+        return [
+          'Analyze my item optimization.',
+          'CSV Columns: item_name,quantity_sold,item_cost,portion_size,portion_cost,waste_percent,description',
+          'CSV Sample:',
+          'item_name,quantity_sold,item_cost,portion_size,portion_cost,waste_percent,description',
+          'Veggie Wrap,12,3.5,220g,1.20,8,"Fresh seasonal vegetables in a spinach wrap"',
+          'Soup of Day,15,2.2,300ml,0.90,5,"Chef’s daily creation"',
+          'Include recipe costing, portion control, and description optimization.'
+        ].join('\n');
+      }
+
+      // Remove confirm button behavior; fill input only and wait for Send
+
+      // Quick action handlers: only insert example prompt, no auto-send, no auto-output
+      window.analyzeMenu = () => {
+        selectedKind = 'menu';
+        chatInput.value = buildAnalysisPromptText('menu');
+        chatInput.focus();
+      };
+
+      window.pricingStrategy = () => {
+        selectedKind = 'pricing';
+        chatInput.value = buildAnalysisPromptText('pricing');
+        chatInput.focus();
+      };
+
+      window.itemOptimization = () => {
+        selectedKind = 'optimization';
+        chatInput.value = buildAnalysisPromptText('optimization');
+        chatInput.focus();
+      };
     });
   </script>
 </body>
