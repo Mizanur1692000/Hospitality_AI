@@ -8,6 +8,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'dashboard/css/modern-glass.css' %}">
   <style>
+    /* Theme overrides for brighter, more legible palette */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #06b6d4 0%, #7c3aed 50%, #f472b6 100%);
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+    }
+
     /* Enhanced Menu Engineering Styles */
     .menu-matrix {
       display: grid;
@@ -59,10 +66,10 @@
     }
 
     .matrix-quadrant.stars {
-      color: #f59e0b;
+      color: #10b981;
     }
     .matrix-quadrant.stars::before { 
-      background: linear-gradient(90deg, #fbbf24, #f59e0b, #d97706); 
+      background: linear-gradient(90deg, #34d399, #10b981, #059669); 
     }
     .matrix-quadrant.stars:hover {
       box-shadow: 0 25px 50px rgba(245, 158, 11, 0.2), 0 0 0 1px rgba(245, 158, 11, 0.3);
@@ -551,7 +558,7 @@
           const formData = new FormData();
           const task = selectedCsvType === 'product_mix' ? 'product_mix'
                       : selectedCsvType === 'pricing' ? 'pricing'
-                      : selectedCsvType === 'optimization' ? 'design'
+                      : selectedCsvType === 'optimization' ? 'optimization'
                       : 'menu_engineering';
           formData.append('task', task);
           formData.append('file', file);
@@ -594,6 +601,68 @@
       });
 
       // --- CSV helpers ---
+      function parseLabeledMenuItems(text) {
+        // Matches: Item: Name. Quantity Sold: 125. Price: $19.00. Cost: $6.20.
+        const items = [];
+        const regex = /Item:\s*([^\.]+)\.\s*Quantity\s*Sold:\s*([\d,]+)\.\s*Price:\s*\$?([\d,.]+)\.\s*Cost:\s*\$?([\d,.]+)\./gi;
+        let m;
+        while ((m = regex.exec(text)) !== null) {
+          const name = m[1].trim();
+          const qty = parseFloat(m[2].replace(/,/g, '')) || 0;
+          const price = parseFloat(m[3].replace(/,/g, '')) || 0;
+          const cost = parseFloat(m[4].replace(/,/g, '')) || 0;
+          if (name && qty > 0 && price > 0) {
+            items.push({ name, quantity_sold: qty, price, cost });
+          }
+        }
+        return items;
+      }
+
+      function parseLabeledPricingRows(text) {
+        // Matches: Item: Name. Item Price: $18.00. Item Cost: $5.50. Competitor Price: $16.00. Target Food Cost Percent: 32%.
+        const rows = [];
+        const regex = /Item:\s*([^\.]+)\.\s*Item\s*Price:\s*\$?([\d,.]+)\.\s*Item\s*Cost:\s*\$?([\d,.]+)\.\s*Competitor\s*Price:\s*\$?([\d,.]+)\.\s*Target\s*Food\s*Cost\s*Percent:\s*([\d,.]+)%/gi;
+        let m;
+        while ((m = regex.exec(text)) !== null) {
+          const name = m[1].trim();
+          const price = parseFloat(m[2].replace(/,/g, '')) || 0;
+          const cost = parseFloat(m[3].replace(/,/g, '')) || 0;
+          const competitor = parseFloat(m[4].replace(/,/g, '')) || 0;
+          const target = parseFloat(m[5].replace(/,/g, '')) || 32.0;
+          rows.push({ item_name: name, item_price: price, item_cost: cost, competitor_price: competitor, target_food_cost_percent: target });
+        }
+        return rows;
+      }
+
+      function parseLabeledOptimizationRows(text) {
+        // Flexible parser: extracts fields independently, allows optional segments (e.g., Recipe Ingredients) in any order.
+        const rows = [];
+        const parts = text.split(/Item:\s*/i).slice(1);
+        parts.forEach(part => {
+          // Name up to first period
+          const nameMatch = part.match(/^([^\.]+)/);
+          const name = nameMatch ? nameMatch[1].trim() : '';
+          // Independent field extraction
+          const qtyMatch = part.match(/Quantity\s*Sold:\s*([\d,.]+)/i);
+          const costMatch = part.match(/Item\s*Cost:\s*\$?([\d,.]+)/i);
+          const pSizeMatch = part.match(/Portion\s*Size:\s*([^\.]+)/i);
+          const pCostMatch = part.match(/Portion\s*Cost:\s*\$?([\d,.]+)/i);
+          const wasteMatch = part.match(/Waste\s*Percent:\s*([\d,.]+)%/i);
+          const descMatch = part.match(/Description:\s*([^\n]+)/i);
+
+          const quantity_sold = qtyMatch ? parseFloat(qtyMatch[1].replace(/,/g, '')) : 0;
+          const item_cost = costMatch ? parseFloat(costMatch[1].replace(/,/g, '')) : 0;
+          const portion_size = pSizeMatch ? pSizeMatch[1].trim() : '';
+          const portion_cost = pCostMatch ? parseFloat(pCostMatch[1].replace(/,/g, '')) : 0;
+          const waste_percent = wasteMatch ? parseFloat(wasteMatch[1].replace(/,/g, '')) : 0;
+          const description = descMatch ? descMatch[1].trim() : '';
+
+          if (name) {
+            rows.push({ item_name: name, quantity_sold, item_cost, portion_size, portion_cost, waste_percent, description });
+          }
+        });
+        return rows;
+      }
       function parseCsv(text) {
         const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
         if (lines.length === 0) return { columns: [], rows: [] };
@@ -612,17 +681,17 @@
         const lower = columns.map(c => c.toLowerCase());
         const has = (key) => lower.some(c => c === key || c.includes(key));
         const hasAny = (...keys) => keys.some(k => has(k));
-        // Product mix requires quantity + price
-        if (hasAny('item_name','product_name','menu item') && hasAny('quantity_sold','quantity','units sold') && hasAny('price','unit_price')) {
-          return 'product_mix';
+        // Prefer item optimization when cost-specific columns exist
+        if (hasAny('item_name','product_name','menu item') && hasAny('quantity_sold','quantity','units sold') && hasAny('item_cost','cost')) {
+          return 'optimization';
         }
         // Pricing strategy signature
         if (hasAny('item_name','menu item') && hasAny('item_price','price') && hasAny('item_cost','cost') && has('competitor_price')) {
           return 'pricing';
         }
-        // Item optimization signature
-        if (hasAny('item_name') && hasAny('quantity_sold','quantity') && hasAny('item_cost','cost')) {
-          return 'optimization';
+        // Product mix requires quantity + price
+        if (hasAny('item_name','product_name','menu item') && hasAny('quantity_sold','quantity','units sold') && hasAny('price','unit_price')) {
+          return 'product_mix';
         }
         return 'unknown';
       }
@@ -691,6 +760,42 @@
         html += `<div class="kpi-card"><div class="kpi-value">${metrics.targetFoodCost.toFixed(1)}%</div><div class="kpi-label">Target Food Cost</div></div>`;
         html += '</div>';
 
+        // Tracking sections for comprehensive alignment
+        const avgFoodCostPct = items.length ? (items.reduce((a,b)=> a + (b.price>0 ? (b.cost/b.price*100) : 0), 0) / items.length) : 0;
+        const withinTarget = items.filter(i => i.price>0 && (i.cost/i.price*100) <= defaultTarget).length;
+        const compGaps = items.map(i => i.competitor>0 ? ((i.price - i.competitor)/i.competitor*100) : 0);
+        const avgCompGap = compGaps.length ? (compGaps.reduce((a,b)=>a+b,0)/compGaps.length) : 0;
+        const above10 = compGaps.filter(g=>g>10).length;
+        const near10 = compGaps.filter(g=>Math.abs(g)<=10).length;
+        const below0 = compGaps.filter(g=>g<0).length;
+
+        html += '<div class="tracking-section"><h3>📊 Detailed Tracking & Analytics</h3><div class="tracking-grid">';
+        // Pricing Alignment
+        html += `<div class="tracking-card"><div class="tracking-header" style="background:linear-gradient(135deg,#10b981,#059669)"><span class="tracking-icon">🎯</span><span class="tracking-title">Pricing Alignment</span><span class="badge badge--good" style="font-size:.75rem;">Actual</span></div><div class="tracking-body">`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Underpriced</span><span class="tracking-value">${underpriced.length}</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Overpriced</span><span class="tracking-value">${overpriced.length}</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Well-Priced</span><span class="tracking-value">${wellPriced.length}</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Underpriced %</span><span class="tracking-value">${items.length?((underpriced.length/items.length*100).toFixed(1)):'0.0'}%</span></div>`;
+        html += '</div></div>';
+
+        // Food Cost Compliance
+        html += `<div class="tracking-card"><div class="tracking-header" style="background:linear-gradient(135deg,#10b981,#06b6d4)"><span class="tracking-icon">🍲</span><span class="tracking-title">Food Cost Compliance</span><span class="badge badge--good" style="font-size:.75rem;">Actual</span></div><div class="tracking-body">`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Target %</span><span class="tracking-value">${defaultTarget.toFixed(1)}%</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Avg Food Cost %</span><span class="tracking-value">${avgFoodCostPct.toFixed(1)}%</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Items Within Target</span><span class="tracking-value">${withinTarget}</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Compliance %</span><span class="tracking-value">${items.length?((withinTarget/items.length*100).toFixed(1)):'0.0'}%</span></div>`;
+        html += '</div></div>';
+
+        // Competitive Position
+        html += `<div class="tracking-card"><div class="tracking-header" style="background:linear-gradient(135deg,#10b981,#3b82f6)"><span class="tracking-icon">🏁</span><span class="tracking-title">Competitive Position</span><span class="badge badge--good" style="font-size:.75rem;">Actual</span></div><div class="tracking-body">`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Avg Competitor Gap %</span><span class="tracking-value">${avgCompGap.toFixed(1)}%</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Above Competitor (>10%)</span><span class="tracking-value">${above10}</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Near Competitor (±10%)</span><span class="tracking-value">${near10}</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Below Competitor</span><span class="tracking-value">${below0}</span></div>`;
+        html += '</div></div>';
+
+        html += '</div></div>';
+
         // Underpriced table (top 5 by highest food cost %)
         if (underpriced.length) {
           const top = underpriced.sort((a,b)=>b.foodCostPct-a.foodCostPct).slice(0,5);
@@ -742,7 +847,7 @@
 
         let html = renderItemOptimizationTemplate();
         html += '<div class="report__body">';
-        html += '<h3 style="color:#f59e0b; margin-bottom:0.5rem;">Key Metrics</h3><div class="kpi-grid">';
+        html += '<h3 style="color:#10b981; margin-bottom:0.5rem;">Key Metrics</h3><div class="kpi-grid">';
         html += `<div class="kpi-card"><div class="kpi-value">${items.length}</div><div class="kpi-label">Items</div></div>`;
         html += `<div class="kpi-card"><div class="kpi-value">$${avgCost.toFixed(2)}</div><div class="kpi-label">Avg Cost/Item</div></div>`;
         html += `<div class="kpi-card"><div class="kpi-value">${avgQty.toFixed(0)}</div><div class="kpi-label">Avg Units Sold</div></div>`;
@@ -751,13 +856,50 @@
 
         if (highWaste.length) {
           const top = highWaste.sort((a,b)=>b.waste-a.waste).slice(0,5);
-          html += '<h3 style="color:#f59e0b; margin-top:1rem;">Items with High Waste</h3><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.875rem">';
-          html += '<thead><tr style="background:#f59e0b;color:white"><th style="padding:0.5rem;text-align:left">Item</th><th style="padding:0.5rem;text-align:right">Waste %</th><th style="padding:0.5rem;text-align:left">Portion</th><th style="padding:0.5rem;text-align:right">Portion Cost</th></tr></thead><tbody>';
+          html += '<h3 style="color:#10b981; margin-top:1rem;">Items with High Waste</h3><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.875rem">';
+          html += '<thead><tr style="background:#10b981;color:white"><th style="padding:0.5rem;text-align:left">Item</th><th style="padding:0.5rem;text-align:right">Waste %</th><th style="padding:0.5rem;text-align:left">Portion</th><th style="padding:0.5rem;text-align:right">Portion Cost</th></tr></thead><tbody>';
           top.forEach(i=>{
             html += `<tr><td style="padding:0.5rem">${i.name}</td><td style="padding:0.5rem;text-align:right">${i.waste.toFixed(1)}%</td><td style="padding:0.5rem">${i.portionSize||'-'}</td><td style="padding:0.5rem;text-align:right">${i.portionCost?`$${i.portionCost.toFixed(2)}`:'-'}</td></tr>`;
           });
           html += '</tbody></table></div>';
         }
+
+        // Tracking sections for comprehensive alignment
+        const portionInfoCount = items.filter(i => i.portionSize || i.portionCost).length;
+        const standardizationNeeded = items.filter(i => i.waste >= 5 && !i.portionSize).length;
+        const highCostLowQty = items.filter(i => i.cost >= (avgCost*1.2) && i.qty <= (avgQty*0.8));
+        const needsDescription = rows.map(r=>({
+          name: map(r, ['item_name','menu item','product_name']),
+          qty: toNumber(map(r, ['quantity_sold','quantity','units sold'])),
+          desc: map(r, ['description'])
+        })).filter(i => i.name && i.qty <= (avgQty*0.8) && (!i.desc || String(i.desc).trim()===''));
+
+        html += '<div class="tracking-section"><h3>📊 Detailed Tracking & Analytics</h3><div class="tracking-grid">';
+
+        // Waste Tracking
+        html += `<div class="tracking-card"><div class="tracking-header" style="background:linear-gradient(135deg,#10b981,#059669)"><span class="tracking-icon">🗑️</span><span class="tracking-title">Waste Tracking</span><span class="badge badge--needs-improvement" style="font-size:.75rem;">Actual</span></div><div class="tracking-body">`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Avg Waste %</span><span class="tracking-value">${items.length?(items.reduce((a,b)=>a+b.waste,0)/items.length).toFixed(1):'0.0'}%</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">High Waste (>=5%)</span><span class="tracking-value">${highWaste.length}</span></div>`;
+        html += '</div></div>';
+
+        // Portion Control
+        html += `<div class="tracking-card"><div class="tracking-header" style="background:linear-gradient(135deg,#10b981,#06b6d4)"><span class="tracking-icon">⚖️</span><span class="tracking-title">Portion Control</span><span class="badge badge--acceptable" style="font-size:.75rem;">Actual</span></div><div class="tracking-body">`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Items With Portion Info</span><span class="tracking-value">${portionInfoCount}</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Standardization Needed</span><span class="tracking-value">${standardizationNeeded}</span></div>`;
+        html += '</div></div>';
+
+        // Recipe Costing Opportunities
+        html += `<div class="tracking-card"><div class="tracking-header" style="background:linear-gradient(135deg,#10b981,#22c55e)"><span class="tracking-icon">📋</span><span class="tracking-title">Recipe Costing Opportunities</span><span class="badge badge--acceptable" style="font-size:.75rem;">Actual</span></div><div class="tracking-body">`;
+        html += `<div class="tracking-metric"><span class="tracking-label">High Cost & Low Sales</span><span class="tracking-value">${highCostLowQty.length}</span></div>`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Avg Cost/Item</span><span class="tracking-value">$${avgCost.toFixed(2)}</span></div>`;
+        html += '</div></div>';
+
+        // Description Optimization
+        html += `<div class="tracking-card"><div class="tracking-header" style="background:linear-gradient(135deg,#10b981,#3b82f6)"><span class="tracking-icon">📝</span><span class="tracking-title">Description Optimization</span><span class="badge badge--acceptable" style="font-size:.75rem;">Actual</span></div><div class="tracking-body">`;
+        html += `<div class="tracking-metric"><span class="tracking-label">Items Needing Description</span><span class="tracking-value">${needsDescription.length}</span></div>`;
+        html += '</div></div>';
+
+        html += '</div></div>';
 
         html += '</div>';
         return html;
@@ -778,7 +920,7 @@
             // Hint task based on detected CSV type
             const task = selectedCsvType === 'product_mix' ? 'product_mix'
                         : selectedCsvType === 'pricing' ? 'pricing'
-                        : selectedCsvType === 'optimization' ? 'design'
+                        : selectedCsvType === 'optimization' ? 'optimization'
                         : 'menu_engineering';
             formData.append('task', task);
             formData.append('file', selectedFile);
@@ -808,7 +950,47 @@
             return;
           }
 
-          // No attachment → standard chat API
+          // No attachment → prefer agent API when we can parse labeled inputs
+          if (selectedKind === 'menu') {
+            const items = parseLabeledMenuItems(message);
+            if (items.length) {
+              const payload = { task: 'pmix_report', payload: { items } };
+              const response = await fetch('/api/agent/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+                body: JSON.stringify(payload)
+              });
+              const data = await response.json();
+              if (data.business_report_html) {
+                addMessage(data.business_report_html, false);
+              } else {
+                addMessage(formatProductMixReport(data), false);
+              }
+              return;
+            }
+          }
+
+          if (selectedKind === 'pricing') {
+            const rows = parseLabeledPricingRows(message);
+            if (rows.length) {
+              const columns = ['item_name','item_price','item_cost','competitor_price','target_food_cost_percent'];
+              const html = generatePricingReportFromCsv(rows, columns);
+              addMessage(html, false);
+              return;
+            }
+          }
+
+          if (selectedKind === 'optimization') {
+            const rows = parseLabeledOptimizationRows(message);
+            if (rows.length) {
+              const columns = ['item_name','quantity_sold','item_cost','portion_size','portion_cost','waste_percent','description'];
+              const html = generateItemOptimizationReportFromCsv(rows, columns);
+              addMessage(html, false);
+              return;
+            }
+          }
+
+          // Fallback to chat API if we cannot parse structured input
           const response = await fetch('/chat/api/', {
             method: 'POST',
             headers: {
@@ -883,7 +1065,7 @@
           html += '<h3 style="color: #667eea; margin: 1.5rem 0 1rem;">🎯 Menu Engineering Matrix</h3><div class="kpi-grid">';
           const matrixItems = [
             { label: 'Stars', value: m['Stars'] || 0, icon: '⭐', desc: 'High Profit, High Sales', color: '#10b981' },
-            { label: 'Plowhorses', value: m['Plowhorses'] || 0, icon: '🐴', desc: 'Low Profit, High Sales', color: '#f59e0b' },
+            { label: 'Plowhorses', value: m['Plowhorses'] || 0, icon: '🐴', desc: 'Low Profit, High Sales', color: '#10b981' },
             { label: 'Puzzles', value: m['Puzzles'] || 0, icon: '🧩', desc: 'High Profit, Low Sales', color: '#3b82f6' },
             { label: 'Dogs', value: m['Dogs'] || 0, icon: '🐕', desc: 'Low Profit, Low Sales', color: '#ef4444' }
           ];
@@ -1016,17 +1198,17 @@
           <div class="report"><div class="report__header"><h2>🛠️ Improve Underperforming Items</h2>
           <div class="report__meta">Recipe costing • Portion control • Description optimization</div></div>
           <div class="report__body">
-            <h3 style="color:#f59e0b;">What You'll Get</h3>
+            <h3 style="color:#10b981;">What You'll Get</h3>
             <ul style="margin:0 0 1rem 1rem; color:#555;">
               <li>Cost drivers and portion standardization opportunities</li>
               <li>Waste hotspots and action items</li>
               <li>Menu description improvements to boost conversion</li>
             </ul>
-            <h3 style="color:#f59e0b;">📋 Recipe Costing</h3>
+            <h3 style="color:#10b981;">📋 Recipe Costing</h3>
             <p>Ingredient breakdowns to reduce cost while maintaining quality.</p>
-            <h3 style="color:#f59e0b;">⚖️ Portion Control</h3>
+            <h3 style="color:#10b981;">⚖️ Portion Control</h3>
             <p>Standardize portion sizes to stabilize margins and consistency.</p>
-            <h3 style="color:#f59e0b;">📝 Description Optimization</h3>
+            <h3 style="color:#10b981;">📝 Description Optimization</h3>
             <p>Enhance menu language to boost appeal and conversion.</p>
           </div></div>`;
       }
@@ -1049,34 +1231,22 @@
         if (kind === 'menu') {
           return [
             'Analyze my menu analysis.',
-            'CSV Columns: item_name, quantity_sold, price, cost',
-            'CSV Sample:',
-            'item_name,quantity_sold,price,cost',
-            'Grilled Salmon,85,28,8',
-            'Ribeye Steak,72,42,17',
-            'Please include Sales mix analysis, Contribution margins, and Menu matrix mapping.'
+            'Item: Chicken Biryani. Quantity Sold: 125. Price: $19.00. Cost: $6.20. Revenue: $2,375.00. Profit: $1,580.00. Category: Entrees. Food Cost %: 32.6%. Contribution Margin %: 67.4%.',
+            'Include: Sales mix analysis; Contribution margins; Menu matrix mapping.'
           ].join('\n');
         }
         if (kind === 'pricing') {
           return [
             'Analyze my pricing strategy.',
-            'CSV Columns: item_name,item_price,item_cost,competitor_price,target_food_cost_percent',
-            'CSV Sample:',
-            'item_name,item_price,item_cost,competitor_price,target_food_cost_percent',
-            'Margherita Pizza,18,5.5,16,32',
-            'Pepperoni Pizza,22,5.0,20,32',
-            'Focus on price elasticity, competitive analysis, and profit maximization.'
+            'Item: Margherita Pizza. Item Price: $18.00. Item Cost: $5.50. Competitor Price: $16.00. Target Food Cost Percent: 32%. Elasticity Index: 1.2. Category: Pizza.',
+            'Focus on: Price elasticity; Competitive analysis; Profit maximization.'
           ].join('\n');
         }
         // optimization
         return [
           'Analyze my item optimization.',
-          'CSV Columns: item_name,quantity_sold,item_cost,portion_size,portion_cost,waste_percent,description',
-          'CSV Sample:',
-          'item_name,quantity_sold,item_cost,portion_size,portion_cost,waste_percent,description',
-          'Veggie Wrap,12,3.5,220g,1.20,8,"Fresh seasonal vegetables in a spinach wrap"',
-          'Soup of Day,15,2.2,300ml,0.90,5,"Chef’s daily creation"',
-          'Include recipe costing, portion control, and description optimization.'
+          'Item: Veggie Wrap. Quantity Sold: 12. Item Cost: $3.50. Portion Size: 220g. Portion Cost: $1.20. Waste Percent: 8%. Recipe Ingredients: Spinach wrap; seasonal vegetables; dressing. Description: Fresh seasonal vegetables in a spinach wrap.',
+          'Include: Recipe costing; Portion control; Description optimization.'
         ].join('\n');
       }
 

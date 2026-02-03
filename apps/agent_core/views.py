@@ -188,6 +188,18 @@ def agent_view(request: HttpRequest) -> JsonResponse:
                 result = process_csv_data(uploaded_file)
                 status_code = 400 if result.get("status") == "error" else 200
                 return JsonResponse(result, status=status_code)
+            elif task == "pricing":
+                # CSV-based pricing strategy analysis
+                from backend.consulting_services.menu.pricing_csv_processor import process_pricing_csv_data
+                result = process_pricing_csv_data(uploaded_file)
+                status_code = 400 if result.get("status") == "error" else 200
+                return JsonResponse(result, status=status_code)
+            elif task == "design":
+                # CSV-based menu design recommendations (matrix mapping)
+                from backend.consulting_services.menu.design_csv_processor import process_design_csv_data
+                result = process_design_csv_data(uploaded_file)
+                status_code = 400 if result.get("status") == "error" else 200
+                return JsonResponse(result, status=status_code)
             elif task == "kpi_analysis":
                 from backend.consulting_services.kpi.kpi_utils import process_kpi_csv_data
                 result = process_kpi_csv_data(uploaded_file)
@@ -196,6 +208,12 @@ def agent_view(request: HttpRequest) -> JsonResponse:
             elif task == "recipe_management":
                 from backend.consulting_services.recipe.analysis_functions import process_recipe_csv_data
                 result = process_recipe_csv_data(uploaded_file)
+                status_code = 400 if result.get("status") == "error" else 200
+                return JsonResponse(result, status=status_code)
+            elif task == "optimization":
+                # CSV-based item optimization analysis
+                from backend.consulting_services.menu.optimization_csv_processor import process_optimization_csv_data
+                result = process_optimization_csv_data(uploaded_file)
                 status_code = 400 if result.get("status") == "error" else 200
                 return JsonResponse(result, status=status_code)
             elif task in ["hr_retention", "hr_scheduling", "hr_performance", "hr_analysis"]:

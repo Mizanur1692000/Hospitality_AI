@@ -332,20 +332,27 @@ def process_csv_data(csv_file) -> Dict[str, Any]:
 
 
 def generate_pmix_report(items):
+    """Generate Product Mix report and a comprehensive business report.
+
+    Returns data including:
+    - pmix_report: per-item margins and total profit
+    - business_report_html: detailed report with Sales Mix, Contribution Margins, and Menu Matrix mapping
+    """
     report = []
 
+    # Build base per-item metrics
     for item in items:
         name = item.get("name")
-        qty = item.get("quantity_sold", 0)
-        price = item.get("price", 0.0)
-        cost = item.get("cost", 0.0)
+        qty = float(item.get("quantity_sold", 0) or 0)
+        price = float(item.get("price", 0.0) or 0.0)
+        cost = float(item.get("cost", 0.0) or 0.0)
         margin = price - cost
         total_profit = qty * margin
 
         report.append(
             {
                 "name": name,
-                "quantity_sold": qty,
+                "quantity_sold": int(qty),
                 "price": price,
                 "cost": cost,
                 "contribution_margin": round(margin, 2),
@@ -353,6 +360,148 @@ def generate_pmix_report(items):
             }
         )
 
+    # Sort by profit for top items table
     report.sort(key=lambda x: x["total_profit"], reverse=True)
 
-    return {"status": "success", "pmix_report": report}
+    # Aggregate totals for Sales Mix and Contribution metrics
+    total_revenue = sum((r["price"] * r["quantity_sold"]) for r in report)
+    total_cost = sum((r["cost"] * r["quantity_sold"]) for r in report)
+    total_profit = sum(r["total_profit"] for r in report)
+    total_items = len(report)
+    avg_margin = (sum(r.get("contribution_margin", 0.0) for r in report) / total_items) if total_items > 0 else 0.0
+    avg_food_cost_pct = (
+        sum(((r.get("cost", 0.0) / max(r.get("price", 0.0), 1e-6)) * 100.0) for r in report) / total_items
+    ) if total_items > 0 else 0.0
+
+    # Popularity threshold: average quantity sold
+    avg_qty = (sum(r.get("quantity_sold", 0) for r in report) / total_items) if total_items > 0 else 0.0
+
+    # Quadrant classification (Menu Engineering Matrix)
+    stars = [r for r in report if r["quantity_sold"] >= avg_qty and r["contribution_margin"] >= avg_margin]
+    plowhorses = [r for r in report if r["quantity_sold"] >= avg_qty and r["contribution_margin"] < avg_margin]
+    puzzles = [r for r in report if r["quantity_sold"] < avg_qty and r["contribution_margin"] >= avg_margin]
+    dogs = [r for r in report if r["quantity_sold"] < avg_qty and r["contribution_margin"] < avg_margin]
+
+    # Performance rating
+    star_percent = (len(stars) / total_items * 100.0) if total_items > 0 else 0.0
+    dog_percent = (len(dogs) / total_items * 100.0) if total_items > 0 else 0.0
+    if star_percent >= 30 and dog_percent <= 15:
+        performance_rating = "Excellent"
+        perf_color = "blue"
+    elif star_percent >= 20 and dog_percent <= 25:
+        performance_rating = "Good"
+        perf_color = "green"
+    elif star_percent >= 10 and dog_percent <= 35:
+        performance_rating = "Acceptable"
+        perf_color = "orange"
+    else:
+        performance_rating = "Needs Improvement"
+        perf_color = "red"
+
+    # Sales Mix details
+    # Sort by revenue for share calculations
+    by_revenue = sorted(report, key=lambda x: (x["price"] * x["quantity_sold"]), reverse=True)
+    top1_rev = (by_revenue[0]["price"] * by_revenue[0]["quantity_sold"]) if by_revenue else 0.0
+    top5_rev = sum((r["price"] * r["quantity_sold"]) for r in by_revenue[:5]) if by_revenue else 0.0
+    sales_mix = {
+        "Total Revenue": total_revenue,
+        "Top Item Share %": (top1_rev / total_revenue * 100.0) if total_revenue > 0 else 0.0,
+        "Top 5 Items Share %": (top5_rev / total_revenue * 100.0) if total_revenue > 0 else 0.0,
+        "Items": total_items,
+        "Rating": performance_rating,
+        "data_source": "Actual" if total_revenue > 0 else "Estimated",
+    }
+
+    # Contribution Margin analysis
+    cm_percent_overall = ((total_revenue - total_cost) / total_revenue * 100.0) if total_revenue > 0 else 0.0
+    cm_analysis = {
+        "Average CM ($)": avg_margin,
+        "Average Food Cost %": avg_food_cost_pct,
+        "Contribution Margin % (Overall)": cm_percent_overall,
+        "Total Profit": total_profit,
+        "Items": total_items,
+        "data_source": "Actual" if total_revenue > 0 else "Estimated",
+    }
+
+    # Menu Matrix mapping summary
+    matrix_summary = {
+        "Stars": len(stars),
+        "Plowhorses": len(plowhorses),
+        "Puzzles": len(puzzles),
+        "Dogs": len(dogs),
+        "Stars %": star_percent,
+        "Dogs %": dog_percent,
+        "Rating": performance_rating,
+        "data_source": "Actual",
+    }
+
+    # Metrics for key metrics section
+    metrics = {
+        "Total Menu Items": total_items,
+        "Total Revenue": total_revenue,
+        "Total Profit": total_profit,
+        "Average Contribution Margin": avg_margin,
+        "Average Food Cost Percent": avg_food_cost_pct,
+        "Stars": len(stars),
+        "Plowhorses": len(plowhorses),
+        "Puzzles": len(puzzles),
+        "Dogs": len(dogs),
+    }
+
+    # Recommendations
+    recommendations = []
+    if len(stars) > 0:
+        recommendations.append(
+            f"Promote your {len(stars)} Star items — they are high profit and popular."
+        )
+    if len(plowhorses) > 0:
+        recommendations.append(
+            f"Reduce food cost for {len(plowhorses)} Plowhorse items to improve margin while maintaining sales."
+        )
+    if len(puzzles) > 0:
+        recommendations.append(
+            f"Increase awareness and positioning for {len(puzzles)} Puzzle items to lift sales."
+        )
+    if len(dogs) > 0:
+        recommendations.append(
+            f"Minimize, reposition, or remove {len(dogs)} Dog items due to low profit and sales."
+        )
+    if not recommendations:
+        recommendations.append("Menu performance looks balanced. Maintain pricing and monitor trends.")
+
+    # Benchmarks
+    benchmarks = {
+        "Food Cost %": "28-35% (Restaurant Industry Standard)",
+        "Contribution Margin": "65-72% (Optimal Range)",
+        "Stars Distribution": "25-35% of menu items (Ideal)",
+        "Dogs Distribution": "< 15% of menu items (Maximum Acceptable)",
+    }
+
+    # Additional sections for tracking cards
+    additional_sections = {
+        "Revenue Mix": sales_mix,              # renders as Revenue Analysis card
+        "Contribution Margin Analysis": cm_analysis,
+        "Menu Matrix Mapping": matrix_summary,
+    }
+
+    # Build comprehensive business report HTML
+    from backend.consulting_services.kpi.kpi_utils import format_business_report
+    business_report = format_business_report(
+        analysis_type="Comprehensive Menu Performance Review",
+        metrics=metrics,
+        performance={"rating": performance_rating, "color": perf_color},
+        recommendations=recommendations,
+        benchmarks=benchmarks,
+        additional_data=additional_sections,
+    )
+
+    return {
+        "status": "success",
+        "analysis_type": business_report["analysis_type"],
+        "business_report": business_report["business_report"],
+        "business_report_html": business_report["business_report_html"],
+        "performance_rating": performance_rating,
+        "metrics": metrics,
+        "recommendations": recommendations,
+        "pmix_report": report,
+    }

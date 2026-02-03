@@ -218,6 +218,16 @@ def format_business_report(analysis_type, metrics, performance, recommendations,
     def li_items(lines):  # helper for <ul>
         return "".join(f"<li>{line}</li>" for line in lines)
     
+    # Choose tracking header theme based on performance color
+    perf_color = performance.get('color', 'blue') if isinstance(performance, dict) else 'blue'
+    tracking_gradient = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+    if perf_color == 'green':
+        tracking_gradient = "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+    elif perf_color == 'orange':
+        tracking_gradient = "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)"
+    elif perf_color == 'red':
+        tracking_gradient = "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+
     def format_tracking_section(title, data, icon="📊"):
         """Format a tracking section with proper HTML styling"""
         if not data or not isinstance(data, dict):
@@ -333,12 +343,12 @@ def format_business_report(analysis_type, metrics, performance, recommendations,
     badge_class = rating.lower().replace(' ', '-').replace('_', '-')
 
     # Add CSS styles for tracking sections
-    tracking_styles = '''<style>
+    tracking_styles = f'''<style>
     .tracking-section { margin: 1.5rem 0; }
     .tracking-section h3 { color: #1e293b; margin-bottom: 1rem; font-size: 1.1rem; }
     .tracking-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
     .tracking-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 1px solid rgba(102, 126, 234, 0.15); overflow: hidden; }
-    .tracking-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .tracking-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: {tracking_gradient}; color: white; }
     .tracking-icon { font-size: 1.2rem; }
     .tracking-title { font-weight: 600; flex: 1; }
     .tracking-body { padding: 1rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
