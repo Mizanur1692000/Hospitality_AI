@@ -280,6 +280,8 @@ def format_business_report(analysis_type, metrics, performance, recommendations,
                 {''.join(metric_items)}
             </div>
         </div>'''
+
+    # (Removed temporary KPI grid; reverting to original design)
     
     # Build tracking sections HTML
     tracking_html = ""
@@ -344,19 +346,19 @@ def format_business_report(analysis_type, metrics, performance, recommendations,
 
     # Add CSS styles for tracking sections
     tracking_styles = f'''<style>
-    .tracking-section { margin: 1.5rem 0; }
-    .tracking-section h3 { color: #1e293b; margin-bottom: 1rem; font-size: 1.1rem; }
-    .tracking-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
-    .tracking-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 1px solid rgba(102, 126, 234, 0.15); overflow: hidden; }
-    .tracking-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: {tracking_gradient}; color: white; }
-    .tracking-icon { font-size: 1.2rem; }
-    .tracking-title { font-weight: 600; flex: 1; }
-    .tracking-body { padding: 1rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-    .tracking-metric { display: flex; flex-direction: column; padding: 0.5rem; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
-    .tracking-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    .tracking-value { font-size: 1.1rem; font-weight: 600; color: #1e293b; }
+    .tracking-section {{ margin: 1.5rem 0; }}
+    .tracking-section h3 {{ color: #1e293b; margin-bottom: 1rem; font-size: 1.1rem; }}
+    .tracking-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }}
+    .tracking-card {{ background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 1px solid rgba(102, 126, 234, 0.15); overflow: hidden; }}
+    .tracking-header {{ display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: {tracking_gradient}; color: white; }}
+    .tracking-icon {{ font-size: 1.2rem; }}
+    .tracking-title {{ font-weight: 600; flex: 1; }}
+    .tracking-body {{ padding: 1rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }}
+    .tracking-metric {{ display: flex; flex-direction: column; padding: 0.5rem; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }}
+    .tracking-label {{ font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }}
+    .tracking-value {{ font-size: 1.1rem; font-weight: 600; color: #1e293b; }}
     </style>'''
-    
+
     business_report_html = f"""{tracking_styles}<section class="report"><header class="report__header"><h2>{analysis_type}</h2><div class="report__meta">Generated: {current_date}</div><div class="badge badge--{badge_class}">{rating}</div></header><article class="report__body"><p class="lead">This {analysis_type.lower()} reveals <strong>{tone}</strong> performance metrics that <strong>{comp}</strong> industry standards.</p><h3>Key Performance Metrics</h3><ul>{li_items(key_metrics_lines)}</ul>{f"<h3>Industry Benchmarks</h3><ul>{li_items(bench_lines)}</ul>" if bench_lines else ""}{tracking_html}{other_insights_html}<h3>Strategic Recommendations</h3><ol>{''.join(f'<li>{r}</li>' for r in recommendations)}</ol></article></section>"""
 
     return {
@@ -1722,8 +1724,11 @@ def calculate_liquor_cost_analysis(expected_oz, actual_oz, liquor_cost, total_sa
 
     business_report_html = business_report_result.get("business_report_html", "")
     business_report = business_report_result.get("business_report", "")
+    analysis_type = business_report_result.get("analysis_type", "Liquor Cost Analysis")
 
     return {
+        "status": "success",
+        "analysis_type": analysis_type,
         "metrics": metrics,
         "performance": performance,
         "recommendations": recommendations,
@@ -1851,8 +1856,11 @@ def calculate_inventory_analysis(current_stock, reorder_point, monthly_usage, in
 
     business_report_html = business_report_result.get("business_report_html", "")
     business_report = business_report_result.get("business_report", "")
+    analysis_type = business_report_result.get("analysis_type", "Bar Inventory Analysis")
 
     return {
+        "status": "success",
+        "analysis_type": analysis_type,
         "metrics": metrics,
         "performance": performance,
         "recommendations": recommendations,
@@ -1991,8 +1999,11 @@ def calculate_pricing_analysis(drink_price, cost_per_drink, sales_volume, compet
 
     business_report_html = business_report_result.get("business_report_html", "")
     business_report = business_report_result.get("business_report", "")
+    analysis_type = business_report_result.get("analysis_type", "Beverage Pricing Analysis")
 
     return {
+        "status": "success",
+        "analysis_type": analysis_type,
         "metrics": metrics,
         "performance": performance,
         "recommendations": recommendations,

@@ -12,7 +12,10 @@ from backend.consulting_services.kpi.kpi_utils import (
     calculate_kpi_summary,
     calculate_labor_cost_analysis,
     calculate_prime_cost_analysis,
-    calculate_sales_performance_analysis
+    calculate_sales_performance_analysis,
+    calculate_liquor_cost_analysis,
+    calculate_inventory_analysis,
+    calculate_pricing_analysis
 )
 from backend.consulting_services.kpi.legacy_labor import calculate_labor_cost
 from backend.consulting_services.inventory.liquor import calculate_liquor_variance
@@ -92,6 +95,37 @@ class SalesPerformanceAnalysisSchema(BaseModel):
     food_cost: float
     hours_worked: float
     previous_sales: float = None
+
+
+class LiquorCostAnalysisSchema(BaseModel):
+    expected_oz: float
+    actual_oz: float
+    liquor_cost: float
+    total_sales: float
+    bottle_cost: float = 0.0
+    bottle_size_oz: float = 25.0
+    target_cost_percentage: float = 20.0
+
+
+class BarInventoryAnalysisSchema(BaseModel):
+    current_stock: float
+    reorder_point: float
+    monthly_usage: float
+    inventory_value: float
+    lead_time_days: float = 7.0
+    safety_stock: float = 0.0
+    item_cost: float = 0.0
+    target_turnover: float = 12.0
+
+
+class BeveragePricingAnalysisSchema(BaseModel):
+    drink_price: float
+    cost_per_drink: float
+    sales_volume: float
+    competitor_price: float
+    target_margin: float = 75.0
+    market_position: str = "premium"
+    elasticity_factor: float = 1.5
 
 
 # Task definitions mapping
@@ -176,5 +210,48 @@ TASK_DEFINITIONS: Dict[str, TaskDefinition] = {
         schema=SalesPerformanceAnalysisSchema,
         requires_entitlement=True,
         description="Comprehensive sales performance analysis"
+    ),
+    "liquor_cost_analysis": TaskDefinition(
+        runner=lambda data: calculate_liquor_cost_analysis(
+            data.expected_oz,
+            data.actual_oz,
+            data.liquor_cost,
+            data.total_sales,
+            data.bottle_cost,
+            data.bottle_size_oz,
+            data.target_cost_percentage
+        ),
+        schema=LiquorCostAnalysisSchema,
+        requires_entitlement=False,
+        description="Liquor cost variance and waste analysis with business report"
+    ),
+    "bar_inventory_analysis": TaskDefinition(
+        runner=lambda data: calculate_inventory_analysis(
+            data.current_stock,
+            data.reorder_point,
+            data.monthly_usage,
+            data.inventory_value,
+            data.lead_time_days,
+            data.safety_stock,
+            data.item_cost,
+            data.target_turnover
+        ),
+        schema=BarInventoryAnalysisSchema,
+        requires_entitlement=False,
+        description="Bar inventory stock, reorder, and valuation analysis"
+    ),
+    "beverage_pricing_analysis": TaskDefinition(
+        runner=lambda data: calculate_pricing_analysis(
+            data.drink_price,
+            data.cost_per_drink,
+            data.sales_volume,
+            data.competitor_price,
+            data.target_margin,
+            data.market_position,
+            data.elasticity_factor
+        ),
+        schema=BeveragePricingAnalysisSchema,
+        requires_entitlement=False,
+        description="Beverage pricing margin, competitive position, and revenue optimization"
     ),
 }

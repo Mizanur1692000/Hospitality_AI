@@ -245,11 +245,71 @@ def agent_view(request: HttpRequest) -> JsonResponse:
                 result = process_cost_csv_data(uploaded_file, analysis_type)
                 status_code = 400 if result.get("status") == "error" else 200
                 return JsonResponse(result, status=status_code)
+            elif task in ["liquor_cost_analysis", "bar_inventory_analysis", "beverage_pricing_analysis"]:
+                # Try the selected beverage processor; on column errors, auto-detect and fallback
+                def _try_processor(proc_func):
+                    # Ensure we reset file pointer between reads
+                    try:
+                        uploaded_file.seek(0)
+                    except Exception:
+                        pass
+                    res = proc_func(uploaded_file)
+                    return res
+
+                result = None
+                if task == "liquor_cost_analysis":
+                    from backend.consulting_services.beverage.liquor_cost_csv_processor import process_liquor_cost_csv_data
+                    result = _try_processor(process_liquor_cost_csv_data)
+                elif task == "bar_inventory_analysis":
+                    from backend.consulting_services.beverage.bar_inventory_csv_processor import process_bar_inventory_csv_data
+                    result = _try_processor(process_bar_inventory_csv_data)
+                elif task == "beverage_pricing_analysis":
+                    from backend.consulting_services.beverage.beverage_pricing_csv_processor import process_beverage_pricing_csv_data
+                    result = _try_processor(process_beverage_pricing_csv_data)
+
+                # If missing columns error, auto-detect based on CSV headers
+                if result and result.get("status") == "error" and "Missing required columns" in (result.get("message") or ""):
+                    import pandas as pd
+                    try:
+                        uploaded_file.seek(0)
+                    except Exception:
+                        pass
+                    try:
+                        df = pd.read_csv(uploaded_file)
+                        cols = [c.lower().strip() for c in df.columns]
+                        def has_all(keys):
+                            return all(k in cols for k in keys)
+                        # Decide which processor matches the CSV
+                        if has_all(["expected_oz", "actual_oz", "liquor_cost", "total_sales"]):
+                            from backend.consulting_services.beverage.liquor_cost_csv_processor import process_liquor_cost_csv_data
+                            uploaded_file.seek(0)
+                            result = process_liquor_cost_csv_data(uploaded_file)
+                        elif has_all(["current_stock", "reorder_point", "monthly_usage", "inventory_value"]):
+                            from backend.consulting_services.beverage.bar_inventory_csv_processor import process_bar_inventory_csv_data
+                            uploaded_file.seek(0)
+                            result = process_bar_inventory_csv_data(uploaded_file)
+                        elif has_all(["drink_price", "cost_per_drink", "sales_volume", "competitor_price"]):
+                            from backend.consulting_services.beverage.beverage_pricing_csv_processor import process_beverage_pricing_csv_data
+                            uploaded_file.seek(0)
+                            result = process_beverage_pricing_csv_data(uploaded_file)
+                        else:
+                            # Fallback to general cost auto-detection
+                            from backend.consulting_services.cost.cost_csv_processor import process_cost_csv_data
+                            uploaded_file.seek(0)
+                            result = process_cost_csv_data(uploaded_file, "auto")
+                    except Exception as e:
+                        result = {
+                            "status": "error",
+                            "message": f"Failed to auto-detect beverage CSV type: {str(e)}"
+                        }
+
+                status_code = 400 if (result or {}).get("status") == "error" else 200
+                return JsonResponse(result or {"status": "error", "message": "Unknown CSV processing error"}, status=status_code)
             else:
                 return build_error_response(
                     ErrorCodes.UNKNOWN_TASK,
                     f"File upload not supported for task: {task}",
-                    details={"supported_tasks": ["product_mix", "kpi_analysis", "recipe_management", "hr_retention", "hr_scheduling", "hr_performance", "hr_analysis", "labor_cost", "food_cost", "prime_cost", "liquor_cost", "beverage_cost", "liquor_variance", "cost_analysis"]}
+                    details={"supported_tasks": ["product_mix", "kpi_analysis", "recipe_management", "hr_retention", "hr_scheduling", "hr_performance", "hr_analysis", "labor_cost", "food_cost", "prime_cost", "liquor_cost", "beverage_cost", "liquor_variance", "cost_analysis", "liquor_cost_analysis", "bar_inventory_analysis", "beverage_pricing_analysis"]}
                 )
         except Exception as e:
             trace_id = uuid4().hex

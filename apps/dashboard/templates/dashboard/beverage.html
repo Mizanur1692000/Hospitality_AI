@@ -372,16 +372,16 @@
         <div class="messages-area" id="messages-area">
           <div class="message assistant">
             <div class="message-bubble">Hello! I'm here to help you optimize your bar operations. <strong>To get accurate analysis, please provide your data</strong>:<br><br>
-              <strong>🍸 Liquor Cost Analysis:</strong><br>
+              <strong>🍸 Liquor Cost Analysis (CSV columns):</strong><br>
               • Required: expected_oz, actual_oz, liquor_cost, total_sales<br>
               • Optional: bottle_cost, bottle_size_oz, target_cost_percentage<br><br>
-              <strong>📦 Bar Inventory:</strong><br>
+              <strong>📦 Bar Inventory (CSV columns):</strong><br>
               • Required: current_stock, reorder_point, monthly_usage, inventory_value<br>
               • Optional: lead_time_days, safety_stock, item_cost, target_turnover<br><br>
-              <strong>💰 Beverage Pricing:</strong><br>
+              <strong>💰 Beverage Pricing (CSV columns):</strong><br>
               • Required: drink_price, cost_per_drink, sales_volume, competitor_price<br>
               • Optional: target_margin, market_position, elasticity_factor<br><br>
-              Click the quick action buttons above to see example prompts with sample data.</div>
+              Click the quick action cards above to insert a structured example. I’ll return a formatted HTML report.</div>
             <div class="message-time">Just now</div>
           </div>
         </div>
@@ -413,6 +413,7 @@
       const chatInput = document.getElementById('chat-input');
       const fileInput = document.getElementById('file-input');
       const uploadButton = document.getElementById('upload-button');
+      let currentCsvTask = 'liquor_cost_analysis';
 
       function getCookie(name) {
         const value = `; ${document.cookie}`;
@@ -443,7 +444,7 @@
         addMessage(`📁 Uploading: ${file.name}`, true);
         
         const formData = new FormData();
-        formData.append('task', 'liquor_variance');
+        formData.append('task', currentCsvTask);
         formData.append('file', file);
 
         try {
@@ -459,7 +460,7 @@
           } else if (data.status === 'error') {
             addMessage(`❌ ${data.message}\n\n${data.help || ''}`, false);
           } else {
-            formatCostResponse(data);
+            formatBeverageResponse(data);
           }
         } catch (error) {
           addMessage(`❌ Error uploading file: ${error.message}`, false);
@@ -467,6 +468,97 @@
         
         fileInput.value = '';
       });
+
+      function parseLabeledBlocks(text) {
+        // Support both newline-separated and comma-separated key: value pairs
+        const obj = {};
+        const cleaned = text.replace(/^[A-Za-z ]+:\s*/i, ''); // remove leading "Analysis:" header
+        const pairs = [];
+        const regex = /([A-Za-z][A-Za-z ]*?):\s*([^,;\n]+)(?:[,;]|\n|$)/g;
+        let match;
+        while ((match = regex.exec(cleaned)) !== null) {
+          pairs.push([match[1], match[2]]);
+        }
+        if (pairs.length === 0) {
+          const lines = cleaned.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          for (const line of lines) {
+            const m = line.match(/^([A-Za-z ][A-Za-z ]*?):\s*(.+)$/);
+            if (m) pairs.push([m[1], m[2]]);
+          }
+        }
+        for (const [rawKey, rawVal] of pairs) {
+          const key = rawKey.toLowerCase().replace(/\s+/g, '_');
+          let val = String(rawVal).trim();
+          const num = parseFloat(val.replace(/\$/g,'').replace(/%/g,'').replace(/,/g,''));
+          if (!isNaN(num) && /[\d\.]/.test(val)) {
+            obj[key] = num;
+          } else {
+            obj[key] = val;
+          }
+        }
+        return obj;
+      }
+
+      async function tryBeverageAgent(message) {
+        // Detect which card payload this is
+        const lower = message.toLowerCase();
+        const data = parseLabeledBlocks(message);
+        // Liquor Cost
+        const hasLiquor = ['expected_oz','actual_oz','liquor_cost','total_sales'].every(k => k in data);
+        const hasInventory = ['current_stock','reorder_point','monthly_usage','inventory_value'].every(k => k in data);
+        const hasPricing = ['drink_price','cost_per_drink','sales_volume','competitor_price'].every(k => k in data);
+
+        let task = null;
+        let payload = null;
+        if (hasLiquor) {
+          task = 'liquor_cost_analysis';
+          payload = {
+            expected_oz: data.expected_oz,
+            actual_oz: data.actual_oz,
+            liquor_cost: data.liquor_cost,
+            total_sales: data.total_sales,
+            bottle_cost: data.bottle_cost || 0.0,
+            bottle_size_oz: data.bottle_size_oz || 25.0,
+            target_cost_percentage: data.target_cost_percentage || 20.0,
+          };
+        } else if (hasInventory) {
+          task = 'bar_inventory_analysis';
+          payload = {
+            current_stock: data.current_stock,
+            reorder_point: data.reorder_point,
+            monthly_usage: data.monthly_usage,
+            inventory_value: data.inventory_value,
+            lead_time_days: data.lead_time_days || 7.0,
+            safety_stock: data.safety_stock || 0.0,
+            item_cost: data.item_cost || 0.0,
+            target_turnover: data.target_turnover || 12.0,
+          };
+        } else if (hasPricing) {
+          task = 'beverage_pricing_analysis';
+          payload = {
+            drink_price: data.drink_price,
+            cost_per_drink: data.cost_per_drink,
+            sales_volume: data.sales_volume,
+            competitor_price: data.competitor_price,
+            target_margin: data.target_margin || 75.0,
+            market_position: data.market_position || 'premium',
+            elasticity_factor: data.elasticity_factor || 1.5,
+          };
+        } else {
+          return null; // Not a structured beverage task; fall back to chat API
+        }
+
+        const resp = await fetch('/api/agent/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': CSRF_TOKEN,
+          },
+          body: JSON.stringify({ task, payload })
+        });
+        const json = await resp.json();
+        return json;
+      }
 
       window.sendMessage = async function() {
         const message = chatInput.value.trim();
@@ -477,6 +569,16 @@
         chatInput.style.height = 'auto';
 
         try {
+          const agentData = await tryBeverageAgent(message);
+          if (agentData) {
+            if (agentData.status === 'error' || agentData.error) {
+              addMessage(`❌ ${agentData.message || agentData.error}`, false);
+            } else {
+              formatBeverageResponse(agentData);
+            }
+            return;
+          }
+          // Fallback to chat API
           const response = await fetch('/chat/api/', {
             method: 'POST',
             headers: {
@@ -492,29 +594,25 @@
         }
       };
 
-      window.formatCostResponse = function(data) {
-        let html = '<div class="report"><div class="report__header"><h2>📊 Beverage Cost Analysis Results</h2><div class="report__meta">Analysis completed successfully</div></div><div class="report__body">';
-        
-        if (data.summary) {
-          html += '<h3 style="color: #667eea; margin: 0 0 1rem;">📈 Summary Metrics</h3><div class="kpi-grid">';
-          for (const [key, value] of Object.entries(data.summary)) {
-            const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            let displayValue = value;
-            if (typeof value === 'number') {
-              if (key.includes('cost') && !key.includes('percent')) displayValue = '$' + value.toLocaleString();
-              else if (key.includes('percent') || key.includes('rate')) displayValue = value.toFixed(1) + '%';
-              else displayValue = value.toFixed(2);
-            }
-            html += `<div class="kpi-card"><div class="kpi-value">${displayValue}</div><div class="kpi-label">${label}</div></div>`;
-          }
-          html += '</div>';
+      window.formatBeverageResponse = function(data) {
+        // Prefer the backend's comprehensive HTML report to avoid duplicate headers
+        if (data.business_report_html) {
+          addMessage(data.business_report_html, false);
+          return;
         }
-        
+        // Fallback: render a minimal header + plain-text report
+        let title = '📊 Beverage Analysis Results';
+        if (data.analysis_type === 'liquor_cost_analysis' || data.analysis_type === 'Liquor Cost Analysis') title = '🍸 Liquor Cost Analysis';
+        else if (data.analysis_type === 'bar_inventory_analysis' || data.analysis_type === 'Bar Inventory Analysis') title = '📦 Bar Inventory Analysis';
+        else if (data.analysis_type === 'beverage_pricing_analysis' || data.analysis_type === 'Beverage Pricing Analysis') title = '💰 Beverage Pricing Analysis';
+        const rating = data.performance && data.performance.rating ? data.performance.rating : '';
+        const color = data.performance && data.performance.color ? data.performance.color : 'blue';
+        const badgeClass = String(color).toLowerCase();
+        let html = `<section class="report"><header class="report__header"><h2>${title}</h2>${rating ? `<div class="badge badge--${badgeClass}">${rating}</div>` : ''}</header><article class="report__body">`;
         if (data.business_report) {
-          html += `<div class="ai-analysis-section"><h4>Business Report</h4><pre style="white-space: pre-wrap; font-family: inherit; font-size: 0.9rem; line-height: 1.6;">${data.business_report}</pre></div>`;
+          html += `<pre style="white-space: pre-wrap; font-family: inherit; font-size: 0.95rem; line-height: 1.6; margin: 0;">${data.business_report}</pre>`;
         }
-        
-        html += '</div></div>';
+        html += '</article></section>';
         addMessage(html, false);
       };
 
@@ -524,7 +622,12 @@
         
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
-        bubble.innerHTML = content.replace(/\n/g, '<br>');
+        // Avoid injecting <br> into HTML reports; only convert newlines for plain text
+        if (typeof content === 'string' && /<\w+[^>]*>/.test(content)) {
+          bubble.innerHTML = content.trim();
+        } else {
+          bubble.innerHTML = String(content).replace(/\n/g, '<br>');
+        }
         
         const time = document.createElement('div');
         time.className = 'message-time';
@@ -544,28 +647,30 @@
       window.clearChat = function() {
         messagesArea.innerHTML = `
           <div class="message assistant">
-            <div class="message-bubble">Hello! I'm here to help you optimize your bar operations. <strong>To get accurate analysis, please provide your data</strong>:<br><br>
-              <strong>🍷 Liquor Cost Analysis:</strong><br>
-              • Required: total_sales, liquor_cost (or beverage_cost)<br>
-              • Optional: waste_cost, covers, beginning_inventory, ending_inventory<br><br>
-              Upload a CSV file or tell me your numbers. Click the quick action buttons below for examples.</div>
+            <div class="message-bubble">Hello! I'm here to help you optimize your bar operations. <strong>Provide structured inputs or upload CSVs</strong>.<br><br>
+              <strong>🍸 Liquor Cost Analysis (CSV):</strong> expected_oz, actual_oz, liquor_cost, total_sales; optional bottle_cost, bottle_size_oz, target_cost_percentage<br>
+              <strong>📦 Bar Inventory (CSV):</strong> current_stock, reorder_point, monthly_usage, inventory_value; optional lead_time_days, safety_stock, item_cost, target_turnover<br>
+              <strong>💰 Beverage Pricing (CSV):</strong> drink_price, cost_per_drink, sales_volume, competitor_price; optional target_margin, market_position, elasticity_factor</div>
             <div class="message-time">Just now</div>
           </div>
         `;
       };
 
       window.analyzeLiquorCosts = function() {
-        chatInput.value = 'Analyze my liquor cost. Total sales: $15,000. Liquor cost: $3,500. Waste cost: $200. Covers served: 600.';
+        currentCsvTask = 'liquor_cost_analysis';
+        chatInput.value = 'Liquor Cost Analysis:\nExpected oz: 1500, Actual oz: 1650, Liquor cost: $3500, Total sales: $15000, Bottle cost: $25, Bottle size oz: 25, Target cost percentage: 20%';
         chatInput.focus();
       };
 
       window.manageBarInventory = function() {
-        chatInput.value = 'Analyze bar inventory turnover. Total sales: $20,000. Beginning inventory: $5,000. Ending inventory: $4,500. Purchases: $3,000.';
+        currentCsvTask = 'bar_inventory_analysis';
+        chatInput.value = 'Bar Inventory Analysis:\nCurrent stock: 800, Reorder point: 250, Monthly usage: 600, Inventory value: $12500, Lead time days: 7, Safety stock: 100, Item cost: $12.5, Target turnover: 12';
         chatInput.focus();
       };
 
       window.optimizeBeveragePricing = function() {
-        chatInput.value = 'Optimize beverage pricing. Current liquor cost: 23%. Target: 20%. Average drink price: $12. Monthly sales: $25,000.';
+        currentCsvTask = 'beverage_pricing_analysis';
+        chatInput.value = 'Beverage Pricing Analysis:\nDrink price: $12, Cost per drink: $3, Sales volume: 1800, Competitor price: $11, Target margin: 75%, Market position: premium, Elasticity factor: 1.5';
         chatInput.focus();
       };
 
