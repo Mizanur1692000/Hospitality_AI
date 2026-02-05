@@ -681,17 +681,32 @@
         const lower = columns.map(c => c.toLowerCase());
         const has = (key) => lower.some(c => c === key || c.includes(key));
         const hasAny = (...keys) => keys.some(k => has(k));
-        // Prefer item optimization when cost-specific columns exist
-        if (hasAny('item_name','product_name','menu item') && hasAny('quantity_sold','quantity','units sold') && hasAny('item_cost','cost')) {
-          return 'optimization';
-        }
-        // Pricing strategy signature
-        if (hasAny('item_name','menu item') && hasAny('item_price','price') && hasAny('item_cost','cost') && has('competitor_price')) {
+        const hasName = hasAny('item_name', 'product_name', 'menu item');
+        const hasQty = hasAny('quantity_sold', 'quantity', 'units sold');
+        const hasPrice = hasAny('item_price', 'price', 'unit_price');
+        const hasCost = hasAny('item_cost', 'cost');
+        const hasCompetitor = has('competitor_price');
+        const hasOptimizationSignals = hasAny('portion_size', 'portion_cost', 'waste_percent', 'waste %', 'description', 'recipe_ingredients');
+        const hasMenuSignals = hasAny('food_cost_percent', 'food cost %', 'contribution_margin_percent', 'contribution margin %', 'revenue', 'profit', 'category');
+
+        // Pricing strategy signature (most specific)
+        if (hasName && hasPrice && hasCost && hasCompetitor) {
           return 'pricing';
         }
-        // Product mix requires quantity + price
-        if (hasAny('item_name','product_name','menu item') && hasAny('quantity_sold','quantity','units sold') && hasAny('price','unit_price')) {
+
+        // Item optimization (explicit signals win even if price exists)
+        if (hasName && hasQty && hasCost && hasOptimizationSignals) {
+          return 'optimization';
+        }
+
+        // Menu analysis / product mix (prefer when price is present)
+        if (hasName && hasQty && hasPrice) {
           return 'product_mix';
+        }
+
+        // Item optimization (when no price or no menu signals)
+        if (hasName && hasQty && hasCost && (!hasPrice || !hasMenuSignals)) {
+          return 'optimization';
         }
         return 'unknown';
       }
