@@ -449,6 +449,116 @@
       sendButton.addEventListener('click', sendMessage);
       uploadButton.addEventListener('click', () => fileInput.click());
 
+      function normalizeHeader(header) {
+        return header.toLowerCase().trim().replace(/\s+/g, '_');
+      }
+
+      function splitHeaderLine(line) {
+        if (!line) return [];
+        if (line.includes('\t')) return line.split('\t');
+        if (line.includes(';')) return line.split(';');
+        return line.split(',');
+      }
+
+      function hasAll(headers, required) {
+        return required.every(key => headers.includes(key));
+      }
+
+      function hasAny(headers, variants) {
+        return variants.some(v => headers.some(h => h === v || h.includes(v)));
+      }
+
+      function detectCsvTask(headers) {
+        // Beverage
+        if (hasAll(headers, ['expected_oz', 'actual_oz']) && hasAny(headers, ['liquor_cost', 'beverage_cost', 'bar_cost']) && hasAny(headers, ['total_sales', 'sales', 'revenue'])) {
+          return 'liquor_cost_analysis';
+        }
+        if (hasAll(headers, ['current_stock', 'reorder_point', 'monthly_usage', 'inventory_value'])) {
+          return 'bar_inventory_analysis';
+        }
+        if (hasAll(headers, ['drink_price', 'cost_per_drink', 'sales_volume', 'competitor_price'])) {
+          return 'beverage_pricing_analysis';
+        }
+
+        // Strategic planning
+        const hasBusinessGoals = hasAll(headers, ['revenue_target', 'budget_total']);
+        if (hasBusinessGoals) {
+          return 'business_goals';
+        }
+        if (hasAny(headers, ['market_size', 'market_share', 'competition_level', 'investment_budget', 'growth_potential', 'market_penetration', 'target_roi', 'roi_target'])) {
+          return 'growth_strategy';
+        }
+        if (hasAny(headers, ['efficiency_score', 'process_time', 'quality_rating', 'customer_satisfaction', 'cost_per_unit', 'waste_percentage', 'productivity_score', 'industry_benchmark'])) {
+          return 'operational_excellence';
+        }
+        if (hasAny(headers, ['historical_sales', 'current_sales', 'growth_rate', 'seasonal_factor', 'forecast_periods', 'forecast_period'])) {
+          return 'sales_forecasting';
+        }
+
+        // Menu pricing
+        if (hasAll(headers, ['item_name', 'item_price', 'item_cost', 'competitor_price'])) {
+          return 'pricing';
+        }
+
+        // Item optimization (prefer when optimization-specific fields exist)
+        const hasItemName = hasAny(headers, ['item_name', 'menu_item', 'product_name', 'product name', 'item']);
+        const hasQty = hasAny(headers, ['quantity_sold', 'quantity', 'units_sold', 'units sold']);
+        const hasOptSpecific = hasAny(headers, ['portion_size', 'portion_cost', 'waste_percent', 'waste', 'description']);
+        if (hasItemName && hasQty && hasOptSpecific) {
+          return 'optimization';
+        }
+
+        // Menu engineering (product mix)
+        const hasPrice = hasAny(headers, ['price', 'unit_price', 'unit price', 'item_price']);
+        if (hasItemName && hasQty && hasPrice) {
+          return 'product_mix';
+        }
+
+        // Recipe management
+        if (hasAny(headers, ['recipe_name', 'recipe', 'menu_item', 'dish']) && hasAny(headers, ['ingredient_cost', 'portion_cost', 'recipe_price'])) {
+          return 'recipe_management';
+        }
+
+        // KPI analysis
+        if (hasAny(headers, ['date']) && hasAny(headers, ['sales', 'revenue', 'total_sales', 'daily_sales']) && hasAny(headers, ['labor_cost', 'labor', 'wages', 'payroll']) && hasAny(headers, ['food_cost', 'cogs', 'cost_of_goods', 'food']) && hasAny(headers, ['labor_hours', 'hours', 'hours_worked', 'staff_hours', 'labor_hour'])) {
+          return 'kpi_analysis';
+        }
+
+        // HR analysis
+        if (hasAny(headers, ['turnover_rate', 'turnover', 'attrition_rate'])) {
+          return 'hr_retention';
+        }
+        if (hasAny(headers, ['total_sales', 'sales', 'revenue']) && hasAny(headers, ['labor_hours', 'hours_worked', 'hours']) && hasAny(headers, ['hourly_rate', 'pay_rate', 'avg_hourly_rate'])) {
+          return 'hr_scheduling';
+        }
+        if (hasAny(headers, ['customer_satisfaction', 'csat', 'sales_performance', 'efficiency_score', 'attendance_rate'])) {
+          return 'hr_performance';
+        }
+
+        return 'product_mix';
+      }
+
+      function labelForTask(task) {
+        const labels = {
+          liquor_cost_analysis: 'Liquor Cost Analysis',
+          bar_inventory_analysis: 'Bar Inventory Analysis',
+          beverage_pricing_analysis: 'Beverage Pricing Analysis',
+          business_goals: 'Business Goals',
+          sales_forecasting: 'Sales Forecasting',
+          growth_strategy: 'Growth Strategy',
+          operational_excellence: 'Operational Excellence',
+          pricing: 'Menu Pricing Strategy',
+          optimization: 'Item Optimization',
+          recipe_management: 'Recipe Management',
+          kpi_analysis: 'KPI Analysis',
+          hr_retention: 'HR Retention',
+          hr_scheduling: 'HR Scheduling',
+          hr_performance: 'HR Performance',
+          product_mix: 'Product Mix'
+        };
+        return labels[task] || task;
+      }
+
       fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -456,8 +566,25 @@
         addMessage(`📁 Uploading: ${file.name}`, true);
         showTypingIndicator();
         
+        let detectedTask = 'product_mix';
+        try {
+          const headerText = await file.slice(0, 2048).text();
+          const firstLine = (headerText.split(/\r?\n/)[0] || '').trim();
+          const headers = splitHeaderLine(firstLine).map(normalizeHeader).filter(Boolean);
+          if (headers.length) {
+            detectedTask = detectCsvTask(headers);
+          }
+        } catch (err) {
+          // Fall back to default product mix if header detection fails
+          detectedTask = 'product_mix';
+        }
+
+        if (detectedTask && detectedTask !== 'product_mix') {
+          addMessage(`🔎 Detected CSV type: ${labelForTask(detectedTask)}`, true);
+        }
+
         const formData = new FormData();
-        formData.append('task', 'product_mix');
+        formData.append('task', detectedTask);
         formData.append('file', file);
 
         try {
@@ -565,6 +692,15 @@
         // First check if we have business_report_html - use it directly
         if (data.business_report_html) {
           return data.business_report_html;
+        }
+
+        if (data.business_report) {
+          const safeText = String(data.business_report)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>');
+          return `<div class="report"><div class="report__body">${safeText}</div></div>`;
         }
         
         if (data.items && Array.isArray(data.items)) {

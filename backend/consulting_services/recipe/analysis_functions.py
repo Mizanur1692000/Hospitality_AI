@@ -584,6 +584,47 @@ CRITICAL FORMATTING RULES:
         except Exception as e:
             ai_analysis = f"AI analysis unavailable: {str(e)}"
 
+        # Build business report for consistent UI rendering
+        if avg_profit_margin >= 65 and avg_food_cost <= 32:
+            performance_rating = "Excellent"
+            perf_color = "blue"
+        elif avg_profit_margin >= 60 and avg_food_cost <= 35:
+            performance_rating = "Good"
+            perf_color = "green"
+        elif avg_profit_margin >= 50:
+            performance_rating = "Acceptable"
+            perf_color = "orange"
+        else:
+            performance_rating = "Needs Improvement"
+            perf_color = "red"
+
+        metrics = {
+            "Total Recipes": total_recipes,
+            "Average Food Cost %": avg_food_cost,
+            "Average Profit Margin %": avg_profit_margin,
+            "Profitable Recipes": profitable_count,
+            "Needs Review": needs_review_count,
+            "Total Potential Profit": total_potential_profit,
+        }
+
+        additional_data = {
+            "Top Performers": [r["recipe_name"] for r in top_performers],
+            "Needs Attention": [r["recipe_name"] for r in needs_attention],
+            "AI Analysis": ai_analysis,
+        }
+
+        business_report = format_business_report(
+            analysis_type="Recipe Management Analysis",
+            metrics=metrics,
+            performance={"rating": performance_rating, "color": perf_color},
+            recommendations=recommendations,
+            benchmarks={
+                "Food Cost %": "28-32% (Target Range)",
+                "Profit Margin %": "65-70% (Target Range)",
+            },
+            additional_data=additional_data,
+        )
+
         return {
             "status": "success",
             "file_info": csv_file.name if hasattr(csv_file, 'name') else "Uploaded CSV",
@@ -600,6 +641,10 @@ CRITICAL FORMATTING RULES:
             "needs_attention": needs_attention,
             "recommendations": recommendations,
             "ai_analysis": ai_analysis,
+            "business_report": business_report.get("business_report"),
+            "business_report_html": business_report.get("business_report_html"),
+            "analysis_type": business_report.get("analysis_type"),
+            "performance_rating": business_report.get("performance_rating"),
         }
 
     except Exception as e:

@@ -2494,6 +2494,54 @@ def chat_with_gpt(prompt: str, context: str | None = None) -> str:
     if not prompt or not prompt.strip():
         return "Error: Please provide a message."
 
+    def is_small_talk(text: str) -> bool:
+        text_lower = text.strip().lower()
+        return text_lower in {
+            "thanks",
+            "thank you",
+            "ok",
+            "okay",
+            "got it",
+            "great",
+            "cool",
+            "appreciate it",
+            "bye",
+            "goodbye",
+            "see you",
+            "hello",
+            "hi",
+            "hey"
+        }
+
+    def is_hospitality_query(text: str) -> bool:
+        keywords = [
+            "restaurant", "hospitality", "menu", "menu engineering", "item optimization",
+            "recipe", "food cost", "labor", "staff", "scheduling", "turnover",
+            "inventory", "stock", "beverage", "bar", "liquor", "pour cost",
+            "kitchen", "chef", "server", "pos", "sales", "cogs", "prime cost",
+            "profit", "margin", "pricing", "waste", "portion", "allergen",
+            "guest", "dining", "service", "table", "reservation", "covers",
+            "financial", "financial health", "finance", "cash flow", "p&l",
+            "income statement", "balance sheet", "business goals",
+            "strategic planning", "growth strategy", "operational excellence",
+            "sales forecasting"
+        ]
+        text_lower = text.lower()
+        return any(k in text_lower for k in keywords)
+
+    allowed_contexts = {"beverage", "hr", "recipes", "menu", "kpi"}
+    if is_small_talk(prompt):
+        return "You're welcome! If you want help with menu engineering, costs, scheduling, or recipes, just let me know."
+
+    if context and context.lower() in allowed_contexts:
+        pass
+    elif not is_hospitality_query(prompt):
+        return (
+            "Sorry, I can only help with restaurant and hospitality topics. "
+            "Ask about menu engineering, pricing, food cost, labor scheduling, "
+            "inventory, recipes, or beverage management."
+        )
+
     # If frontend explicitly set a context for recipes, route those requests
     # directly to the KPI/recipe handler first so recipe-specific analysis
     # (costing, scaling, ingredient optimization) is used instead of

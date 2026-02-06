@@ -231,6 +231,7 @@ turnover_rate,industry_average,department
     avg_turnover = sum(r["data"]["turnover_rate"] for r in results) / len(results)
     avg_retention = sum(r["data"]["retention_rate"] for r in results) / len(results)
     
+    summary_report = _generate_retention_summary_report(results)
     return {
         "status": "success",
         "analysis_type": "staff_retention",
@@ -242,7 +243,8 @@ turnover_rate,industry_average,department
         },
         "results": results,
         "errors": errors if errors else None,
-        "business_report": _generate_retention_summary_report(results)
+        "business_report": summary_report,
+        "business_report_html": _wrap_text_report_html("Staff Retention Summary", summary_report)
     }
 
 
@@ -335,6 +337,7 @@ date,total_sales,labor_hours,hourly_rate,peak_hours
     total_hours = sum(r["data"]["labor_hours"] for r in results)
     avg_labor_pct = sum(r["data"]["labor_percent"] for r in results) / len(results)
     
+    summary_report = _generate_scheduling_summary_report(results)
     return {
         "status": "success",
         "analysis_type": "labor_scheduling",
@@ -347,8 +350,24 @@ date,total_sales,labor_hours,hourly_rate,peak_hours
         },
         "results": results,
         "errors": errors if errors else None,
-        "business_report": _generate_scheduling_summary_report(results)
+        "business_report": summary_report,
+        "business_report_html": _wrap_text_report_html("Labor Scheduling Summary", summary_report)
     }
+
+
+def _wrap_text_report_html(title: str, report_text: str) -> str:
+    """Convert a text report into a simple HTML report container."""
+    safe_text = report_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    safe_text = safe_text.replace("\n", "<br>")
+    return (
+        '<section class="report" style="border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.06);">'
+        f'<header class="report__header" style="background:linear-gradient(135deg,#0ea5e9,#6366f1);color:#fff;padding:20px;">'
+        f'<h2 style="margin:0 0 6px 0;">{title}</h2>'
+        f'<div class="report__meta" style="opacity:0.9;">Generated: {__import__("datetime").datetime.now().strftime("%B %d, %Y")}</div>'
+        '</header>'
+        f'<article class="report__body" style="padding:20px;line-height:1.6;">{safe_text}</article>'
+        '</section>'
+    )
 
 
 def _process_performance_csv(df: pd.DataFrame, column_def: Dict, original_columns: List[str]) -> Dict[str, Any]:

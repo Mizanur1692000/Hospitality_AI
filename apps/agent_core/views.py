@@ -186,6 +186,120 @@ def agent_view(request: HttpRequest) -> JsonResponse:
             if task == "product_mix":
                 from backend.consulting_services.menu.legacy_product_mix import process_csv_data
                 result = process_csv_data(uploaded_file)
+                if result.get("status") == "error" and "Missing required columns" in (result.get("message") or ""):
+                    def _has_any(col_list, variants):
+                        return any(any(v in c for v in variants) for c in col_list)
+
+                    def _has_all(col_list, required):
+                        return all(any(r == c or r in c for c in col_list) for r in required)
+
+                    def _detect_task_from_headers(file_obj):
+                        import pandas as pd
+                        try:
+                            file_obj.seek(0)
+                        except Exception:
+                            pass
+                        df = pd.read_csv(file_obj, nrows=0)
+                        cols = [c.lower().strip() for c in df.columns]
+
+                        if _has_all(cols, ["expected_oz", "actual_oz"]) and _has_any(cols, ["liquor_cost", "beverage_cost", "bar_cost"]) and _has_any(cols, ["total_sales", "sales", "revenue"]):
+                            return "liquor_cost_analysis"
+                        if _has_all(cols, ["current_stock", "reorder_point", "monthly_usage", "inventory_value"]):
+                            return "bar_inventory_analysis"
+                        if _has_all(cols, ["drink_price", "cost_per_drink", "sales_volume", "competitor_price"]):
+                            return "beverage_pricing_analysis"
+
+                        has_business_goals = _has_all(cols, ["revenue_target", "budget_total"])
+                        if has_business_goals:
+                            return "business_goals"
+                        if _has_any(cols, ["market_size", "market_share", "competition_level", "investment_budget", "growth_potential", "market_penetration", "target_roi", "roi_target"]):
+                            return "growth_strategy"
+                        if _has_any(cols, ["efficiency_score", "process_time", "quality_rating", "customer_satisfaction", "cost_per_unit", "waste_percentage", "productivity_score", "industry_benchmark"]):
+                            return "operational_excellence"
+                        if _has_any(cols, ["historical_sales", "current_sales", "growth_rate", "seasonal_factor", "forecast_periods", "forecast_period"]):
+                            return "sales_forecasting"
+
+                        has_item_name = _has_any(cols, ["item_name", "menu_item", "product_name", "product name", "item"])
+                        has_qty = _has_any(cols, ["quantity_sold", "quantity", "units_sold", "units sold"])
+                        has_opt_specific = _has_any(cols, ["portion_size", "portion_cost", "waste_percent", "waste", "description"])
+                        if has_item_name and has_qty and has_opt_specific:
+                            return "optimization"
+
+                        has_price = _has_any(cols, ["price", "unit_price", "unit price", "item_price"])
+                        if has_item_name and has_qty and has_price:
+                            return "product_mix"
+
+                        if _has_any(cols, ["recipe_name", "recipe", "menu_item", "dish"]) and _has_any(cols, ["ingredient_cost", "portion_cost", "recipe_price"]):
+                            return "recipe_management"
+                        if _has_any(cols, ["date"]) and _has_any(cols, ["sales", "revenue", "total_sales", "daily_sales"]) and _has_any(cols, ["labor_cost", "labor", "wages", "payroll"]) and _has_any(cols, ["food_cost", "cogs", "cost_of_goods", "food"]) and _has_any(cols, ["labor_hours", "hours", "hours_worked", "staff_hours", "labor_hour"]):
+                            return "kpi_analysis"
+
+                        if _has_any(cols, ["turnover_rate", "turnover", "attrition_rate"]):
+                            return "hr_retention"
+                        if _has_any(cols, ["total_sales", "sales", "revenue"]) and _has_any(cols, ["labor_hours", "hours_worked", "hours"]) and _has_any(cols, ["hourly_rate", "pay_rate", "avg_hourly_rate"]):
+                            return "hr_scheduling"
+                        if _has_any(cols, ["customer_satisfaction", "csat", "sales_performance", "efficiency_score", "attendance_rate"]):
+                            return "hr_performance"
+
+                        if _has_all(cols, ["item_name", "item_price", "item_cost", "competitor_price"]):
+                            return "pricing"
+
+                        return None
+
+                    try:
+                        detected_task = _detect_task_from_headers(uploaded_file)
+                    except Exception:
+                        detected_task = None
+
+                    if detected_task and detected_task != "product_mix":
+                        try:
+                            uploaded_file.seek(0)
+                        except Exception:
+                            pass
+                        if detected_task == "liquor_cost_analysis":
+                            from backend.consulting_services.beverage.liquor_cost_csv_processor import process_liquor_cost_csv_data
+                            result = process_liquor_cost_csv_data(uploaded_file)
+                        elif detected_task == "bar_inventory_analysis":
+                            from backend.consulting_services.beverage.bar_inventory_csv_processor import process_bar_inventory_csv_data
+                            result = process_bar_inventory_csv_data(uploaded_file)
+                        elif detected_task == "beverage_pricing_analysis":
+                            from backend.consulting_services.beverage.beverage_pricing_csv_processor import process_beverage_pricing_csv_data
+                            result = process_beverage_pricing_csv_data(uploaded_file)
+                        elif detected_task == "recipe_management":
+                            from backend.consulting_services.recipe.analysis_functions import process_recipe_csv_data
+                            result = process_recipe_csv_data(uploaded_file)
+                        elif detected_task == "kpi_analysis":
+                            from backend.consulting_services.kpi.kpi_utils import process_kpi_csv_data
+                            result = process_kpi_csv_data(uploaded_file)
+                        elif detected_task in ["hr_retention", "hr_scheduling", "hr_performance"]:
+                            from backend.consulting_services.hr.hr_csv_processor import process_hr_csv_data
+                            analysis_type_map = {
+                                "hr_retention": "retention",
+                                "hr_scheduling": "scheduling",
+                                "hr_performance": "performance",
+                            }
+                            result = process_hr_csv_data(uploaded_file, analysis_type_map.get(detected_task, "auto"))
+                        elif detected_task == "optimization":
+                            from backend.consulting_services.menu.optimization_csv_processor import process_optimization_csv_data
+                            result = process_optimization_csv_data(uploaded_file)
+                        elif detected_task in ["business_goals", "sales_forecasting", "growth_strategy", "operational_excellence"]:
+                            from backend.consulting_services.strategy.strategic_csv_processor import (
+                                process_business_goals_csv_data,
+                                process_sales_forecasting_csv_data,
+                                process_growth_strategy_csv_data,
+                                process_operational_excellence_csv_data,
+                            )
+                            if detected_task == "business_goals":
+                                result = process_business_goals_csv_data(uploaded_file)
+                            elif detected_task == "sales_forecasting":
+                                result = process_sales_forecasting_csv_data(uploaded_file)
+                            elif detected_task == "growth_strategy":
+                                result = process_growth_strategy_csv_data(uploaded_file)
+                            else:
+                                result = process_operational_excellence_csv_data(uploaded_file)
+                        elif detected_task == "pricing":
+                            from backend.consulting_services.menu.pricing_csv_processor import process_pricing_csv_data
+                            result = process_pricing_csv_data(uploaded_file)
                 status_code = 400 if result.get("status") == "error" else 200
                 return JsonResponse(result, status=status_code)
             elif task == "pricing":
@@ -305,11 +419,28 @@ def agent_view(request: HttpRequest) -> JsonResponse:
 
                 status_code = 400 if (result or {}).get("status") == "error" else 200
                 return JsonResponse(result or {"status": "error", "message": "Unknown CSV processing error"}, status=status_code)
+            elif task in ["business_goals", "sales_forecasting", "growth_strategy", "operational_excellence"]:
+                from backend.consulting_services.strategy.strategic_csv_processor import (
+                    process_business_goals_csv_data,
+                    process_sales_forecasting_csv_data,
+                    process_growth_strategy_csv_data,
+                    process_operational_excellence_csv_data,
+                )
+                if task == "business_goals":
+                    result = process_business_goals_csv_data(uploaded_file)
+                elif task == "sales_forecasting":
+                    result = process_sales_forecasting_csv_data(uploaded_file)
+                elif task == "growth_strategy":
+                    result = process_growth_strategy_csv_data(uploaded_file)
+                else:
+                    result = process_operational_excellence_csv_data(uploaded_file)
+                status_code = 400 if result.get("status") == "error" else 200
+                return JsonResponse(result, status=status_code)
             else:
                 return build_error_response(
                     ErrorCodes.UNKNOWN_TASK,
                     f"File upload not supported for task: {task}",
-                    details={"supported_tasks": ["product_mix", "kpi_analysis", "recipe_management", "hr_retention", "hr_scheduling", "hr_performance", "hr_analysis", "labor_cost", "food_cost", "prime_cost", "liquor_cost", "beverage_cost", "liquor_variance", "cost_analysis", "liquor_cost_analysis", "bar_inventory_analysis", "beverage_pricing_analysis"]}
+                    details={"supported_tasks": ["product_mix", "kpi_analysis", "recipe_management", "hr_retention", "hr_scheduling", "hr_performance", "hr_analysis", "labor_cost", "food_cost", "prime_cost", "liquor_cost", "beverage_cost", "liquor_variance", "cost_analysis", "liquor_cost_analysis", "bar_inventory_analysis", "beverage_pricing_analysis", "business_goals", "sales_forecasting", "growth_strategy", "operational_excellence"]}
                 )
         except Exception as e:
             trace_id = uuid4().hex

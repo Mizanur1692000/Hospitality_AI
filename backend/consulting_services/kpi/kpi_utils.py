@@ -1528,6 +1528,59 @@ def process_kpi_csv_data(csv_file) -> Dict[str, Any]:
         except Exception as e:
             ai_analysis = f"AI analysis unavailable: {str(e)}"
         
+        # Build KPI business report for consistent frontend rendering
+        def _rating_from_kpis(labor_pct, food_pct, prime_pct):
+            if labor_pct <= 30 and food_pct <= 32 and prime_pct <= 55:
+                return "Excellent", "blue"
+            if labor_pct <= 32 and food_pct <= 34 and prime_pct <= 60:
+                return "Good", "green"
+            if labor_pct <= 35 and food_pct <= 36 and prime_pct <= 65:
+                return "Acceptable", "orange"
+            return "Needs Improvement", "red"
+
+        perf_rating, perf_color = _rating_from_kpis(avg_labor_percent, avg_food_percent, avg_prime_percent)
+        metrics = {
+            "Total Sales": total_sales,
+            "Average Labor Percent": avg_labor_percent,
+            "Average Food Percent": avg_food_percent,
+            "Average Prime Percent": avg_prime_percent,
+            "Average Sales per Labor Hour": avg_sales_per_hour,
+            "Days Analyzed": len(daily_kpis)
+        }
+
+        rec_lines = []
+        for rec in recommendations:
+            if isinstance(rec, dict):
+                parts = []
+                if rec.get("category"):
+                    parts.append(rec["category"])
+                if rec.get("action"):
+                    parts.append(rec["action"])
+                if rec.get("impact"):
+                    parts.append(f"Impact: {rec['impact']}")
+                rec_lines.append(" - ".join(parts) if parts else str(rec))
+            else:
+                rec_lines.append(str(rec))
+
+        additional_data = {
+            "Trend": trend,
+            "AI Analysis": ai_analysis
+        }
+
+        business_report = format_business_report(
+            analysis_type="KPI Analysis",
+            metrics=metrics,
+            performance={"rating": perf_rating, "color": perf_color},
+            recommendations=rec_lines,
+            benchmarks={
+                "Labor %": "25-30% (Target Range)",
+                "Food %": "28-32% (Target Range)",
+                "Prime %": "55-60% (Target Range)",
+                "Sales per Labor Hour": "$50+/hour (Target)"
+            },
+            additional_data=additional_data
+        )
+
         return {
             "status": "success",
             "file_info": csv_file.name,
@@ -1543,6 +1596,10 @@ def process_kpi_csv_data(csv_file) -> Dict[str, Any]:
             "daily_kpis": daily_kpis[:30],  # Show last 30 days
             "recommendations": recommendations,
             "ai_analysis": ai_analysis,
+            "business_report": business_report.get("business_report"),
+            "business_report_html": business_report.get("business_report_html"),
+            "analysis_type": business_report.get("analysis_type"),
+            "performance_rating": business_report.get("performance_rating"),
         }
 
     except Exception as e:
