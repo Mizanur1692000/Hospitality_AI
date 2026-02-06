@@ -170,7 +170,65 @@ def run(params: dict, file_bytes: bytes | None = None) -> tuple[dict, int]:
 
         # Generate business report HTML (compacted to avoid \n in JSON)
         recs_html = ''.join([f'<li>{rec}</li>' for rec in recommendations])
-        business_report_html = f'<section class="report"><header class="report__header"><h2>Performance Management Analysis</h2><div class="report__meta">Generated: {__import__("datetime").datetime.now().strftime("%B %d, %Y")}</div><div class="badge badge--{performance.lower().replace(" ", "-")}">{performance}</div></header><article class="report__body"><p class="lead">This performance management analysis reveals <strong>{performance.lower()}</strong> overall performance with a score of <strong>{overall_score:.1f}%</strong>.</p><h3>Key Performance Metrics</h3><ul><li>Overall Score: {overall_score:.1f}%</li><li>Customer Satisfaction: {customer_satisfaction:.1f}% (Target: {customer_satisfaction_target:.1f}%)</li><li>Sales Performance: {sales_performance:.1f}% (Target: {sales_performance_target:.1f}%)</li><li>Efficiency Score: {efficiency_score:.1f}% (Target: {efficiency_target:.1f}%)</li><li>Attendance Rate: {attendance_rate:.1f}% (Target: {attendance_target:.1f}%)</li></ul><h3>Performance Benchmarks</h3><ul><li>Excellent Threshold: {benchmarks["excellent_threshold"]:.1f}%</li><li>Good Threshold: {benchmarks["good_threshold"]:.1f}%</li><li>Acceptable Threshold: {benchmarks["acceptable_threshold"]:.1f}%</li></ul><h3>Metric Assessments</h3><ul><li>Customer Satisfaction: {metric_assessments["customer_satisfaction"]}</li><li>Sales Performance: {metric_assessments["sales_performance"]}</li><li>Efficiency Score: {metric_assessments["efficiency_score"]}</li><li>Attendance Rate: {metric_assessments["attendance_rate"]}</li></ul><h3>Additional Insights</h3><ul><li>Performance Trend: {additional_insights["performance_trend"]}</li><li>Training Priority: {additional_insights["training_priority"]}</li><li>Management Focus: {additional_insights["management_focus"]}</li></ul><h3>Strategic Recommendations</h3><ol>{recs_html}</ol></article></section>'
+        onboarding_items = [
+            f'Attendance Rate: {attendance_rate:.1f}% (Target: {attendance_target:.1f}%)',
+            f'Customer Satisfaction: {customer_satisfaction:.1f}% (Target: {customer_satisfaction_target:.1f}%)',
+            'Focus onboarding on service standards, expectations, and role clarity'
+        ]
+        if attendance_rate < attendance_target:
+            onboarding_items.append('Reduce early absenteeism with tighter onboarding schedules and manager check-ins')
+        if customer_satisfaction < customer_satisfaction_target:
+            onboarding_items.append('Add service recovery drills to onboarding to lift guest satisfaction')
+
+        skill_dev_items = [
+            f'Sales Performance: {sales_performance:.1f}% (Target: {sales_performance_target:.1f}%)',
+            f'Efficiency Score: {efficiency_score:.1f}% (Target: {efficiency_target:.1f}%)',
+            'Prioritize product knowledge, upselling, and speed of service training'
+        ]
+        if sales_performance < sales_performance_target:
+            skill_dev_items.append('Run weekly upsell coaching and role-play sessions')
+        if efficiency_score < efficiency_target:
+            skill_dev_items.append('Coach station setup, prep sequencing, and time-management routines')
+
+        performance_tracking_items = [
+            f'Overall Score: {overall_score:.1f}% ({performance})',
+            f'Performance Trend: {additional_insights["performance_trend"]}',
+            f'Training Priority: {additional_insights["training_priority"]}',
+            f'Management Focus: {additional_insights["management_focus"]}'
+        ]
+
+        onboarding_html = ''.join([f'<li>{item}</li>' for item in onboarding_items])
+        skill_dev_html = ''.join([f'<li>{item}</li>' for item in skill_dev_items])
+        performance_tracking_html = ''.join([f'<li>{item}</li>' for item in performance_tracking_items])
+
+        business_report_html = (
+            f'<section class="report" style="border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.06);">'
+            f'<header class="report__header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:20px;">'
+            f'<h2 style="margin:0 0 6px 0;">Training Programs Analysis</h2>'
+            f'<div class="report__meta" style="opacity:0.9;">Generated: {__import__("datetime").datetime.now().strftime("%B %d, %Y")}</div>'
+            f'<div class="badge badge--{performance.lower().replace(" ", "-")}" style="margin-top:8px;display:inline-block;background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:999px;">{performance}</div>'
+            f'</header>'
+            f'<article class="report__body" style="padding:20px;">'
+            f'<p class="lead" style="margin:0 0 14px 0;">This training program review summarizes <strong>{performance.lower()}</strong> performance with an overall score of <strong>{overall_score:.1f}%</strong>.</p>'
+            f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">'
+            f'<section style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#f9fafb;">'
+            f'<h3 style="margin:0 0 8px 0;">Onboarding Optimization</h3>'
+            f'<ul style="margin:0;padding-left:18px;">{onboarding_html}</ul>'
+            f'</section>'
+            f'<section style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#f9fafb;">'
+            f'<h3 style="margin:0 0 8px 0;">Skill Development</h3>'
+            f'<ul style="margin:0;padding-left:18px;">{skill_dev_html}</ul>'
+            f'</section>'
+            f'<section style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#f9fafb;">'
+            f'<h3 style="margin:0 0 8px 0;">Performance Tracking</h3>'
+            f'<ul style="margin:0;padding-left:18px;">{performance_tracking_html}</ul>'
+            f'</section>'
+            f'</div>'
+            f'<h3 style="margin:18px 0 8px 0;">Strategic Recommendations</h3>'
+            f'<ol style="margin:0;padding-left:18px;">{recs_html}</ol>'
+            f'</article>'
+            f'</section>'
+        )
 
         # Generate text business report
         business_report = f"""
@@ -179,7 +237,7 @@ Generated: {__import__('datetime').datetime.now().strftime('%B %d, %Y')}
 
 PERFORMANCE RATING: {performance.upper()}
 
-This performance management analysis reveals {performance.lower()} overall performance with a score of {overall_score:.1f}%.
+This training programs analysis reveals {performance.lower()} overall performance with a score of {overall_score:.1f}%.
 
 KEY PERFORMANCE METRICS
 • Overall Score: {overall_score:.1f}%

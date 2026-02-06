@@ -58,6 +58,7 @@
       margin: 0 auto var(--spacing-md);
       box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      line-height: 0;
     }
     .core-task-card:hover .task-icon { transform: scale(1.15) rotate(5deg); }
     
@@ -69,13 +70,89 @@
       color: var(--text-secondary);
       font-size: 0.85rem;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 0.5rem;
+      line-height: 1.2;
     }
     .task-features li::before {
       content: '✓';
       color: #10b981;
       font-weight: bold;
+      flex: 0 0 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.1rem;
+    }
+    .task-icon svg {
+      display: block;
+      width: 32px;
+      height: 32px;
+    }
+    .upload-button,
+    .send-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .upload-button svg,
+    .send-button svg {
+      display: block;
+    }
+
+    .csv-guide {
+      margin-top: var(--spacing-lg);
+      padding: var(--spacing-lg);
+      border-radius: var(--radius-xl);
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(102, 126, 234, 0.12);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
+    .csv-guide h3 {
+      margin-bottom: 0.5rem;
+    }
+    .csv-guide p {
+      margin: 0 0 1rem 0;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    .csv-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-md);
+    }
+    @media (max-width: 992px) { .csv-grid { grid-template-columns: 1fr; } }
+    .csv-card {
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      background: rgba(248, 250, 252, 0.9);
+      border: 1px solid rgba(102, 126, 234, 0.08);
+    }
+    .csv-card h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+    .csv-card .label {
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 0.25rem;
+    }
+    .csv-card ul {
+      margin: 0.35rem 0 0 0;
+      padding-left: 1.1rem;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+    .report-text {
+      white-space: pre-wrap;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text-secondary);
+      background: rgba(248, 250, 252, 0.9);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      border: 1px solid rgba(102, 126, 234, 0.08);
     }
   </style>
 </head>
@@ -161,6 +238,56 @@
             </ul>
           </div>
         </div>
+
+        <div class="csv-guide">
+          <h3>CSV Column Guide</h3>
+          <p>Use these exact column names for best results. Columns are case-insensitive. Upload one analysis type per file.</p>
+          <div class="csv-grid">
+            <div class="csv-card">
+              <h4>Staff Retention</h4>
+              <div class="label">Required</div>
+              <ul>
+                <li>turnover_rate</li>
+              </ul>
+              <div class="label">Optional</div>
+              <ul>
+                <li>industry_average</li>
+                <li>department</li>
+                <li>employee_count</li>
+              </ul>
+            </div>
+            <div class="csv-card">
+              <h4>Labor Scheduling</h4>
+              <div class="label">Required</div>
+              <ul>
+                <li>total_sales</li>
+                <li>labor_hours</li>
+                <li>hourly_rate</li>
+              </ul>
+              <div class="label">Optional</div>
+              <ul>
+                <li>peak_hours</li>
+                <li>date</li>
+                <li>department</li>
+              </ul>
+            </div>
+            <div class="csv-card">
+              <h4>Training Programs</h4>
+              <div class="label">Required (at least one)</div>
+              <ul>
+                <li>customer_satisfaction</li>
+                <li>sales_performance</li>
+                <li>efficiency_score</li>
+                <li>attendance_rate</li>
+              </ul>
+              <div class="label">Optional</div>
+              <ul>
+                <li>employee_name</li>
+                <li>department</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Chat Section -->
@@ -175,10 +302,10 @@
             <div class="message-bubble">Welcome to HR Solutions! <strong>To get accurate analysis, please provide your data</strong>:<br><br>
               <strong>👥 Staff Retention:</strong><br>
               • Required: turnover_rate<br>
-              • Optional: industry_average, employee_count, avg_salary<br><br>
+              • Optional: industry_average, department, employee_count<br><br>
               <strong>📅 Labor Scheduling:</strong><br>
               • Required: total_sales, labor_hours, hourly_rate<br>
-              • Optional: peak_hours, target_labor_pct, overtime_hours<br><br>
+              • Optional: peak_hours, date, department<br><br>
               <strong>🎓 Training Programs:</strong><br>
               • Required: At least one of: customer_satisfaction, sales_performance, efficiency_score, attendance_rate<br>
               • Optional: employee_name, department<br><br>
@@ -291,7 +418,27 @@
       };
 
       window.formatHRResponse = function(data) {
+        const focusAreas = {
+          staff_retention: {
+            title: 'Staff Retention',
+            items: ['Turnover analysis', 'Retention strategies', 'Cost impact assessment']
+          },
+          labor_scheduling: {
+            title: 'Labor Scheduling',
+            items: ['Shift optimization', 'Peak hour coverage', 'Overtime management']
+          },
+          performance_management: {
+            title: 'Training Programs',
+            items: ['Onboarding optimization', 'Skill development', 'Performance tracking']
+          }
+        };
+
         let html = '';
+        if (data.analysis_type && focusAreas[data.analysis_type]) {
+          const focus = focusAreas[data.analysis_type];
+          html += `<strong>🎯 ${focus.title} Focus Areas:</strong><br>`;
+          html += `<ul>${focus.items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+        }
         if (data.summary) {
           html += '<strong>📊 Analysis Summary:</strong><br>';
           for (const [key, value] of Object.entries(data.summary)) {
@@ -300,8 +447,11 @@
           }
           html += '<br>';
         }
-        if (data.business_report) {
-          html += `<strong>📋 Business Report:</strong><br>${data.business_report.replace(/\n/g, '<br>')}`;
+        const reportHtml = data.business_report_html || (data.data && data.data.business_report_html);
+        if (reportHtml) {
+          html += `<strong>📋 Business Report:</strong><br>${reportHtml}`;
+        } else if (data.business_report) {
+          html += `<strong>📋 Business Report:</strong><div class="report-text">${data.business_report}</div>`;
         }
         addMessage(html || JSON.stringify(data, null, 2), false);
       };
@@ -330,18 +480,21 @@
         `;
       };
 
+      const setSampleInput = (message) => {
+        chatInput.value = message;
+        chatInput.dispatchEvent(new Event('input'));
+        chatInput.focus();
+      };
+
       // Quick action functions - populate chat with sample data
-      window.staffRetention = () => { 
-        chatInput.value = 'Analyze staff retention. Turnover rate: 45%. Industry average: 70%. Employee count: 25. Average salary: $30,000.'; 
-        chatInput.focus(); 
+      window.staffRetention = () => {
+        setSampleInput('Staff retention sample: turnover_rate: 0.45, industry_average: 0.70, department: Front of House, employee_count: 25');
       };
-      window.laborScheduling = () => { 
-        chatInput.value = 'Optimize labor scheduling. Total sales: $50,000. Labor hours: 800. Hourly rate: $15. Peak hours: 200. Target labor %: 30%.'; 
-        chatInput.focus(); 
+      window.laborScheduling = () => {
+        setSampleInput('Labor scheduling sample: total_sales: 50000, labor_hours: 800, hourly_rate: 15, peak_hours: 200, date: 2026-02-01, department: Kitchen');
       };
-      window.trainingPrograms = () => { 
-        chatInput.value = 'Analyze training program effectiveness. Customer satisfaction: 85%. Sales performance: 95%. Efficiency score: 80%. Attendance rate: 92%.'; 
-        chatInput.focus(); 
+      window.trainingPrograms = () => {
+        setSampleInput('Training programs sample: customer satisfaction: 0.85, sales performance: 0.95, efficiency score: 0.80, attendance rate: 0.92, employee name: Alex Rivera, department: Service');
       };
     });
   </script>

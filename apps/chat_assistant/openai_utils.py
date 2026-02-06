@@ -420,34 +420,40 @@ def extract_kpi_data(prompt: str) -> dict:
 
     # Extract HR-specific metrics
     # Turnover rate
-    turnover_match = re.search(r'turnover\s+rate[:\s]*([0-9,]+)', prompt_lower)
+    turnover_match = re.search(r'turnover[_\s]+rate[:\s]*([0-9,]+(?:\.[0-9]+)?)%?', prompt_lower)
     if turnover_match:
-        data['turnover_rate'] = float(turnover_match.group(1).replace(',', ''))
+        turnover_value = float(turnover_match.group(1).replace(',', ''))
+        data['turnover_rate'] = turnover_value * 100 if 0 < turnover_value <= 1 else turnover_value
     elif 'turnover' in prompt_lower and number_values:
         # Use first number if turnover is mentioned
         data['turnover_rate'] = number_values[0]
 
     # Industry average
-    industry_match = re.search(r'industry\s+(?:average|avg)[:\s]*([0-9,]+)', prompt_lower)
+    industry_match = re.search(r'industry[_\s]+(?:average|avg)[:\s]*([0-9,]+(?:\.[0-9]+)?)%?', prompt_lower)
     if industry_match:
-        data['industry_average'] = float(industry_match.group(1).replace(',', ''))
+        industry_value = float(industry_match.group(1).replace(',', ''))
+        data['industry_average'] = industry_value * 100 if 0 < industry_value <= 1 else industry_value
 
     # Performance metrics
-    satisfaction_match = re.search(r'customer\s+satisfaction[:\s]*([0-9,]+)', prompt_lower)
+    satisfaction_match = re.search(r'customer[_\s]+satisfaction[:\s]*([0-9,]+(?:\.[0-9]+)?)%?', prompt_lower)
     if satisfaction_match:
-        data['customer_satisfaction'] = float(satisfaction_match.group(1).replace(',', ''))
+        satisfaction_value = float(satisfaction_match.group(1).replace(',', ''))
+        data['customer_satisfaction'] = satisfaction_value * 100 if 0 < satisfaction_value <= 1 else satisfaction_value
 
-    performance_match = re.search(r'sales\s+performance[:\s]*([0-9,]+)', prompt_lower)
+    performance_match = re.search(r'sales[_\s]+performance[:\s]*([0-9,]+(?:\.[0-9]+)?)%?', prompt_lower)
     if performance_match:
-        data['sales_performance'] = float(performance_match.group(1).replace(',', ''))
+        performance_value = float(performance_match.group(1).replace(',', ''))
+        data['sales_performance'] = performance_value * 100 if 0 < performance_value <= 1 else performance_value
 
-    efficiency_match = re.search(r'efficiency\s+score[:\s]*([0-9,]+)', prompt_lower)
+    efficiency_match = re.search(r'efficiency[_\s]+score[:\s]*([0-9,]+(?:\.[0-9]+)?)%?', prompt_lower)
     if efficiency_match:
-        data['efficiency_score'] = float(efficiency_match.group(1).replace(',', ''))
+        efficiency_value = float(efficiency_match.group(1).replace(',', ''))
+        data['efficiency_score'] = efficiency_value * 100 if 0 < efficiency_value <= 1 else efficiency_value
 
-    attendance_match = re.search(r'attendance\s+rate[:\s]*([0-9,]+)', prompt_lower)
+    attendance_match = re.search(r'attendance[_\s]+rate[:\s]*([0-9,]+(?:\.[0-9]+)?)%?', prompt_lower)
     if attendance_match:
-        data['attendance_rate'] = float(attendance_match.group(1).replace(',', ''))
+        attendance_value = float(attendance_match.group(1).replace(',', ''))
+        data['attendance_rate'] = attendance_value * 100 if 0 < attendance_value <= 1 else attendance_value
 
     # Extract Beverage Management metrics
     # Liquor cost metrics
@@ -728,9 +734,10 @@ def extract_kpi_data(prompt: str) -> dict:
     if quality_rating_match:
         data['quality_rating'] = float(quality_rating_match.group(1).replace(',', ''))
 
-    customer_satisfaction_match = re.search(r'customer\s+satisfaction[:\s]*([0-9,]+)', prompt_lower)
+    customer_satisfaction_match = re.search(r'customer[_\s]+satisfaction[:\s]*([0-9,]+(?:\.[0-9]+)?)%?', prompt_lower)
     if customer_satisfaction_match:
-        data['customer_satisfaction'] = float(customer_satisfaction_match.group(1).replace(',', ''))
+        customer_satisfaction_value = float(customer_satisfaction_match.group(1).replace(',', ''))
+        data['customer_satisfaction'] = customer_satisfaction_value * 100 if 0 < customer_satisfaction_value <= 1 else customer_satisfaction_value
 
     # Extract KPI Dashboard metrics
     # Comprehensive analysis metrics (support $ and common phrasing)
@@ -2103,7 +2110,17 @@ Example: "Optimize labor scheduling. Total sales: $50,000. Labor hours: 800. Hou
 
 Or upload a CSV file with columns: total_sales, labor_hours, hourly_rate, peak_hours"""
 
-        elif any(keyword in prompt_lower for keyword in ['performance management', 'staff performance', 'performance analysis', 'employee performance']):
+        elif any(keyword in prompt_lower for keyword in [
+            'performance management',
+            'staff performance',
+            'performance analysis',
+            'employee performance',
+            'training program',
+            'training programs',
+            'onboarding',
+            'skill development',
+            'performance tracking'
+        ]):
             # For performance management, we need at least one performance metric
             if any(key in data for key in ['customer_satisfaction', 'sales_performance', 'efficiency_score', 'attendance_rate']):
                 result, status = task_registry.execute_task(
@@ -2486,6 +2503,28 @@ def chat_with_gpt(prompt: str, context: str | None = None) -> str:
         recipe_response = handle_kpi_analysis(prompt)
         if recipe_response:
             return sanitize_response(recipe_response)
+
+    # Route HR analysis before conversational AI so structured reports are returned
+    hr_keywords = [
+        'training program',
+        'training programs',
+        'onboarding',
+        'skill development',
+        'performance tracking',
+        'performance management',
+        'staff performance',
+        'performance analysis',
+        'employee performance',
+        'staff retention',
+        'turnover',
+        'labor scheduling',
+        'scheduling optimization',
+        'shift optimization'
+    ]
+    if context == 'hr' or any(k in prompt_lower for k in hr_keywords):
+        hr_response = handle_kpi_analysis(prompt)
+        if hr_response:
+            return sanitize_response(hr_response)
 
     # STEP 1: Try Conversational AI first (natural language queries about menu/business)
     conversational_response = handle_conversational_ai(prompt)

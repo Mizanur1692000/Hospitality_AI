@@ -447,7 +447,8 @@ Mike Johnson,Management,88,110,85,99""",
         },
         "results": results,
         "errors": errors if errors else None,
-        "business_report": _generate_performance_summary_report(results)
+        "business_report": _generate_performance_summary_report(results),
+        "business_report_html": _generate_performance_summary_report_html(results)
     }
 
 
@@ -590,3 +591,69 @@ INDIVIDUAL PERFORMANCE:
         report += f"{i}. {rec}\n"
     
     return report.strip()
+
+
+def _generate_performance_summary_report_html(results: List[Dict]) -> str:
+    """Generate an HTML summary report for performance analysis."""
+    if not results:
+        return '<section class="report"><header class="report__header"><h2>Training Programs Summary</h2></header><article class="report__body"><p>No data available for report.</p></article></section>'
+
+    avg_score = sum(r["data"]["overall_score"] for r in results) / len(results)
+    avg_csat = sum(r["data"]["customer_satisfaction"] for r in results) / len(results)
+    avg_sales = sum(r["data"]["sales_performance"] for r in results) / len(results)
+    avg_efficiency = sum(r["data"]["efficiency_score"] for r in results) / len(results)
+    avg_attendance = sum(r["data"]["attendance_rate"] for r in results) / len(results)
+
+    named_results = [r for r in results if r.get("employee_name")]
+    top_performers_html = ''
+    if named_results:
+        sorted_results = sorted(named_results, key=lambda x: x["data"]["overall_score"], reverse=True)
+        top_performers_html = ''.join([
+            f'<li>{r.get("employee_name", "Unknown")}: {r["data"]["overall_score"]:.1f}% ({r["data"]["performance_rating"]})</li>'
+            for r in sorted_results[:5]
+        ])
+    else:
+        ratings = {}
+        for r in results:
+            rating = r["data"]["performance_rating"]
+            ratings[rating] = ratings.get(rating, 0) + 1
+        top_performers_html = ''.join([
+            f'<li>{rating}: {count} employees</li>'
+            for rating, count in sorted(ratings.items())
+        ])
+
+    all_recs = set()
+    for r in results[:3]:
+        for rec in r.get("insights", [])[:2]:
+            all_recs.add(rec)
+    recs_html = ''.join([f'<li>{rec}</li>' for rec in list(all_recs)[:5]])
+
+    return (
+        '<section class="report" style="border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.06);">'
+        '<header class="report__header" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:20px;">'
+        '<h2 style="margin:0 0 6px 0;">Training Programs Summary</h2>'
+        f'<div class="report__meta" style="opacity:0.9;">Records Analyzed: {len(results)}</div>'
+        '</header>'
+        '<article class="report__body" style="padding:20px;">'
+        f'<p class="lead" style="margin:0 0 14px 0;">Average overall performance score: <strong>{avg_score:.1f}%</strong>.</p>'
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">'
+        '<section style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#f9fafb;">'
+        '<h3 style="margin:0 0 8px 0;">Onboarding Optimization</h3>'
+        f'<ul style="margin:0;padding-left:18px;"><li>Attendance Rate: {avg_attendance:.1f}%</li><li>Customer Satisfaction: {avg_csat:.1f}%</li></ul>'
+        '</section>'
+        '<section style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#f9fafb;">'
+        '<h3 style="margin:0 0 8px 0;">Skill Development</h3>'
+        f'<ul style="margin:0;padding-left:18px;"><li>Sales Performance: {avg_sales:.1f}%</li><li>Efficiency Score: {avg_efficiency:.1f}%</li></ul>'
+        '</section>'
+        '<section style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;background:#f9fafb;">'
+        '<h3 style="margin:0 0 8px 0;">Performance Tracking</h3>'
+        f'<ul style="margin:0;padding-left:18px;"><li>Average Overall Score: {avg_score:.1f}%</li><li>Participants: {len(results)}</li></ul>'
+        '</section>'
+        '</div>'
+        '<h3 style="margin:18px 0 8px 0;">Top Performers / Distribution</h3>'
+        f'<ul style="margin:0;padding-left:18px;">{top_performers_html}</ul>'
+        '<h3 style="margin:18px 0 8px 0;">Strategic Recommendations</h3>'
+        f'<ol style="margin:0;padding-left:18px;">{recs_html}</ol>'
+        '</article>'
+        '</section>'
+    )
