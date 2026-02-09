@@ -992,13 +992,13 @@ def handle_kpi_analysis(prompt: str) -> str:
                 logger.info("Routing: Best Way (forced)")
                 # Build a concise strategic planning sequence using any uploaded CSV headers/values
                 steps = [
-                    '1. Define Objectives: Clarify top-level business goals and success metrics.',
-                    '2. Audit & SWOT: Assess strengths, weaknesses, opportunities, and threats using uploaded data.',
-                    '3. Set KPIs: Choose measurable KPIs (revenue target, conversion rate, market share).',
-                    '4. Budget & Resources: Allocate budgets by channel and priority (use budget_total & marketing_spend).',
-                    '5. Timeline & Milestones: Define a 3-12 month timeline with checkpoints.',
-                    '6. Execute & Track: Implement tactics and monitor KPI cadence (weekly/monthly).',
-                    '7. Review & Improve: Run monthly reviews and reallocate budget to top-performing initiatives.'
+                    'Define Objectives: Clarify top-level business goals and success metrics.',
+                    'Audit & SWOT: Assess strengths, weaknesses, opportunities, and threats using uploaded data.',
+                    'Set KPIs: Choose measurable KPIs (revenue target, conversion rate, market share).',
+                    'Budget & Resources: Allocate budgets by channel and priority (use budget_total & marketing_spend).',
+                    'Timeline & Milestones: Define a 3-12 month timeline with checkpoints.',
+                    'Execute & Track: Implement tactics and monitor KPI cadence (weekly/monthly).',
+                    'Review & Improve: Run monthly reviews and reallocate budget to top-performing initiatives.'
                 ]
 
                 # Include CSV-derived summary if available
@@ -2489,58 +2489,79 @@ def handle_beverage_analysis(prompt: str) -> str:
         return None
 
 
-def chat_with_gpt(prompt: str, context: str | None = None) -> str:
+def chat_with_gpt(
+    prompt: str,
+    context: str | None = None,
+    history: list[dict] | None = None,
+    *,
+    max_history_messages: int = 20,
+) -> str:
     """Chat with GPT-4 using the OpenAI API, with KPI and Beverage analysis integration."""
     if not prompt or not prompt.strip():
         return "Error: Please provide a message."
 
-    def is_small_talk(text: str) -> bool:
-        text_lower = text.strip().lower()
-        return text_lower in {
-            "thanks",
-            "thank you",
-            "ok",
-            "okay",
-            "got it",
-            "great",
-            "cool",
-            "appreciate it",
-            "bye",
-            "goodbye",
-            "see you",
-            "hello",
-            "hi",
-            "hey"
-        }
+    def _coerce_history_messages(raw_history: list[dict] | None) -> list[dict]:
+        if not raw_history:
+            return []
+        safe: list[dict] = []
+        for item in raw_history:
+            if not isinstance(item, dict):
+                continue
+            role = item.get("role")
+            content = item.get("content")
+            if role not in {"user", "assistant"}:
+                continue
+            if not isinstance(content, str) or not content.strip():
+                continue
+            safe.append({"role": role, "content": content.strip()})
+        if max_history_messages and len(safe) > max_history_messages:
+            safe = safe[-max_history_messages:]
+        return safe
 
-    def is_hospitality_query(text: str) -> bool:
-        keywords = [
-            "restaurant", "hospitality", "menu", "menu engineering", "item optimization",
-            "recipe", "food cost", "labor", "staff", "scheduling", "turnover",
-            "inventory", "stock", "beverage", "bar", "liquor", "pour cost",
-            "kitchen", "chef", "server", "pos", "sales", "cogs", "prime cost",
-            "profit", "margin", "pricing", "waste", "portion", "allergen",
-            "guest", "dining", "service", "table", "reservation", "covers",
-            "financial", "financial health", "finance", "cash flow", "p&l",
-            "income statement", "balance sheet", "business goals",
-            "strategic planning", "growth strategy", "operational excellence",
-            "sales forecasting"
-        ]
-        text_lower = text.lower()
-        return any(k in text_lower for k in keywords)
+    def _normalize_chat_text(text: str) -> str:
+        # Normalize for lightweight intent checks (handle punctuation like "Hi," or "Thanks!").
+        normalized = re.sub(r"[^a-z0-9\s]", " ", (text or "").strip().lower())
+        normalized = re.sub(r"\s+", " ", normalized).strip()
+        return normalized
 
+    def small_talk_type(text: str) -> str | None:
+        text_lower = _normalize_chat_text(text)
+        if not text_lower:
+            return None
+
+        greetings = {"hello", "hi", "hey"}
+        gratitude = {"thanks", "thank you", "appreciate it"}
+        acknowledgements = {"ok", "okay", "got it", "great", "cool"}
+        farewells = {"bye", "goodbye", "see you"}
+
+        if text_lower in greetings or any(text_lower.startswith(g + " ") for g in greetings):
+            return "greeting"
+        if text_lower in gratitude or any(text_lower.startswith(g + " ") for g in gratitude):
+            return "gratitude"
+        if text_lower in farewells or any(text_lower.startswith(f + " ") for f in farewells):
+            return "farewell"
+        if text_lower in acknowledgements or any(text_lower.startswith(a + " ") for a in acknowledgements):
+            return "ack"
+        return None
+
+    # NOTE: This assistant is intentionally general-purpose (ChatGPT-like).
+    # We keep `context` only to improve routing into project-specific analysis
+    # modules (recipes/hr/beverage/etc.), not to restrict topics.
     allowed_contexts = {"beverage", "hr", "recipes", "menu", "kpi"}
-    if is_small_talk(prompt):
-        return "You're welcome! If you want help with menu engineering, costs, scheduling, or recipes, just let me know."
+    stype = small_talk_type(prompt)
+    if stype == "greeting":
+        return "Hello! How can I help you today with menu planning, recipe costing, inventory, staffing, or pricing?"
+    if stype == "gratitude":
+        return "You're welcome. What would you like to work on next?"
+    if stype == "ack":
+        return "Got it. What would you like to analyze or plan next?"
+    if stype == "farewell":
+        return "Goodbye. If you need help with anything restaurant-related later, just message me."
 
+    # Do not block queries by topic; allow any user question.
+    # Context (if provided) is used only for routing/optimization.
     if context and context.lower() in allowed_contexts:
         pass
-    elif not is_hospitality_query(prompt):
-        return (
-            "Sorry, I can only help with restaurant and hospitality topics. "
-            "Ask about menu engineering, pricing, food cost, labor scheduling, "
-            "inventory, recipes, or beverage management."
-        )
 
     # If frontend explicitly set a context for recipes, route those requests
     # directly to the KPI/recipe handler first so recipe-specific analysis
@@ -2596,7 +2617,7 @@ def chat_with_gpt(prompt: str, context: str | None = None) -> str:
     if not api_key:
         return "Error: OpenAI API key not configured. Please set OPENAI_API_KEY environment variable."
 
-    base_system_message = """You are an expert restaurant business consultant with 20+ years of experience in the hospitality industry. Your role is to provide comprehensive, actionable, and data-driven advice to restaurant owners and managers.
+    base_system_message = """You are a helpful, knowledgeable assistant. You answer questions across any topic clearly and accurately, and you can also help with restaurant and hospitality analysis when asked.
 
 CRITICAL FORMATTING RULES - YOU MUST FOLLOW THESE:
 1. NEVER use markdown formatting like asterisks, bold, or headers (no **, no ##, no ###)
@@ -2615,37 +2636,23 @@ Your Communication Style:
 
 When Analyzing Data:
 - Acknowledge what the user is asking
-- Explain calculations in conversational language with actual numbers
-- Compare results to industry standards (mention the benchmark ranges naturally)
-- Provide 3-5 specific action items the owner can take
-- Quantify potential savings when possible
-- Suggest what they could do next
+- Explain calculations in conversational language with the actual numbers
+- Provide 3-5 specific, practical next steps
+- Ask a brief follow-up question if key inputs are missing
 
-Your Expertise Areas:
-- KPI Analysis: labor costs, food costs, prime costs, sales per labor hour
-- Menu Engineering: identifying best sellers, profit drivers, and underperformers  
-- Recipe Costing: ingredient costs, portion control, margin optimization
-- Beverage Management: liquor cost control, inventory management, pricing
-- HR Solutions: staff retention, scheduling, performance management
-- Strategic Planning: sales forecasting, market analysis, growth strategies
-
-Industry Benchmarks to Reference (mention these naturally in conversation):
-- Food Cost: 28-32% of sales
-- Labor Cost: 25-30% of sales
-- Prime Cost: 55-65% of sales
-- Beverage Cost: 18-24% of sales
-- Sales Per Labor Hour: $35-50 or higher
-
-Remember: Write naturally like a trusted advisor having a conversation. No special formatting, no technical markup, just clear and helpful guidance."""
+Remember: Write naturally like a trusted assistant having a conversation. No special formatting, no technical markup, just clear and helpful guidance."""
 
     try:
         client = OpenAI(api_key=api_key)
+        prior_messages = _coerce_history_messages(history)
+        messages = [
+            {"role": "system", "content": base_system_message},
+            *prior_messages,
+            {"role": "user", "content": prompt.strip()},
+        ]
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[
-                {"role": "system", "content": base_system_message},
-                {"role": "user", "content": prompt.strip()},
-            ],
+            messages=messages,
             temperature=0.7,
             max_tokens=2000,
         )
